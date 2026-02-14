@@ -1,0 +1,35 @@
+---
+import Base from '../layouts/Base.astro';
+import BlockRenderer from '../components/blocks/BlockRenderer.astro';
+import { getPages, getPage } from '../lib/payload';
+
+// Build-time: generate paths for all CMS pages
+export async function getStaticPaths() {
+  try {
+    const pages = await getPages();
+    return pages.map((page: any) => ({
+      params: { slug: page.slug },
+      props: { page },
+    }));
+  } catch {
+    // CMS not available at build time — return empty array
+    return [];
+  }
+}
+
+const { page } = Astro.props;
+
+if (!page) {
+  return Astro.redirect('/404');
+}
+
+const { title, layout, meta } = page;
+---
+
+<Base
+  title={meta?.title || title}
+  description={meta?.description || `${title} — Joe's Garage`}
+  ogImage={meta?.image?.url}
+>
+  {layout && <BlockRenderer blocks={layout} />}
+</Base>

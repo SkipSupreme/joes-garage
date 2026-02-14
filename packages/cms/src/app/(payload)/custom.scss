@@ -1,0 +1,925 @@
+/* ═══════════════════════════════════════════════
+   Joe's Garage — Admin Panel Branding
+   Industrial garage aesthetic · Dark mode forced
+
+   ARCHITECTURE:
+   1. @payloadcms/ui/scss/app.scss → theme vars, colors, global resets
+   2. Missing template/nav CSS → @layer payload-default (Payload bug workaround)
+   3. Joe's Garage branding → unlayered (overrides Payload defaults)
+
+   The @payloadcms/next package strips SCSS imports during compilation,
+   so template-default and nav layout CSS never reaches the browser.
+   We inject the missing rules from Payload's source inside @layer
+   payload-default to match the intended cascade.
+   ═══════════════════════════════════════════════ */
+
+/* ─── 1. Payload Core Styles ──────────────────── */
+
+@import '@payloadcms/ui/scss/app.scss';
+
+/* ─── 2. Missing Template + Nav Layout CSS ────── */
+/* Source: @payloadcms/next/src/templates/Default/ */
+/* These SCSS files are stripped from the compiled npm package */
+
+@layer payload-default {
+  /* === Default Template Grid Layout === */
+  .template-default {
+    background-color: var(--theme-bg);
+    color: var(--theme-text);
+    min-height: 100vh;
+    display: grid;
+    position: relative;
+    isolation: isolate;
+  }
+
+  @media (prefers-reduced-motion) {
+    .template-default {
+      transition: none;
+    }
+  }
+
+  .template-default--nav-animate {
+    transition: grid-template-columns var(--nav-trans-time) linear;
+  }
+
+  .template-default--nav-open .template-default__nav-overlay {
+    transition: opacity var(--nav-trans-time) linear;
+  }
+
+  .template-default__nav-toggler-wrapper {
+    position: sticky;
+    z-index: var(--z-modal);
+    top: 0;
+    left: 0;
+    height: 0;
+    width: var(--gutter-h);
+    display: flex;
+    justify-content: center;
+  }
+
+  .template-default__nav-toggler-container {
+    height: var(--app-header-height);
+    display: flex;
+    align-items: center;
+  }
+
+  .template-default__nav-toggler {
+    display: flex;
+    align-items: center;
+  }
+
+  .template-default__wrap {
+    min-width: 0;
+    width: 100%;
+    flex-grow: 1;
+    position: relative;
+    background-color: var(--theme-bg);
+  }
+
+  .template-default__wrap::before {
+    content: '';
+    display: block;
+    position: absolute;
+    inset: 0;
+    background-color: inherit;
+    opacity: 0;
+    z-index: var(--z-status);
+    visibility: hidden;
+    transition: all var(--nav-trans-time) linear;
+  }
+
+  /* Desktop (>1440px): nav toggleable */
+  @media (min-width: 1441px) {
+    .template-default {
+      grid-template-columns: 0 auto;
+    }
+    .template-default--nav-open {
+      grid-template-columns: var(--nav-width) auto;
+    }
+  }
+
+  /* Tablet/smaller desktop (<=1440px): nav hidden until hydrated */
+  @media (max-width: 1440px) {
+    .template-default--nav-hydrated.template-default--nav-open {
+      grid-template-columns: var(--nav-width) auto;
+    }
+    .template-default {
+      grid-template-columns: 1fr auto;
+    }
+    .template-default .nav {
+      display: none;
+    }
+    .template-default--nav-hydrated {
+      grid-template-columns: 0 auto;
+    }
+    .template-default--nav-hydrated .nav {
+      display: unset;
+    }
+  }
+
+  /* Mobile (<=768px) */
+  @media (max-width: 768px) {
+    .template-default__nav-toggler-wrapper {
+      width: unset;
+      justify-content: unset;
+    }
+    .template-default__nav-toggler-wrapper .hamburger {
+      display: none;
+    }
+    .template-default .template-default__wrap {
+      min-width: 100%;
+    }
+  }
+
+  /* Mid-break (<=1024px) */
+  @media (max-width: 1024px) {
+    .template-default__nav-toggler-wrapper .hamburger {
+      left: unset;
+    }
+  }
+
+  /* === Nav Sidebar Layout === */
+  /* Source: @payloadcms/next/src/elements/Nav/index.scss */
+
+  .nav {
+    position: sticky;
+    top: 0;
+    left: 0;
+    flex-shrink: 0;
+    height: 100vh;
+    width: var(--nav-width);
+    border-right: 1px solid var(--theme-elevation-100);
+    opacity: 0;
+    overflow: hidden;
+    --nav-padding-inline-start: var(--base);
+    --nav-padding-inline-end: var(--base);
+    --nav-padding-block-start: var(--app-header-height);
+    --nav-padding-block-end: calc(var(--base) * 2);
+  }
+
+  .nav--nav-animate {
+    transition: opacity var(--nav-trans-time) ease-in-out;
+  }
+
+  .nav--nav-open {
+    opacity: 1;
+  }
+
+  .nav__header {
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    height: var(--app-header-height);
+  }
+
+  .nav__header-content {
+    z-index: 1;
+    position: relative;
+    height: 100%;
+    width: 100%;
+  }
+
+  .nav__mobile-close {
+    display: none;
+    background: none;
+    border: 0;
+    outline: 0;
+    padding: calc(var(--base) * 0.8) 0;
+  }
+
+  .nav__scroll {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--nav-padding-block-start) var(--nav-padding-inline-end)
+      var(--nav-padding-block-end) var(--nav-padding-inline-start);
+    overflow-y: auto;
+  }
+
+  .nav__scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav__wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-grow: 1;
+  }
+
+  .nav__label {
+    color: var(--theme-elevation-400);
+  }
+
+  .nav__controls {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--base) * 0.75);
+    margin-top: auto;
+    margin-bottom: 0;
+  }
+
+  .nav__controls > :first-child {
+    margin-top: var(--base);
+  }
+
+  .nav__controls a:focus-visible {
+    outline: var(--accessibility-outline);
+  }
+
+  .nav__link {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-block: calc(var(--base) * 0.125);
+    padding-inline-start: 0;
+    padding-inline-end: calc(var(--base) * 1.5);
+    text-decoration: none;
+  }
+
+  .nav__link:focus:not(:focus-visible) {
+    box-shadow: none;
+    font-weight: 600;
+  }
+
+  .nav__link.active {
+    font-weight: 600;
+    padding-left: 0;
+  }
+
+  a.nav__link:hover,
+  a.nav__link:focus-visible {
+    text-decoration: underline;
+  }
+
+  .nav__link:has(.nav__link-indicator) {
+    font-weight: 600;
+    padding-left: 0;
+  }
+
+  .nav__link-indicator {
+    position: absolute;
+    display: block;
+    inset-inline-start: calc(var(--base) * -1);
+    width: 2px;
+    height: 16px;
+    border-start-end-radius: 2px;
+    border-end-end-radius: 2px;
+    background: var(--theme-text);
+  }
+
+  @media (max-width: 1024px) {
+    .nav__scroll {
+      --nav-padding-inline-start: calc(var(--base) * 0.5);
+      --nav-padding-inline-end: calc(var(--base) * 0.5);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .nav__scroll {
+      --nav-padding-inline-start: var(--gutter-h);
+      --nav-padding-inline-end: var(--gutter-h);
+    }
+    .nav__link {
+      font-size: calc(var(--base) * 0.875);
+      line-height: calc(var(--base) * 1.5);
+    }
+    .nav__mobile-close {
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+/* ─── 3. Joe's Garage Branding ────────────────── */
+/* Everything below is OUTSIDE @layer so it
+   overrides Payload's defaults via CSS cascade */
+
+/* ─── Brand Accent Overrides ────────────────── */
+
+[data-theme="dark"] {
+  --theme-error-500: #D42B2B;
+  --theme-error-400: #C02424;
+  --theme-error-600: #E04545;
+  --theme-success-500: #22C55E;
+  --theme-warning-500: #F59E0B;
+}
+
+/* ─── Google Fonts Import ───────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+/* ─── Base Typography ───────────────────────── */
+
+body {
+  font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+
+/* ─── Login / Register / Forgot Password ────── */
+
+.template-minimal {
+  position: relative;
+  min-height: 100vh;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .template-minimal__wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 420px;
+    width: 100%;
+    padding: 24px 16px;
+    margin: 0 auto;
+
+    @media (min-width: 768px) {
+      padding: 48px 24px;
+    }
+  }
+}
+
+/* ─── Login Brand Area (logo) ───────────────── */
+
+.login__brand {
+  text-align: center;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ─── Login Form Card ───────────────────────── */
+
+.login__form {
+  background: var(--theme-elevation-100) !important;
+  border: 1px solid var(--theme-elevation-200) !important;
+  border-radius: 14px !important;
+  padding: 32px 24px !important;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15) !important;
+
+  @media (min-width: 480px) {
+    padding: 40px 32px !important;
+  }
+
+  .login__form__inputWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .field-type {
+    input {
+      background: var(--theme-elevation-0) !important;
+      border: 1px solid var(--theme-elevation-250) !important;
+      border-radius: 10px !important;
+      padding: 12px 14px !important;
+      font-size: 14px !important;
+      font-family: inherit !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+
+      &::placeholder {
+        opacity: 0.4;
+      }
+
+      &:focus {
+        border-color: #D42B2B !important;
+        box-shadow: 0 0 0 3px rgba(212, 43, 43, 0.12) !important;
+        outline: none !important;
+      }
+    }
+
+    label {
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.04em !important;
+      text-transform: uppercase !important;
+      opacity: 0.65;
+      margin-bottom: 6px !important;
+    }
+  }
+
+  > a {
+    display: inline-block;
+    font-size: 13px;
+    opacity: 0.6;
+    margin-bottom: 20px;
+    transition: opacity 0.15s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+/* ─── Create First User (Registration) ──────── */
+
+.create-first-user {
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  > p {
+    opacity: 0.6;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 28px;
+  }
+
+  form {
+    background: var(--theme-elevation-100);
+    border: 1px solid var(--theme-elevation-200);
+    border-radius: 14px;
+    padding: 28px 24px;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      0 8px 24px rgba(0, 0, 0, 0.15);
+
+    @media (min-width: 480px) {
+      padding: 36px 32px;
+    }
+
+    .field-type {
+      input {
+        background: var(--theme-elevation-0) !important;
+        border: 1px solid var(--theme-elevation-250) !important;
+        border-radius: 10px !important;
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+        font-family: inherit !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+
+        &::placeholder {
+          opacity: 0.4;
+        }
+
+        &:focus {
+          border-color: #D42B2B !important;
+          box-shadow: 0 0 0 3px rgba(212, 43, 43, 0.12) !important;
+          outline: none !important;
+        }
+      }
+
+      label {
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        opacity: 0.65;
+        margin-bottom: 6px !important;
+      }
+    }
+  }
+}
+
+/* ─── Forgot Password ───────────────────────── */
+
+.forgot-password,
+.reset-password {
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  > p {
+    opacity: 0.6;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  form {
+    background: var(--theme-elevation-100);
+    border: 1px solid var(--theme-elevation-200);
+    border-radius: 14px;
+    padding: 28px 24px;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.2),
+      0 8px 24px rgba(0, 0, 0, 0.15);
+
+    @media (min-width: 480px) {
+      padding: 36px 32px;
+    }
+
+    .field-type input {
+      background: var(--theme-elevation-0) !important;
+      border: 1px solid var(--theme-elevation-250) !important;
+      border-radius: 10px !important;
+      padding: 12px 14px !important;
+      font-size: 14px !important;
+      font-family: inherit !important;
+
+      &:focus {
+        border-color: #D42B2B !important;
+        box-shadow: 0 0 0 3px rgba(212, 43, 43, 0.12) !important;
+      }
+    }
+
+    .field-type label {
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.04em !important;
+      text-transform: uppercase !important;
+      opacity: 0.65;
+      margin-bottom: 6px !important;
+    }
+  }
+}
+
+/* ─── All Submit Buttons (Login, Register, etc.) */
+
+.form-submit .btn,
+button[type="submit"].btn {
+  background: #D42B2B !important;
+  color: #FAF7F2 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 13px 24px !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  letter-spacing: 0.01em !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease !important;
+  width: 100% !important;
+
+  &:hover {
+    background: #E04545 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 14px rgba(212, 43, 43, 0.3) !important;
+  }
+
+  &:active {
+    transform: translateY(0) !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ─── Dashboard / Main Admin Polish ─────────── */
+
+.template-default .nav {
+  border-right-color: var(--theme-elevation-200);
+}
+
+.nav__link {
+  border-radius: 8px !important;
+  transition: background 0.15s ease !important;
+
+  &:hover {
+    background: var(--theme-elevation-150) !important;
+  }
+
+  &.active,
+  &[aria-current="page"] {
+    background: rgba(212, 43, 43, 0.08) !important;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: #D42B2B;
+      border-radius: 0 2px 2px 0;
+    }
+  }
+}
+
+/* ─── Document Header ───────────────────────── */
+
+.doc-header {
+  border-bottom-color: var(--theme-elevation-200);
+}
+
+.doc-controls .btn {
+  background: #D42B2B !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+
+  &:hover {
+    background: #E04545 !important;
+  }
+}
+
+/* ─── Form Fields (Edit Views) ──────────────── */
+
+.template-default {
+  .field-type {
+    input,
+    textarea,
+    select {
+      border-radius: 8px !important;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+      font-family: inherit !important;
+
+      &:focus {
+        border-color: #D42B2B !important;
+        box-shadow: 0 0 0 3px rgba(212, 43, 43, 0.08) !important;
+      }
+    }
+  }
+}
+
+/* ─── Cards (Dashboard, Collection Lists) ───── */
+
+.card {
+  border-radius: 12px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+
+  &:hover {
+    border-color: var(--theme-elevation-300) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
+/* ─── Table Rows ────────────────────────────── */
+
+.table .row:hover {
+  background: var(--theme-elevation-50) !important;
+}
+
+/* ─── Rich Text Editor ──────────────────────── */
+
+.rich-text {
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+/* ─── Pills / Status Badges ─────────────────── */
+
+.pill {
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.03em !important;
+}
+
+/* ─── Scrollbar Styling (Webkit) ────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-elevation-300);
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--theme-elevation-400);
+  }
+}
+
+/* ─── Responsive: Mobile Admin ──────────────── */
+/* Joe needs to edit on his phone — everything must
+   be thumb-friendly with easily reachable Save buttons */
+
+@media (max-width: 767px) {
+  /* --- Login / Auth pages --- */
+  .template-minimal .template-minimal__wrap {
+    padding: 20px 12px;
+    max-width: 100%;
+  }
+
+  .login__form {
+    padding: 24px 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .create-first-user form {
+    padding: 24px 16px;
+    border-radius: 12px;
+  }
+
+  /* --- Main content area --- */
+  .template-default__wrap {
+    padding: 8px !important;
+  }
+
+  .gutter--left {
+    padding-left: 12px !important;
+  }
+  .gutter--right {
+    padding-right: 12px !important;
+  }
+
+  /* --- App Header / Breadcrumbs --- */
+  .app-header {
+    padding: 8px 12px !important;
+    min-height: 48px;
+  }
+
+  .app-header__step-nav-wrapper {
+    gap: 4px;
+
+    /* Make breadcrumb links bigger tap targets */
+    a {
+      padding: 6px 4px !important;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    /* Truncate long breadcrumb text */
+    span, a span {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  /* --- Doc Header (title area) --- */
+  .doc-header {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .doc-header__title {
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+    word-break: break-word;
+  }
+
+  /* --- Doc Tabs (Edit / API) --- */
+  .doc-tabs {
+    .doc-tab {
+      padding: 8px 16px !important;
+      font-size: 13px !important;
+    }
+  }
+
+  /* --- Fixed Save Button Bar --- */
+  /* On long forms (like Site Settings), the Save button
+     must always be reachable without scrolling back up.
+     doc-controls is ABOVE the form fields in the DOM,
+     so sticky:bottom doesn't work — use fixed instead.
+     Must constrain height because .doc-controls has a
+     divider child that would expand it to fill viewport. */
+  .doc-controls {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    background: var(--theme-bg) !important;
+    border-top: 1px solid var(--theme-elevation-200) !important;
+    padding: 10px 16px !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25) !important;
+    height: auto !important;
+    max-height: 70px !important;
+    overflow: hidden !important;
+  }
+
+  .doc-controls__divider {
+    display: none !important;
+  }
+
+  .doc-controls__meta {
+    display: none !important;
+  }
+
+  .doc-controls__controls-wrapper {
+    width: 100%;
+  }
+
+  .doc-controls__controls {
+    width: 100%;
+    display: flex;
+    justify-content: stretch;
+  }
+
+  .doc-controls .form-submit {
+    flex: 1;
+  }
+
+  .doc-controls .form-submit .btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 15px !important;
+  }
+
+  /* --- Form Fields --- */
+  .field-type input,
+  .field-type textarea,
+  .field-type select {
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
+
+  .field-type label {
+    font-size: 13px !important;
+  }
+
+  .btn {
+    min-height: 44px !important;
+  }
+
+  /* --- Cards (Dashboard) --- */
+  .card {
+    border-radius: 10px !important;
+  }
+
+  /* --- Array/Block Fields --- */
+  .array-field__header,
+  .blocks-field__header {
+    padding: 8px 10px !important;
+  }
+
+  /* --- Table (Collection List) --- */
+  .table {
+    font-size: 13px !important;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px 10px !important;
+  }
+
+  /* --- Document fields area --- */
+  .document-fields {
+    padding-bottom: 72px !important; /* Space for sticky save button */
+  }
+}
+
+/* --- Tablet --- */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .template-minimal .template-minimal__wrap {
+    max-width: 440px;
+  }
+
+  .doc-header__title {
+    font-size: 24px !important;
+  }
+
+  /* Fixed save on tablet too (Site Settings is long) */
+  .doc-controls {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    background: var(--theme-bg) !important;
+    border-top: 1px solid var(--theme-elevation-200) !important;
+    padding: 12px 16px !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2) !important;
+    height: auto !important;
+    max-height: 70px !important;
+    overflow: hidden !important;
+  }
+
+  .doc-controls__divider {
+    display: none !important;
+  }
+
+  .doc-controls__meta {
+    display: none !important;
+  }
+
+  .document-fields {
+    padding-bottom: 72px !important;
+  }
+}
+
+/* ─── Smooth Transitions ────────────────────── */
+
+a,
+button,
+input,
+textarea,
+select {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1C1917; padding: 40px; font-size: 12px; line-height: 1.6; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #CC2229; padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 22px; font-weight: 800; color: #CC2229; }
+    .header .subtitle { font-size: 10px; color: #78716C; margin-top: 2px; }
+    .header .doc-info { text-align: right; font-size: 10px; color: #78716C; }
+    .section { margin-bottom: 20px; }
+    .section-title { font-size: 13px; font-weight: 700; color: #1C1917; border-bottom: 1px solid #E7E5E4; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field { margin-bottom: 6px; }
+    .field-label { font-size: 9px; font-weight: 600; color: #78716C; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field-value { font-size: 12px; color: #1C1917; }
+    .waiver-text { font-size: 11px; line-height: 1.7; color: #44403C; padding: 16px; background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 4px; margin-bottom: 16px; }
+    .consent-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 11px; }
+    .consent-check { width: 14px; height: 14px; border: 1.5px solid #CC2229; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .consent-check::after { content: '✓'; color: #CC2229; font-size: 10px; font-weight: 700; }
+    .signature-box { border: 1px solid #E7E5E4; border-radius: 4px; padding: 8px; text-align: center; }
+    .signature-box img { max-width: 300px; max-height: 80px; }
+    .signature-line { margin-top: 4px; font-size: 9px; color: #78716C; border-top: 1px solid #D6D3D1; padding-top: 4px; }
+    .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #E7E5E4; font-size: 9px; color: #A8A29E; }
+    .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .hash { font-family: 'Courier New', monospace; font-size: 8px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Joe's Garage</h1>
+      <div class="subtitle">Bicycle Rental Waiver & Release of Liability</div>
+    </div>
+    <div class="doc-info">
+      <div>335 8 St SW, Calgary, AB</div>
+      <div>(403) 874-8189</div>
+      <div>joes-garage.ca</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Renter Information</div>
+    <div class="field-grid">
+      <div class="field">
+        <div class="field-label">Full Name</div>
+        <div class="field-value">{{fullName}}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Email</div>
+        <div class="field-value">{{email}}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Phone</div>
+        <div class="field-value">{{phone}}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Date of Birth</div>
+        <div class="field-value">{{dateOfBirth}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Rental Details</div>
+    <div class="field-grid">
+      <div class="field">
+        <div class="field-label">Reservation ID</div>
+        <div class="field-value" style="font-family: monospace;">{{reservationId}}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Date Signed</div>
+        <div class="field-value">{{signedAt}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Waiver & Release of Liability</div>
+    <div class="waiver-text">
+      {{waiverText}}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Consent</div>
+    <div class="consent-item">
+      <div class="consent-check"></div>
+      <span>I consent to sign this document electronically and agree that my electronic signature has the same legal validity as a handwritten signature.</span>
+    </div>
+    <div class="consent-item">
+      <div class="consent-check"></div>
+      <span>I have read and understand the waiver and release of liability above, and I voluntarily agree to its terms.</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Electronic Signature</div>
+    <div class="signature-box">
+      <img src="{{signatureDataUrl}}" alt="Signature" />
+      <div class="signature-line">Signed by {{fullName}} on {{signedAt}}</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-grid">
+      <div>
+        <div><strong>IP Address:</strong> {{signerIp}}</div>
+        <div><strong>User Agent:</strong> {{signerUa}}</div>
+      </div>
+      <div style="text-align: right;">
+        <div><strong>Document Hash (SHA-256):</strong></div>
+        <div class="hash">{{pdfHash}}</div>
+      </div>
+    </div>
+    <div style="margin-top: 8px; text-align: center;">
+      This document was electronically signed and generated by Joe's Garage rental system.
+      Retained for 7 years per record-keeping policy.
+    </div>
+  </div>
+</body>
+</html>

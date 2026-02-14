@@ -1,0 +1,28 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background circle -->
+  <circle cx="16" cy="16" r="15.5" fill="#000"/>
+  <!-- Red tire outer ring -->
+  <circle cx="16" cy="16" r="12" fill="#D42B2B" />
+  <!-- White tire inner -->
+  <circle cx="16" cy="16" r="10" fill="#F5F5F5" />
+  <!-- Spokes (8 thin lines from hub to rim) -->
+  <g stroke="#AAAAAA" stroke-width="0.5">
+    <line x1="16" y1="6.5" x2="16" y2="25.5"/>
+    <line x1="6.5" y1="16" x2="25.5" y2="16"/>
+    <line x1="9.3" y1="9.3" x2="22.7" y2="22.7"/>
+    <line x1="22.7" y1="9.3" x2="9.3" y2="22.7"/>
+  </g>
+  <!-- Hub -->
+  <circle cx="16" cy="16" r="3" fill="#888"/>
+  <circle cx="16" cy="16" r="1.5" fill="#555"/>
+  <!-- Wrench (simplified, crossing horizontally behind the tire) -->
+  <rect x="2" y="14.5" width="28" height="3" rx="1.5" fill="#777" opacity="0.85"/>
+  <!-- Wrench jaw left -->
+  <path d="M2 13 Q0 16 2 19 L5 18 L5 14 Z" fill="#777" opacity="0.85"/>
+  <!-- Wrench jaw right -->
+  <path d="M30 13 Q32 16 30 19 L27 18 L27 14 Z" fill="#777" opacity="0.85"/>
+  <!-- Red tire outer ring (overlay to hide wrench behind tire) -->
+  <circle cx="16" cy="16" r="10" fill="none" stroke="#D42B2B" stroke-width="2.5"/>
+  <!-- JG initials -->
+  <text x="16" y="18.5" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="7" fill="#D42B2B" letter-spacing="-0.5">JG</text>
+</svg>

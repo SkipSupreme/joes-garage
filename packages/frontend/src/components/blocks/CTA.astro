@@ -1,0 +1,36 @@
+---
+interface Props {
+  heading: string;
+  content?: string; // Rich text HTML
+  buttonText: string;
+  buttonLink: string;
+}
+
+const { heading, content, buttonText, buttonLink } = Astro.props;
+---
+
+<section class="relative py-20 lg:py-28 bg-coal overflow-hidden">
+  <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber/5 rounded-full blur-[100px]"></div>
+  <div class="absolute bottom-0 right-1/4 w-72 h-72 bg-red/5 rounded-full blur-[80px]"></div>
+  <div class="absolute inset-0 grain"></div>
+
+  <div class="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-extrabold text-cream tracking-tight leading-tight">
+      {heading}
+    </h2>
+
+    {content && (
+      <div class="mt-6 text-lg text-cream/50 max-w-xl mx-auto prose prose-invert prose-p:text-cream/50" set:html={content}>
+      </div>
+    )}
+
+    <div class="mt-10">
+      <a
+        href={buttonLink}
+        class="inline-flex items-center gap-2 px-10 py-4 bg-amber text-coal font-bold text-lg rounded-xl hover:bg-amber-light hover:shadow-xl hover:shadow-amber/20 hover:-translate-y-0.5 transition-all duration-200"
+      >
+        {buttonText}
+      </a>
+    </div>
+  </div>
+</section>

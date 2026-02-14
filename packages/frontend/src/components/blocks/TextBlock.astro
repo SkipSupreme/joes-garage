@@ -1,0 +1,21 @@
+---
+interface Props {
+  content: string; // Rich text HTML from Payload's Lexical editor
+}
+
+const { content } = Astro.props;
+---
+
+<section class="py-16 lg:py-20">
+  <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+    <div class="prose prose-lg max-w-none
+      prose-headings:font-display prose-headings:font-bold prose-headings:text-coal prose-headings:tracking-tight
+      prose-p:text-ink-muted prose-p:leading-relaxed
+      prose-a:text-amber prose-a:no-underline hover:prose-a:text-amber-dark
+      prose-strong:text-coal
+      prose-blockquote:border-l-amber prose-blockquote:text-ink-muted
+      prose-img:rounded-xl
+    " set:html={content}>
+    </div>
+  </div>
+</section>

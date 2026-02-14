@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+/*
+ * Joe's Garage — Brand Design System
+ *
+ * Joe Nunn's shipping container bike shop on the Bow River pathway.
+ * Red tire rim, silver wrench, clean white/black, blue accents.
+ * Industrial-meets-riverside. Bold, honest, unpretentious.
+ */
+
+@theme {
+  /* Blacks — clean, true blacks */
+  --color-coal: #111111;
+  --color-coal-light: #1A1A1A;
+  --color-coal-lighter: #333333;
+
+  /* Joe's Garage Red — the tire rim */
+  --color-red: #D42B2B;
+  --color-red-dark: #B01E1E;
+  --color-red-light: #E84848;
+
+  /* Blue accent — for links, highlights, interactive elements */
+  --color-amber: #1E5FAD;
+  --color-amber-light: #3B82F6;
+  --color-amber-dark: #164B8A;
+
+  /* Silver — from the wrench in the logo */
+  --color-copper: #666666;
+  --color-copper-light: #888888;
+
+  /* Clean surfaces — white, not warm cream */
+  --color-cream: #FFFFFF;
+  --color-cream-dark: #F5F5F5;
+  --color-parchment: #E0E0E0;
+
+  /* Text */
+  --color-ink: #111111;
+  --color-ink-muted: #555555;
+  --color-ink-light: #999999;
+
+  /* Functional */
+  --color-success: #22C55E;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+
+  /* Typography
+   * Display: Franchise (self-hosted) → Oswald (Google Fonts fallback) → Impact
+   * Body: Jost (Google Fonts, closest free Futura match)
+   * If you have Franchise-Bold.woff2, drop it in /public/fonts/ and it'll be used automatically
+   */
+  --font-display: "Franchise", "Oswald", "Impact", system-ui, sans-serif;
+  --font-body: "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Self-hosted Franchise Bold — drop the file in /public/fonts/ to activate */
+@font-face {
+  font-family: "Franchise";
+  src: url("/fonts/Franchise-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  html {
+    /* Slightly larger base size for better readability */
+    font-size: 16px;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background-color: var(--color-cream);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Better body text size */
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  /* Improve paragraph readability */
+  p {
+    line-height: 1.75;
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--color-cream-dark); }
+  ::-webkit-scrollbar-thumb { background: var(--color-coal-lighter); border-radius: 4px; }
+
+  ::selection {
+    background-color: var(--color-red);
+    color: #fff;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ULTRAWIDE MONITOR SUPPORT
+   Center content and prevent stretching on
+   screens wider than 1920px
+   ═══════════════════════════════════════════ */
+@layer utilities {
+  /* Ultrawide wrapper — prevents content from stretching beyond 1920px */
+  .ultrawide-contain {
+    max-width: 1920px;
+    margin-inline: auto;
+  }
+}
+
+/* Full-bleed sections still look good on ultrawide */
+@media (min-width: 1920px) {
+  /* Inner containers get tighter max-widths */
+  .max-w-7xl {
+    max-width: 80rem; /* 1280px */
+  }
+}
+
+@layer utilities {
+  /* ═══════════════════════════════════════
+     ANIMATIONS
+     ═══════════════════════════════════════ */
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out both;
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out both;
+  }
+  .animate-slide-in-right {
+    animation: slideInRight 0.5s ease-out both;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out both;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+  .delay-700 { animation-delay: 700ms; }
+  .delay-800 { animation-delay: 800ms; }
+
+  /* ═══════════════════════════════════════
+     TEXTURES & PATTERNS
+     ═══════════════════════════════════════ */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px;
+  }
+
+  .pattern-dots {
+    background-image: radial-gradient(circle, var(--color-parchment) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .pattern-diagonal {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      var(--color-coal-lighter) 10px,
+      var(--color-coal-lighter) 11px
+    );
+    opacity: 0.05;
+  }
+
+  /* Corrugated steel texture — for the shipping container vibe */
+  .pattern-corrugated {
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 8px,
+      rgba(255, 255, 255, 0.02) 8px,
+      rgba(255, 255, 255, 0.02) 9px
+    );
+  }
+
+  /* ═══════════════════════════════════════
+     EFFECTS
+     ═══════════════════════════════════════ */
+  .glow-amber {
+    box-shadow: 0 0 20px rgba(30, 95, 173, 0.3), 0 0 60px rgba(30, 95, 173, 0.1);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px rgba(212, 43, 43, 0.3), 0 0 60px rgba(212, 43, 43, 0.1);
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 43, 43, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(212, 43, 43, 0.5), 0 0 60px rgba(212, 43, 43, 0.2); }
+}

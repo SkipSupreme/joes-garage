@@ -1,0 +1,185 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="About" description="Meet Joe Nunn — the mechanic behind Joe's Garage. Operating from a shipping container on the Bow River pathway since 2007.">
+
+  <!-- Hero -->
+  <section class="relative py-10 sm:py-16 lg:py-24 bg-coal overflow-hidden">
+    <div class="absolute inset-0 grain"></div>
+    <div class="absolute -top-40 -right-40 w-[500px] h-[500px] bg-red/5 rounded-full blur-[120px]"></div>
+
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <span class="text-sm font-medium text-red tracking-wider uppercase">About Joe's Garage</span>
+        <h1 class="mt-2 text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-cream leading-tight">
+          A bike trailer, a shipping container,
+          <span class="text-red">and 30 years of grease.</span>
+        </h1>
+        <p class="mt-4 text-base sm:text-lg text-cream/50 max-w-xl">
+          The story of how Joe Nunn turned a spot on the Bow River pathway into Calgary's favourite bike shop.
+        </p>
+      </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-cream to-transparent"></div>
+  </section>
+
+  <!-- Story -->
+  <section class="py-10 sm:py-16 lg:py-24">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+        <!-- Photo placeholder — hidden on mobile since no image yet -->
+        <div class="hidden sm:block relative">
+          <div class="aspect-[4/5] rounded-2xl bg-cream-dark border border-parchment overflow-hidden flex items-center justify-center">
+            <div class="text-center p-8">
+              <svg class="w-16 h-16 text-parchment mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/>
+              </svg>
+              <p class="text-ink-muted">Photo of Joe at the container</p>
+              <p class="text-xs text-ink-light mt-1">Upload via CMS admin panel</p>
+            </div>
+          </div>
+          <!-- Decorative accent — uses red to match brand, not amber/blue -->
+          <div class="absolute -bottom-4 -right-4 w-24 h-24 rounded-xl bg-red/10 -z-10"></div>
+        </div>
+
+        <!-- Text -->
+        <div class="lg:pt-8">
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-coal mb-4 sm:mb-6">
+            From Bike Trailer to Bow River Landmark
+          </h2>
+
+          <div class="space-y-5 text-ink-muted leading-relaxed text-base sm:text-lg">
+            <p>
+              Joe Nunn has been fixing bikes for <strong class="text-ink">over 30 years</strong>. In 2007, he started Joe's Garage with nothing but a bike trailer, some tools, and a permit from the City of Calgary. He set up daily just southeast of the <strong class="text-ink">Louise (10th Street) Bridge</strong> off the Bow River pathway — a location he still calls home.
+            </p>
+            <p>
+              The trailer became a cargo bike. The cargo bike became a <strong class="text-ink">1981 GMC Grumman Kurbmaster delivery truck</strong>. And in 2019, Joe upgraded to what you see today — a <strong class="text-ink">steel shipping container</strong> right on the pathway, equipped with a propane heater so he can work through all four Calgary seasons.
+            </p>
+            <p>
+              It's not a fancy downtown storefront. It's better. Joe's Garage is right where cyclists actually are — on the pathway, next to the river, with a tool for every problem and honest advice for anyone who stops by.
+            </p>
+            <p>
+              No upselling, no jargon, no attitude. Just a guy who genuinely loves bikes and wants to keep Calgary rolling.
+            </p>
+          </div>
+
+          <!-- Stats -->
+          <div class="mt-10 grid grid-cols-3 gap-6">
+            <div class="text-center lg:text-left">
+              <div class="text-3xl font-display font-extrabold text-coal">2007</div>
+              <div class="text-sm text-ink-muted mt-1">Est. on the pathway</div>
+            </div>
+            <div class="text-center lg:text-left">
+              <div class="text-3xl font-display font-extrabold text-coal">30<span class="text-red">+</span></div>
+              <div class="text-sm text-ink-muted mt-1">Years wrenching</div>
+            </div>
+            <div class="text-center lg:text-left">
+              <div class="text-3xl font-display font-extrabold text-coal">5<span class="text-red">★</span></div>
+              <div class="text-sm text-ink-muted mt-1">Google Reviews</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Evolution Timeline -->
+  <section class="py-10 sm:py-16 bg-coal text-cream overflow-hidden">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+        <h2 class="text-2xl sm:text-4xl font-display font-extrabold tracking-tight">
+          The Evolution of Joe's Garage
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="p-6 rounded-2xl bg-cream/5 border border-cream/10">
+          <div class="text-red font-display font-bold text-lg mb-2">2007</div>
+          <h3 class="font-bold text-cream mb-2">The Bike Trailer</h3>
+          <p class="text-cream/50 text-sm leading-relaxed">Joe gets a city permit, loads up a bike trailer with tools, and sets up on the Bow River pathway.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-cream/5 border border-cream/10">
+          <div class="text-red font-display font-bold text-lg mb-2">2010s</div>
+          <h3 class="font-bold text-cream mb-2">The Cargo Bike</h3>
+          <p class="text-cream/50 text-sm leading-relaxed">Business grows. Joe upgrades to a cargo bike, then a 1981 GMC Grumman Kurbmaster delivery truck.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-cream/5 border border-cream/10">
+          <div class="text-red font-display font-bold text-lg mb-2">2019</div>
+          <h3 class="font-bold text-cream mb-2">The Shipping Container</h3>
+          <p class="text-cream/50 text-sm leading-relaxed">The steel shipping container arrives. With a propane heater, Joe's Garage can now run year-round.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-red/10 border border-red/20">
+          <div class="text-red font-display font-bold text-lg mb-2">Today</div>
+          <h3 class="font-bold text-cream mb-2">Rentals & Repairs</h3>
+          <p class="text-cream/50 text-sm leading-relaxed">Full bike rental fleet, online booking, digital waivers, and the same honest repair service Joe's known for.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="py-10 sm:py-16 lg:py-20 bg-cream-dark">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+        <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-coal">
+          How We Roll
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red/10 mb-5">
+            <svg class="w-7 h-7 text-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-display font-bold text-coal mb-2">Honest Work</h3>
+          <p class="text-ink-muted leading-relaxed">We tell you what your bike needs — and what it doesn't. No surprise charges, no unnecessary repairs.</p>
+        </div>
+
+        <div class="text-center">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red/10 mb-5">
+            <svg class="w-7 h-7 text-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.384 3.158c-.767.45-1.736-.15-1.614-1.003l.83-5.977a2.028 2.028 0 00-.586-1.797L.66 5.449c-.622-.605-.29-1.674.567-1.795l6.015-.877a2.03 2.03 0 001.526-1.11L11.42.963c.385-.78 1.518-.78 1.902 0l2.652 5.704c.27.58.79.996 1.417 1.1l5.865.855c.857.125 1.19 1.19.567 1.795l-4.248 4.102a2.028 2.028 0 00-.586 1.797l.83 5.977c.122.853-.846 1.453-1.614 1.003L12.42 15.17a2.03 2.03 0 00-1 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-display font-bold text-coal mb-2">Quality First</h3>
+          <p class="text-ink-muted leading-relaxed">Every repair and every rental bike gets the same attention. We're not happy until it rides perfect.</p>
+        </div>
+
+        <div class="text-center">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-red/10 mb-5">
+            <svg class="w-7 h-7 text-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-display font-bold text-coal mb-2">Community Driven</h3>
+          <p class="text-ink-muted leading-relaxed">A Bow River pathway fixture since 2007. We're proud to be part of Calgary's cycling community.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-10 sm:py-16">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-coal">
+        Come say hi
+      </h2>
+      <p class="mt-4 text-lg text-ink-muted">
+        Find us on the Bow River pathway, just southeast of the Louise Bridge. Drop by anytime during shop hours — Joe's always happy to talk bikes.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/contact" class="inline-flex items-center justify-center px-8 py-3.5 bg-red text-cream font-bold rounded-xl hover:bg-red-light transition-colors">
+          Get Directions
+        </a>
+        <a href="tel:+14038748189" class="inline-flex items-center justify-center px-8 py-3.5 text-coal font-medium rounded-xl border border-coal/15 hover:border-coal/30 transition-colors">
+          Call (403) 874-8189
+        </a>
+      </div>
+    </div>
+  </section>
+
+</Base>

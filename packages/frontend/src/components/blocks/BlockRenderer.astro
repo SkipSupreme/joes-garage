@@ -1,0 +1,31 @@
+---
+import Hero from './Hero.astro';
+import TextBlock from './TextBlock.astro';
+import Gallery from './Gallery.astro';
+import SideBySide from './SideBySide.astro';
+import Testimonials from './Testimonials.astro';
+import CTA from './CTA.astro';
+
+interface Props {
+  blocks: Array<{ blockType: string; [key: string]: any }>;
+}
+
+const { blocks } = Astro.props;
+
+const blockComponents: Record<string, any> = {
+  hero: Hero,
+  textBlock: TextBlock,
+  gallery: Gallery,
+  sideBySide: SideBySide,
+  testimonials: Testimonials,
+  cta: CTA,
+};
+---
+
+{blocks.map((block) => {
+  const Component = blockComponents[block.blockType];
+  if (!Component) return null;
+
+  const { blockType, id, ...props } = block;
+  return <Component {...props} />;
+})}

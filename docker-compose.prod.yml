@@ -1,0 +1,71 @@
+# Production docker-compose for Coolify / Hetzner VPS
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Manages: Postgres + Payload CMS + Booking API
+# Frontend is deployed separately to Cloudflare Pages (static/edge)
+
+services:
+  postgres:
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-joes_garage}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    ports: []  # Don't expose Postgres in production
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  cms:
+    build:
+      context: ./packages/cms
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${CMS_PORT:-3000}:3000"
+    environment:
+      DATABASE_URI: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-joes_garage}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?Set PAYLOAD_SECRET}
+      NODE_ENV: production
+      # Cloudflare Pages deploy hook — triggers frontend rebuild on content changes
+      CLOUDFLARE_DEPLOY_HOOK: ${CLOUDFLARE_DEPLOY_HOOK:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-3001}:3001"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-joes_garage}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://joes-garage.ca}
+      NODE_ENV: production
+      # Moneris
+      MONERIS_GATEWAY_URL: ${MONERIS_GATEWAY_URL:-https://gatewayt.moneris.com/chkt/request/request.php}
+      MONERIS_STORE_ID: ${MONERIS_STORE_ID:-store1}
+      MONERIS_API_TOKEN: ${MONERIS_API_TOKEN:-yesguy}
+      MONERIS_HPP_KEY: ${MONERIS_HPP_KEY:-}
+      # Email
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Joe's Garage <bookings@joes-garage.ca>}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-joe@joes-garage.ca}
+      # Storage
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_BUCKET: ${S3_BUCKET:-waivers}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+    volumes:
+      - waiver_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  waiver_storage:

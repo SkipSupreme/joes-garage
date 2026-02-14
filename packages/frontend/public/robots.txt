@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://joes-garage.ca/sitemap-index.xml

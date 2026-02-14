@@ -1,0 +1,97 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// This page will be SSR (server-rendered) to fetch booking data securely
+// export const prerender = false;
+---
+
+<Base title="Booking Confirmed" description="Your bike rental is confirmed! Check your email for the waiver PDF.">
+
+  <section class="py-20 lg:py-28">
+    <div class="mx-auto max-w-xl px-4 sm:px-6 lg:px-8 text-center" x-data="confirmation">
+
+      <!-- Success icon -->
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-success/10 mb-8 animate-scale-in">
+        <svg class="w-10 h-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-display font-extrabold text-coal tracking-tight animate-fade-up">
+        You're all set!
+      </h1>
+      <p class="mt-3 text-lg text-ink-muted animate-fade-up delay-100">
+        Your bike rental has been confirmed. Check your email for the signed waiver PDF.
+      </p>
+
+      <!-- Booking details card -->
+      <div class="mt-10 p-8 rounded-2xl bg-cream-dark border border-parchment text-left animate-fade-up delay-200">
+        <template x-if="loading">
+          <div class="text-center py-8">
+            <svg class="w-8 h-8 animate-spin text-ink-light mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            <p class="mt-3 text-sm text-ink-muted">Loading booking details...</p>
+          </div>
+        </template>
+
+        <template x-if="!loading && booking">
+          <div>
+            <div class="text-center mb-6">
+              <span class="text-xs font-bold tracking-wider uppercase text-ink-light">Confirmation #</span>
+              <div class="font-mono text-2xl font-bold text-coal mt-1" x-text="booking.id?.split('-')[0]?.toUpperCase()"></div>
+            </div>
+
+            <div class="border-t border-parchment pt-6 space-y-4 text-sm">
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Status</span>
+                <span class="font-medium text-success flex items-center gap-1">
+                  <div class="w-2 h-2 rounded-full bg-success"></div>
+                  Confirmed
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Name</span>
+                <span class="font-medium text-coal" x-text="booking.full_name"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Email</span>
+                <span class="font-medium text-coal" x-text="booking.email"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Rental Period</span>
+                <span class="font-medium text-coal" x-text="booking.rental_dates"></span>
+              </div>
+              <template x-if="booking.total_amount">
+                <div class="flex justify-between border-t border-parchment pt-4">
+                  <span class="font-medium text-coal">Total Charged</span>
+                  <span class="font-display font-extrabold text-coal">$<span x-text="parseFloat(booking.total_amount).toFixed(2)"></span></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="!loading && error">
+          <div class="text-center py-8">
+            <p class="text-ink-muted" x-text="error"></p>
+          </div>
+        </template>
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center animate-fade-up delay-300">
+        <a href="/" class="inline-flex items-center justify-center px-6 py-3 bg-coal text-cream font-bold rounded-xl hover:bg-coal-light transition-colors">
+          Back to Home
+        </a>
+        <a href="tel:+14038748189" class="inline-flex items-center justify-center px-6 py-3 text-coal font-medium rounded-xl border border-coal/15 hover:border-coal/30 transition-colors">
+          Call (403) 874-8189
+        </a>
+      </div>
+
+      <p class="mt-8 text-sm text-ink-light animate-fade-up delay-400">
+        Questions? Call us at (403) 874-8189 or email info@joes-garage.ca
+      </p>
+    </div>
+  </section>
+
+
+</Base>
