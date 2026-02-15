@@ -942,20 +942,12 @@ body:has(.message-detail) .doc-header__title {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
-    display: flex !important;
-    align-items: center !important;
-
-    /* Hide everything inside except the save button */
-    & > *:not(.doc-controls__controls-wrapper) {
-      display: none !important;
-    }
   }
 
-  .doc-controls__divider {
-    display: none !important;
-  }
-
-  .doc-controls__meta {
+  /* Hide the divider line and metadata in the save bar */
+  .doc-controls__divider,
+  .doc-controls__meta,
+  .doc-controls .popup {
     display: none !important;
   }
 
@@ -1091,19 +1083,11 @@ body:has(.message-detail) .doc-header__title {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
-    display: flex !important;
-    align-items: center !important;
-
-    & > *:not(.doc-controls__controls-wrapper) {
-      display: none !important;
-    }
   }
 
-  .doc-controls__divider {
-    display: none !important;
-  }
-
-  .doc-controls__meta {
+  .doc-controls__divider,
+  .doc-controls__meta,
+  .doc-controls .popup {
     display: none !important;
   }
 
