@@ -5,122 +5,206 @@ import Base from '../../layouts/Base.astro';
 <Base title="Book a Rental" description="Book a bike rental from Joe's Garage, Calgary. Pick your dates, choose a bike, sign the waiver, and pay — all online.">
 
   <!-- Booking page header -->
-  <section class="bg-coal py-12">
-    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-      <h1 class="text-3xl sm:text-4xl font-display font-extrabold text-cream tracking-tight">
-        Book Your Rental
-      </h1>
-      <p class="mt-3 text-cream/50">
-        Pick dates, choose a bike, sign the waiver, and pay. Takes about 5 minutes.
-      </p>
+  <section class="relative overflow-hidden bg-coal py-10 sm:py-16 lg:py-24">
+    <div class="absolute inset-0 grain"></div>
+    <div class="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-red/5 rounded-full blur-[120px]"></div>
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <span class="text-sm 3xl:text-base font-medium text-red tracking-wider uppercase">Bike Rentals</span>
+        <h1 class="mt-2 text-3xl sm:text-5xl lg:text-6xl 3xl:text-7xl font-display font-extrabold text-cream tracking-tight leading-tight">
+          Book your <span class="text-red">ride.</span>
+        </h1>
+        <p class="mt-4 text-lg 3xl:text-xl text-cream/50 max-w-xl 3xl:max-w-2xl">
+          Pick dates, choose a bike, sign the waiver, and pay. Takes about 5 minutes.
+        </p>
+      </div>
     </div>
+    <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-cream to-transparent"></div>
   </section>
 
   <!-- Multi-step booking flow (Alpine.js) -->
-  <section class="py-12 lg:py-16">
-    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8" x-data="bookingFlow">
+  <section class="py-10 sm:py-16 lg:py-24">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" x-data="bookingFlow">
 
       <!-- Step indicators -->
-      <div class="flex items-center justify-center gap-2 mb-12">
+      <div class="flex items-center justify-between mb-12 3xl:mb-16">
         <template x-for="(label, i) in ['Dates', 'Bike', 'Waiver', 'Payment']" :key="i">
-          <div class="flex items-center gap-2">
-            <div
-              :class="{
-                'bg-amber text-coal': step > i + 1,
-                'bg-red text-cream': step === i + 1,
-                'bg-parchment text-ink-light': step < i + 1,
-              }"
-              class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
-            >
-              <template x-if="step > i + 1">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              </template>
-              <template x-if="step <= i + 1">
-                <span x-text="i + 1"></span>
-              </template>
+          <div class="flex items-center flex-1 last:flex-none">
+            <div class="flex items-center gap-2 shrink-0">
+              <div
+                :class="{
+                  'bg-amber text-coal': step > i + 1,
+                  'bg-red text-cream': step === i + 1,
+                  'bg-parchment text-ink-light': step < i + 1,
+                }"
+                class="w-8 h-8 3xl:w-10 3xl:h-10 rounded-full flex items-center justify-center text-xs 3xl:text-sm font-bold transition-all duration-300"
+              >
+                <template x-if="step > i + 1">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </template>
+                <template x-if="step <= i + 1">
+                  <span x-text="i + 1"></span>
+                </template>
+              </div>
+              <span
+                :class="step >= i + 1 ? 'text-coal' : 'text-ink-light'"
+                class="text-xs 3xl:text-sm font-medium hidden sm:block transition-colors"
+                x-text="label"
+              ></span>
             </div>
-            <span
-              :class="step >= i + 1 ? 'text-coal' : 'text-ink-light'"
-              class="text-xs font-medium hidden sm:block transition-colors"
-              x-text="label"
-            ></span>
             <template x-if="i < 3">
-              <div class="w-8 h-px bg-parchment mx-1 hidden sm:block"></div>
+              <div :class="step > i + 1 ? 'bg-amber' : 'bg-parchment'" class="flex-1 h-0.5 rounded-full mx-3 3xl:mx-6 hidden sm:block transition-colors"></div>
             </template>
           </div>
         </template>
       </div>
 
       <!-- ═══ STEP 1: Date Selection ═══ -->
-      <div x-show="step === 1" x-transition:enter="animate-fade-up" class="max-w-lg mx-auto">
-        <h2 class="text-2xl font-display font-bold text-coal mb-2">When do you want to ride?</h2>
-        <p class="text-ink-muted mb-8">Select your rental start and end dates.</p>
+      <div x-show="step === 1" x-transition:enter="animate-fade-up">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 3xl:gap-24 items-start">
+          <!-- Left: Form -->
+          <div class="rounded-2xl bg-cream-dark border border-parchment p-8 3xl:p-10">
+            <h2 class="text-2xl 3xl:text-3xl font-display font-bold text-coal mb-2">When do you want to ride?</h2>
+            <p class="text-ink-muted 3xl:text-lg mb-8">Select your rental start and end dates.</p>
 
-        <div class="space-y-5">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="start-date" class="block text-sm font-medium text-coal mb-1.5">Start Date</label>
-              <input
-                type="date"
-                id="start-date"
-                x-model="startDate"
-                :min="today"
-                required
-                class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
-              />
-            </div>
-            <div>
-              <label for="end-date" class="block text-sm font-medium text-coal mb-1.5">End Date</label>
-              <input
-                type="date"
-                id="end-date"
-                x-model="endDate"
-                :min="startDate || today"
-                required
-                class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
-              />
+            <div class="space-y-5">
+              <div class="grid grid-cols-2 gap-4 3xl:gap-6">
+                <div>
+                  <label for="start-date" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Start Date</label>
+                  <input
+                    type="date"
+                    id="start-date"
+                    x-model="startDate"
+                    :min="today"
+                    required
+                    class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label for="end-date" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">End Date</label>
+                  <input
+                    type="date"
+                    id="end-date"
+                    x-model="endDate"
+                    :min="startDate || today"
+                    required
+                    class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <template x-if="startDate && endDate">
+                <div class="p-4 rounded-xl bg-amber/5 border border-amber/15">
+                  <p class="text-sm 3xl:text-base text-ink">
+                    <span class="font-medium" x-text="rentalDays"></span> day<span x-show="rentalDays > 1">s</span> rental
+                  </p>
+                </div>
+              </template>
+
+              <template x-if="dateError">
+                <div class="p-4 rounded-xl bg-error/5 border border-error/15">
+                  <p class="text-sm text-error" x-text="dateError"></p>
+                </div>
+              </template>
+
+              <button
+                @click="checkAvailability()"
+                :disabled="!startDate || !endDate || loading || !!dateError"
+                class="w-full px-6 py-3.5 3xl:py-4 3xl:text-lg bg-coal text-cream font-bold rounded-xl hover:bg-coal-light disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                <span x-show="!loading">Check Availability</span>
+                <span x-show="loading" x-cloak class="flex items-center gap-2">
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  Checking...
+                </span>
+              </button>
             </div>
           </div>
 
-          <template x-if="startDate && endDate">
-            <div class="p-4 rounded-xl bg-amber/5 border border-amber/15">
-              <p class="text-sm text-ink">
-                <span class="font-medium" x-text="rentalDays"></span> day<span x-show="rentalDays > 1">s</span> rental
-              </p>
-            </div>
-          </template>
+          <!-- Right: Info panel -->
+          <div class="hidden lg:block">
+            <div class="rounded-2xl bg-coal p-8 3xl:p-10 text-cream relative overflow-hidden">
+              <div class="absolute inset-0 pattern-corrugated"></div>
+              <div class="relative">
+                <h3 class="text-lg 3xl:text-xl font-display font-bold mb-6">How it works</h3>
+                <div class="space-y-6">
+                  <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-red/20 text-red flex items-center justify-center shrink-0 text-sm font-bold">1</div>
+                    <div>
+                      <p class="font-medium 3xl:text-lg">Pick your dates</p>
+                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">Choose when you want to start and end your rental.</p>
+                    </div>
+                  </div>
+                  <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-red/20 text-red flex items-center justify-center shrink-0 text-sm font-bold">2</div>
+                    <div>
+                      <p class="font-medium 3xl:text-lg">Choose a bike</p>
+                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">Browse available bikes and pick the one that fits.</p>
+                    </div>
+                  </div>
+                  <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-red/20 text-red flex items-center justify-center shrink-0 text-sm font-bold">3</div>
+                    <div>
+                      <p class="font-medium 3xl:text-lg">Sign the waiver</p>
+                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">Quick e-signature — no printing required.</p>
+                    </div>
+                  </div>
+                  <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-red/20 text-red flex items-center justify-center shrink-0 text-sm font-bold">4</div>
+                    <div>
+                      <p class="font-medium 3xl:text-lg">Pay & ride</p>
+                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">Secure payment. Show up and go — your bike is ready.</p>
+                    </div>
+                  </div>
+                </div>
 
-          <template x-if="dateError">
-            <div class="p-4 rounded-xl bg-error/5 border border-error/15">
-              <p class="text-sm text-error" x-text="dateError"></p>
+                <div class="mt-8 pt-6 border-t border-cream/10 space-y-3">
+                  <div class="flex items-center gap-2 text-sm 3xl:text-base text-cream/60">
+                    <svg class="w-4 h-4 text-success shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                    Secure payment via Moneris
+                  </div>
+                  <div class="flex items-center gap-2 text-sm 3xl:text-base text-cream/60">
+                    <svg class="w-4 h-4 text-success shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    15-minute hold on your bike
+                  </div>
+                  <div class="flex items-center gap-2 text-sm 3xl:text-base text-cream/60">
+                    <svg class="w-4 h-4 text-success shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Free cancellation anytime
+                  </div>
+                </div>
+              </div>
             </div>
-          </template>
+          </div>
+        </div>
 
-          <button
-            @click="checkAvailability()"
-            :disabled="!startDate || !endDate || loading || !!dateError"
-            class="w-full px-6 py-3.5 bg-coal text-cream font-bold rounded-xl hover:bg-coal-light disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-          >
-            <span x-show="!loading">Check Availability</span>
-            <span x-show="loading" x-cloak class="flex items-center gap-2">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              Checking...
-            </span>
-          </button>
+        <!-- Trust indicators (mobile only — info panel covers this on desktop) -->
+        <div class="flex flex-wrap items-center justify-center gap-6 mt-10 text-sm text-ink-muted lg:hidden" data-reveal>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            Secure payment
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            15-min hold guarantee
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Free cancellation
+          </span>
         </div>
       </div>
 
       <!-- ═══ STEP 2: Bike Selection ═══ -->
       <div x-show="step === 2" x-transition:enter="animate-fade-up">
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center justify-between mb-8 3xl:mb-12">
           <div>
-            <h2 class="text-2xl font-display font-bold text-coal">Pick your bike</h2>
-            <p class="text-ink-muted mt-1">
+            <h2 class="text-2xl 3xl:text-3xl font-display font-bold text-coal">Pick your bike</h2>
+            <p class="text-ink-muted 3xl:text-lg mt-1">
               <span x-text="bikes.length"></span> bike<span x-show="bikes.length !== 1">s</span> available for
               <span class="font-medium text-coal" x-text="startDate"></span> to <span class="font-medium text-coal" x-text="endDate"></span>
             </p>
           </div>
-          <button @click="step = 1" class="text-sm text-ink-muted hover:text-coal transition-colors flex items-center gap-1">
+          <button @click="step = 1" class="text-sm 3xl:text-base text-ink-muted hover:text-coal transition-colors flex items-center gap-1">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Change dates
           </button>
@@ -142,12 +226,12 @@ import Base from '../../layouts/Base.astro';
           </div>
         </template>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 3xl:grid-cols-3 gap-4 3xl:gap-6">
           <template x-for="bike in bikes" :key="bike.id">
             <div
               @click="selectBike(bike)"
               :class="selectedBike?.id === bike.id ? 'border-amber shadow-lg shadow-amber/10' : 'border-parchment hover:border-amber/30'"
-              class="group p-6 rounded-2xl bg-cream-dark border cursor-pointer transition-all duration-200"
+              class="group p-6 3xl:p-8 rounded-2xl bg-cream-dark border cursor-pointer transition-all duration-200"
             >
               <!-- Bike image placeholder -->
               <div class="aspect-[3/2] rounded-xl bg-parchment mb-4 flex items-center justify-center">
@@ -155,16 +239,16 @@ import Base from '../../layouts/Base.astro';
               </div>
               <div class="flex items-start justify-between gap-2">
                 <div>
-                  <h3 class="font-display font-bold text-coal" x-text="bike.name"></h3>
-                  <p class="text-xs text-ink-muted mt-0.5" x-text="bike.type + ' · Size ' + bike.size"></p>
+                  <h3 class="font-display font-bold text-coal 3xl:text-lg" x-text="bike.name"></h3>
+                  <p class="text-xs 3xl:text-sm text-ink-muted mt-0.5" x-text="bike.type + ' · Size ' + bike.size"></p>
                 </div>
                 <div class="text-right">
-                  <div class="font-display font-extrabold text-coal">$<span x-text="bike.price_per_day"></span></div>
+                  <div class="font-display font-extrabold text-coal 3xl:text-lg">$<span x-text="bike.price_per_day"></span></div>
                   <div class="text-xs text-ink-light">/day</div>
                 </div>
               </div>
               <div class="mt-3 flex items-center justify-between">
-                <span class="text-sm font-medium text-amber">
+                <span class="text-sm 3xl:text-base font-medium text-amber">
                   $<span x-text="(bike.price_per_day * rentalDays).toFixed(2)"></span> total
                 </span>
                 <span x-show="selectedBike?.id === bike.id" class="text-xs font-bold text-amber flex items-center gap-1">
@@ -177,11 +261,11 @@ import Base from '../../layouts/Base.astro';
         </div>
 
         <template x-if="selectedBike && !holdExpires">
-          <div class="mt-8">
+          <div class="mt-8 max-w-xl 3xl:max-w-2xl mx-auto">
             <button
               @click="createHold()"
               :disabled="loading"
-              class="w-full px-6 py-3.5 bg-red text-cream font-bold rounded-xl hover:bg-red-light disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+              class="w-full px-6 py-3.5 3xl:py-4 3xl:text-lg bg-red text-cream font-bold rounded-xl hover:bg-red-light disabled:opacity-40 transition-all flex items-center justify-center gap-2"
             >
               <span x-show="!loading">Reserve This Bike</span>
               <span x-show="loading" x-cloak class="flex items-center gap-2">
@@ -193,10 +277,10 @@ import Base from '../../layouts/Base.astro';
         </template>
 
         <template x-if="holdExpires">
-          <div class="mt-8">
+          <div class="mt-8 max-w-xl 3xl:max-w-2xl mx-auto">
             <button
               @click="step = 3"
-              class="w-full px-6 py-3.5 bg-red text-cream font-bold rounded-xl hover:bg-red-light transition-all"
+              class="w-full px-6 py-3.5 3xl:py-4 3xl:text-lg bg-red text-cream font-bold rounded-xl hover:bg-red-light transition-all"
             >
               Continue to Waiver
             </button>
@@ -205,172 +289,188 @@ import Base from '../../layouts/Base.astro';
       </div>
 
       <!-- ═══ STEP 3: Waiver ═══ -->
-      <div x-show="step === 3" x-transition:enter="animate-fade-up" class="max-w-2xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h2 class="text-2xl font-display font-bold text-coal">Sign the Waiver</h2>
-            <p class="text-ink-muted mt-1">Please fill in your details and sign below.</p>
-          </div>
-          <template x-if="holdExpires">
-            <div class="text-right">
-              <span class="text-xs text-ink-muted">Hold expires</span>
-              <div class="font-mono font-bold text-amber text-sm" x-text="holdCountdown"></div>
+      <div x-show="step === 3" x-transition:enter="animate-fade-up">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 3xl:gap-16">
+          <!-- Left: Form (3/5 width) -->
+          <div class="lg:col-span-3">
+            <div class="flex items-center justify-between mb-8">
+              <div>
+                <h2 class="text-2xl 3xl:text-3xl font-display font-bold text-coal">Sign the Waiver</h2>
+                <p class="text-ink-muted 3xl:text-lg mt-1">Please fill in your details and sign below.</p>
+              </div>
+              <template x-if="holdExpires">
+                <div class="text-right">
+                  <span class="text-xs text-ink-muted">Hold expires</span>
+                  <div class="font-mono font-bold text-amber text-sm" x-text="holdCountdown"></div>
+                </div>
+              </template>
             </div>
-          </template>
-        </div>
 
-        <form @submit.prevent="submitWaiver()" class="space-y-5">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label class="block text-sm font-medium text-coal mb-1.5">Full Name</label>
-              <input type="text" x-model="waiver.fullName" required minlength="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Your full name" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-coal mb-1.5">Email</label>
-              <input type="email" x-model="waiver.email" required maxlength="254" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="you@email.com" />
-            </div>
-          </div>
+            <form @submit.prevent="submitWaiver()" class="space-y-5 3xl:space-y-6">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 3xl:gap-6">
+                <div>
+                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Full Name</label>
+                  <input type="text" x-model="waiver.fullName" required minlength="2" maxlength="200" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Your full name" />
+                </div>
+                <div>
+                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Email</label>
+                  <input type="email" x-model="waiver.email" required maxlength="254" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="you@email.com" />
+                </div>
+              </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label class="block text-sm font-medium text-coal mb-1.5">Phone</label>
-              <input type="tel" x-model="waiver.phone" required minlength="7" maxlength="20" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="(403) 555-1234" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-coal mb-1.5">Date of Birth</label>
-              <input type="date" x-model="waiver.dateOfBirth" required class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" />
-            </div>
-          </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 3xl:gap-6">
+                <div>
+                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Phone</label>
+                  <input type="tel" x-model="waiver.phone" required minlength="7" maxlength="20" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="(403) 555-1234" />
+                </div>
+                <div>
+                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Date of Birth</label>
+                  <input type="date" x-model="waiver.dateOfBirth" required class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" />
+                </div>
+              </div>
 
-          <!-- Waiver text -->
-          <div class="p-4 rounded-xl bg-cream-dark border border-parchment max-h-48 overflow-y-auto text-sm text-ink-muted leading-relaxed">
-            <p class="font-medium text-coal mb-2">Rental Waiver Agreement</p>
-            <p>By signing this waiver, I acknowledge that cycling involves inherent risks including but not limited to falls, collisions, and equipment failure. I agree to wear a helmet at all times while riding a rental bicycle from Joe's Garage. I accept full responsibility for the rental bicycle during the rental period and agree to return it in the same condition. I agree to pay for any damages beyond normal wear and tear. Joe's Garage is not responsible for personal injury, property damage, or theft during the rental period.</p>
-            <p class="mt-3">I confirm that I am physically able to operate a bicycle safely and that I am at least 18 years of age (or have parental/guardian consent).</p>
-          </div>
+              <!-- Signature pad -->
+              <div>
+                <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Your Signature</label>
+                <div class="relative rounded-xl border-2 border-dashed border-parchment bg-white overflow-hidden">
+                  <canvas
+                    id="signature-pad"
+                    class="w-full"
+                    style="height: 160px; touch-action: none;"
+                  ></canvas>
+                  <button
+                    type="button"
+                    @click="clearSignature()"
+                    class="absolute top-2 right-2 px-2.5 py-1 text-xs font-medium text-ink-muted bg-cream-dark rounded-lg hover:text-coal transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <p class="text-xs text-ink-light mt-1.5">Draw your signature above using your mouse or finger.</p>
+              </div>
 
-          <!-- Consent checkboxes -->
-          <div class="space-y-3">
-            <label class="flex items-start gap-3 cursor-pointer group">
-              <input type="checkbox" x-model="waiver.consentElectronic" required class="mt-0.5 w-5 h-5 rounded border-parchment text-amber focus:ring-amber/30 accent-amber" />
-              <span class="text-sm text-ink-muted group-hover:text-ink transition-colors">I consent to sign this waiver electronically</span>
-            </label>
-            <label class="flex items-start gap-3 cursor-pointer group">
-              <input type="checkbox" x-model="waiver.consentTerms" required class="mt-0.5 w-5 h-5 rounded border-parchment text-amber focus:ring-amber/30 accent-amber" />
-              <span class="text-sm text-ink-muted group-hover:text-ink transition-colors">I have read and agree to the waiver terms above</span>
-            </label>
-          </div>
+              <!-- Consent checkboxes -->
+              <div class="space-y-3">
+                <label class="flex items-start gap-3 cursor-pointer group">
+                  <input type="checkbox" x-model="waiver.consentElectronic" required class="mt-0.5 w-5 h-5 rounded border-parchment text-amber focus:ring-amber/30 accent-amber" />
+                  <span class="text-sm 3xl:text-base text-ink-muted group-hover:text-ink transition-colors">I consent to sign this waiver electronically</span>
+                </label>
+                <label class="flex items-start gap-3 cursor-pointer group">
+                  <input type="checkbox" x-model="waiver.consentTerms" required class="mt-0.5 w-5 h-5 rounded border-parchment text-amber focus:ring-amber/30 accent-amber" />
+                  <span class="text-sm 3xl:text-base text-ink-muted group-hover:text-ink transition-colors">I have read and agree to the waiver terms above</span>
+                </label>
+              </div>
 
-          <!-- Signature pad -->
-          <div>
-            <label class="block text-sm font-medium text-coal mb-1.5">Your Signature</label>
-            <div class="relative rounded-xl border-2 border-dashed border-parchment bg-white overflow-hidden">
-              <canvas
-                id="signature-pad"
-                class="w-full"
-                style="height: 160px; touch-action: none;"
-              ></canvas>
+              <template x-if="waiverError">
+                <div class="p-4 rounded-xl bg-error/5 border border-error/15">
+                  <p class="text-sm text-error" x-text="waiverError"></p>
+                </div>
+              </template>
+
               <button
-                type="button"
-                @click="clearSignature()"
-                class="absolute top-2 right-2 px-2.5 py-1 text-xs font-medium text-ink-muted bg-cream-dark rounded-lg hover:text-coal transition-colors"
+                type="submit"
+                :disabled="loading || !waiver.consentElectronic || !waiver.consentTerms"
+                class="w-full px-6 py-3.5 3xl:py-4 3xl:text-lg bg-red text-cream font-bold rounded-xl hover:bg-red-light disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
-                Clear
+                <span x-show="!loading">Sign & Continue to Payment</span>
+                <span x-show="loading" x-cloak class="flex items-center gap-2">
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  Submitting...
+                </span>
               </button>
-            </div>
-            <p class="text-xs text-ink-light mt-1.5">Draw your signature above using your mouse or finger.</p>
+            </form>
           </div>
 
-          <template x-if="waiverError">
-            <div class="p-4 rounded-xl bg-error/5 border border-error/15">
-              <p class="text-sm text-error" x-text="waiverError"></p>
+          <!-- Right: Waiver text sidebar (2/5 width) -->
+          <div class="lg:col-span-2">
+            <div class="lg:sticky lg:top-24 rounded-2xl bg-cream-dark border border-parchment p-6 3xl:p-8">
+              <h3 class="text-sm 3xl:text-base font-display font-bold text-coal uppercase tracking-wide mb-4">Rental Waiver Agreement</h3>
+              <div class="text-sm 3xl:text-base text-ink-muted leading-relaxed space-y-4 max-h-[60vh] overflow-y-auto">
+                <p>By signing this waiver, I acknowledge that cycling involves inherent risks including but not limited to falls, collisions, and equipment failure. I agree to wear a helmet at all times while riding a rental bicycle from Joe's Garage.</p>
+                <p>I accept full responsibility for the rental bicycle during the rental period and agree to return it in the same condition. I agree to pay for any damages beyond normal wear and tear.</p>
+                <p>Joe's Garage is not responsible for personal injury, property damage, or theft during the rental period.</p>
+                <p>I confirm that I am physically able to operate a bicycle safely and that I am at least 18 years of age (or have parental/guardian consent).</p>
+              </div>
             </div>
-          </template>
-
-          <button
-            type="submit"
-            :disabled="loading || !waiver.consentElectronic || !waiver.consentTerms"
-            class="w-full px-6 py-3.5 bg-red text-cream font-bold rounded-xl hover:bg-red-light disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-          >
-            <span x-show="!loading">Sign & Continue to Payment</span>
-            <span x-show="loading" x-cloak class="flex items-center gap-2">
-              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              Submitting...
-            </span>
-          </button>
-        </form>
+          </div>
+        </div>
       </div>
 
       <!-- ═══ STEP 4: Payment ═══ -->
-      <div x-show="step === 4" x-transition:enter="animate-fade-up" class="max-w-lg mx-auto">
-        <h2 class="text-2xl font-display font-bold text-coal mb-2">Complete Your Booking</h2>
-        <p class="text-ink-muted mb-8">Secure payment via Moneris. Your card info never touches our server.</p>
+      <div x-show="step === 4" x-transition:enter="animate-fade-up">
+        <h2 class="text-2xl 3xl:text-3xl font-display font-bold text-coal mb-2">Complete Your Booking</h2>
+        <p class="text-ink-muted 3xl:text-lg mb-8">Secure payment via Moneris. Your card info never touches our server.</p>
 
-        <!-- Order summary -->
-        <div class="p-6 rounded-2xl bg-cream-dark border border-parchment mb-8">
-          <h3 class="text-sm font-display font-bold text-coal uppercase tracking-wide mb-4">Order Summary</h3>
-          <div class="space-y-3 text-sm">
-            <div class="flex justify-between">
-              <span class="text-ink-muted">Bike</span>
-              <span class="font-medium text-coal" x-text="selectedBike?.name"></span>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 3xl:gap-16">
+          <!-- Left: Order summary -->
+          <div class="p-6 3xl:p-8 rounded-2xl bg-cream-dark border border-parchment h-fit">
+            <h3 class="text-sm 3xl:text-base font-display font-bold text-coal uppercase tracking-wide mb-4">Order Summary</h3>
+            <div class="space-y-3 text-sm 3xl:text-base">
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Bike</span>
+                <span class="font-medium text-coal" x-text="selectedBike?.name"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Dates</span>
+                <span class="font-medium text-coal" x-text="startDate + ' → ' + endDate"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Duration</span>
+                <span class="font-medium text-coal"><span x-text="rentalDays"></span> days</span>
+              </div>
+              <div class="border-t border-parchment my-3"></div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Rental (<span x-text="rentalDays"></span> x $<span x-text="selectedBike?.price_per_day"></span>)</span>
+                <span class="font-medium text-coal">$<span x-text="(selectedBike?.price_per_day * rentalDays).toFixed(2)"></span></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">Security Deposit</span>
+                <span class="font-medium text-coal">$<span x-text="selectedBike?.deposit_amount?.toFixed(2) || '0.00'"></span></span>
+              </div>
+              <div class="border-t border-parchment my-3"></div>
+              <div class="flex justify-between text-base 3xl:text-lg">
+                <span class="font-bold text-coal">Total</span>
+                <span class="font-display font-extrabold text-coal">$<span x-text="totalAmount.toFixed(2)"></span></span>
+              </div>
             </div>
-            <div class="flex justify-between">
-              <span class="text-ink-muted">Dates</span>
-              <span class="font-medium text-coal" x-text="startDate + ' → ' + endDate"></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-ink-muted">Duration</span>
-              <span class="font-medium text-coal"><span x-text="rentalDays"></span> days</span>
-            </div>
-            <div class="border-t border-parchment my-3"></div>
-            <div class="flex justify-between">
-              <span class="text-ink-muted">Rental (<span x-text="rentalDays"></span> x $<span x-text="selectedBike?.price_per_day"></span>)</span>
-              <span class="font-medium text-coal">$<span x-text="(selectedBike?.price_per_day * rentalDays).toFixed(2)"></span></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-ink-muted">Security Deposit</span>
-              <span class="font-medium text-coal">$<span x-text="selectedBike?.deposit_amount?.toFixed(2) || '0.00'"></span></span>
-            </div>
-            <div class="border-t border-parchment my-3"></div>
-            <div class="flex justify-between text-base">
-              <span class="font-bold text-coal">Total</span>
-              <span class="font-display font-extrabold text-coal">$<span x-text="totalAmount.toFixed(2)"></span></span>
-            </div>
+            <p class="mt-4 text-xs 3xl:text-sm text-ink-light">Deposit is pre-authorized and refunded upon bike return in good condition.</p>
           </div>
-          <p class="mt-3 text-xs text-ink-light">Deposit is pre-authorized and refunded upon bike return in good condition.</p>
+
+          <!-- Right: Payment -->
+          <div>
+            <!-- Moneris iframe placeholder -->
+            <div class="rounded-xl border border-parchment bg-white p-6 mb-6">
+              <div class="text-center py-8">
+                <svg class="w-10 h-10 text-ink-light mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
+                <p class="text-sm text-ink-muted">Moneris Hosted Tokenization</p>
+                <p class="text-xs text-ink-light mt-1">Card entry iframe loads here in production</p>
+              </div>
+            </div>
+
+            <template x-if="paymentError">
+              <div class="p-4 rounded-xl bg-error/5 border border-error/15 mb-6">
+                <p class="text-sm text-error" x-text="paymentError"></p>
+              </div>
+            </template>
+
+            <button
+              @click="processPayment()"
+              :disabled="loading"
+              class="w-full px-6 py-4 3xl:py-5 3xl:text-xl bg-amber text-coal font-bold text-lg rounded-xl hover:bg-amber-light hover:shadow-xl hover:shadow-amber/20 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+            >
+              <span x-show="!loading">Pay $<span x-text="totalAmount.toFixed(2)"></span></span>
+              <span x-show="loading" x-cloak class="flex items-center gap-2">
+                <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                Processing...
+              </span>
+            </button>
+
+            <p class="mt-4 text-center text-xs text-ink-light flex items-center justify-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              Secured by Moneris. PCI DSS compliant.
+            </p>
+          </div>
         </div>
-
-        <!-- Moneris iframe placeholder -->
-        <div class="rounded-xl border border-parchment bg-white p-6 mb-6">
-          <div class="text-center py-8">
-            <svg class="w-10 h-10 text-ink-light mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
-            <p class="text-sm text-ink-muted">Moneris Hosted Tokenization</p>
-            <p class="text-xs text-ink-light mt-1">Card entry iframe loads here in production</p>
-          </div>
-        </div>
-
-        <template x-if="paymentError">
-          <div class="p-4 rounded-xl bg-error/5 border border-error/15 mb-6">
-            <p class="text-sm text-error" x-text="paymentError"></p>
-          </div>
-        </template>
-
-        <button
-          @click="processPayment()"
-          :disabled="loading"
-          class="w-full px-6 py-4 bg-amber text-coal font-bold text-lg rounded-xl hover:bg-amber-light hover:shadow-xl hover:shadow-amber/20 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
-        >
-          <span x-show="!loading">Pay $<span x-text="totalAmount.toFixed(2)"></span></span>
-          <span x-show="loading" x-cloak class="flex items-center gap-2">
-            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-            Processing...
-          </span>
-        </button>
-
-        <p class="mt-4 text-center text-xs text-ink-light flex items-center justify-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-          Secured by Moneris. PCI DSS compliant.
-        </p>
       </div>
 
       <!-- ═══ Global error display ═══ -->

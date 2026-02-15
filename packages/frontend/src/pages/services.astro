@@ -72,11 +72,11 @@ const services = [
     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl">
         <span class="text-sm font-medium text-red tracking-wider uppercase">Repair Services</span>
-        <h1 class="mt-2 text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-cream tracking-tight leading-tight">
+        <h1 class="mt-2 text-3xl sm:text-5xl lg:text-6xl 3xl:text-7xl font-display font-extrabold text-cream tracking-tight leading-tight">
           We fix bikes.
           <span class="text-red">Properly.</span>
         </h1>
-        <p class="mt-6 text-lg text-cream/50 max-w-xl">
+        <p class="mt-6 text-lg 3xl:text-xl text-cream/50 max-w-xl 3xl:max-w-2xl">
           No shortcuts, no mystery charges. Just quality work at prices that make sense. Most repairs done same-day.
         </p>
       </div>
@@ -88,10 +88,10 @@ const services = [
   <!-- Services grid -->
   <section class="py-10 sm:py-16 lg:py-24">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-3 gap-6 3xl:gap-8" data-reveal-stagger>
         {services.map((service) => (
           <div class:list={[
-            'group relative p-8 rounded-2xl border transition-all duration-300',
+            'group relative p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-1',
             service.popular
               ? 'bg-coal text-cream border-coal-lighter hover:border-amber/30'
               : 'bg-cream-dark border-parchment hover:border-amber/30 hover:shadow-lg hover:shadow-amber/5',
@@ -146,7 +146,7 @@ const services = [
       </div>
 
       <!-- Note -->
-      <div class="mt-12 p-6 rounded-xl bg-amber/5 border border-amber/15 text-center">
+      <div class="mt-12 p-6 rounded-xl bg-amber/5 border border-amber/15 text-center" data-reveal>
         <p class="text-sm text-ink-muted">
           <strong class="text-ink">Prices are starting estimates.</strong> We'll always give you a firm quote before starting any work.
           Parts are extra where needed. Drop by or call <a href="tel:+14038748189" class="text-amber hover:text-amber-dark font-medium">(403) 874-8189</a> for a quote.
@@ -157,8 +157,8 @@ const services = [
 
   <!-- CTA -->
   <section class="py-10 sm:py-16 lg:py-20 bg-cream-dark">
-    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
-      <h2 class="text-3xl sm:text-4xl font-display font-extrabold text-coal tracking-tight">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center" data-reveal>
+      <h2 class="text-3xl sm:text-4xl 3xl:text-5xl font-display font-extrabold text-coal tracking-tight">
         Need a repair?
       </h2>
       <p class="mt-4 text-lg text-ink-muted">

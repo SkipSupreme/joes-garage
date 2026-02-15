@@ -579,6 +579,66 @@ button[type="submit"].btn {
   }
 }
 
+/* ─── Logo / Icon Fix ──────────────────────── */
+/* The logo.webp is 400×285 (wider than tall).
+   Payload's .step-nav__home forces 18×18px with
+   object-fit: fill, which distorts the image.
+   Fix: widen the container and preserve aspect ratio. */
+
+.step-nav__home {
+  width: auto !important;
+  height: 24px !important;
+  flex-shrink: 0;
+
+  img {
+    width: auto !important;
+    height: 24px !important;
+    object-fit: contain !important;
+  }
+}
+
+/* Login page logo — ensure no distortion */
+.login__brand img {
+  object-fit: contain !important;
+  max-width: 200px;
+}
+
+/* ─── Dashboard Edit Mode Fix ──────────────── */
+/* When "Edit Dashboard" is active, the toolbar
+   (Editing Dashboard / Add+ / Save / Cancel)
+   sits inside .dashboard-breadcrumb-dropdown__editing
+   which is nested in .step-nav__last (a <span>).
+   Structure: .editing > span "text" + .actions > buttons
+   Fix: make the wrapper flex-row so text + buttons align. */
+
+.app-header {
+  height: auto !important;
+  min-height: var(--app-header-height, 56px);
+}
+
+.dashboard-breadcrumb-dropdown__editing {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap;
+
+  > span {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+
+.dashboard-breadcrumb-dropdown__actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+
+  .btn {
+    white-space: nowrap;
+  }
+}
+
 /* ─── Dashboard / Main Admin Polish ─────────── */
 
 .template-default .nav {

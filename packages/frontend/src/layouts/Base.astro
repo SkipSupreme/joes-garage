@@ -62,8 +62,8 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
       },
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": 51.0447,
-        "longitude": -114.0719
+        "latitude": 51.0506619,
+        "longitude": -114.0823453
       },
       "openingHoursSpecification": [
         { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "09:00", "closes": "18:00" },
@@ -85,12 +85,28 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     <Nav />
 
     <!-- Spacer for fixed nav -->
-    <div class="h-14 sm:h-16 lg:h-20"></div>
+    <div class="h-14 sm:h-16 lg:h-20 3xl:h-24"></div>
 
     <main class="flex-1">
       <slot />
     </main>
 
     <Footer />
+
+    <!-- Scroll reveal observer -->
+    <script>
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('revealed');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      );
+      document.querySelectorAll('[data-reveal], [data-reveal-stagger]').forEach((el) => observer.observe(el));
+    </script>
   </body>
 </html>

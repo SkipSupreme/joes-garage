@@ -8,7 +8,7 @@
 
 import { lexicalToHtml } from './lexical-html';
 
-const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || 'http://localhost:3000';
+const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || 'http://localhost:3003';
 
 async function payloadFetch<T>(endpoint: string): Promise<T> {
   const url = `${PAYLOAD_URL}/api${endpoint}`;

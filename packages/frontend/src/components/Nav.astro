@@ -17,7 +17,7 @@ const links = [
   class="fixed top-0 left-0 right-0 z-50 overflow-visible transition-all duration-300"
 >
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 overflow-visible">
-    <div class="flex h-14 items-center justify-between sm:h-16 lg:h-20 overflow-visible">
+    <div class="flex h-14 items-center justify-between sm:h-16 lg:h-20 3xl:h-24 overflow-visible">
       <!-- Logo — oversized, shifted down to extend below the nav bar -->
       <a href="/" class="flex items-center group relative z-10">
         <img
@@ -30,12 +30,12 @@ const links = [
       </a>
 
       <!-- Desktop links -->
-      <div class="hidden lg:flex items-center gap-1">
+      <div class="hidden lg:flex items-center gap-1 2xl:gap-2 3xl:gap-3">
         {links.map(link => (
           <a
             href={link.href}
             class:list={[
-              'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+              'px-4 py-2 text-sm 3xl:text-base font-medium rounded-lg transition-all duration-200',
               currentPath === link.href
                 ? 'text-amber bg-amber/10'
                 : 'text-cream/80 hover:text-cream hover:bg-cream/5',
@@ -47,7 +47,7 @@ const links = [
         <a
           href="/book"
           class:list={[
-            'ml-4 px-6 py-2.5 text-sm font-bold rounded-lg transition-all duration-200',
+            'ml-4 px-6 py-2.5 text-sm 3xl:text-base font-bold rounded-lg transition-all duration-200',
             currentPath.startsWith('/book')
               ? 'bg-amber text-coal'
               : 'bg-red text-cream hover:bg-red-light hover:shadow-lg hover:shadow-red/20 hover:-translate-y-0.5',
@@ -85,7 +85,7 @@ const links = [
     x-transition:leave-start="opacity-100 translate-y-0"
     x-transition:leave-end="opacity-0 -translate-y-2"
     @click.outside="open = false"
-    class="lg:hidden border-t border-cream/10 bg-coal-light/95 backdrop-blur-md"
+    class="lg:hidden border-t border-cream/10 bg-coal/98 backdrop-blur-xl shadow-2xl shadow-coal/50"
   >
     <div class="px-4 py-3 space-y-1">
       {links.map(link => (

@@ -24,19 +24,19 @@ import Base from '../layouts/Base.astro';
     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 pb-24 sm:pt-16 sm:pb-28 lg:pt-24 lg:pb-32">
       <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
         <!-- Left: Text content -->
-        <div class="max-w-xl">
+        <div class="max-w-xl 3xl:max-w-2xl">
           <!-- Eyebrow badge -->
           <div class="animate-fade-up inline-flex items-center gap-2 px-3 py-1.5 mb-5 rounded-full bg-red/10 border border-red/20">
             <div class="w-2 h-2 rounded-full bg-red"></div>
             <span class="text-xs font-medium text-red-light tracking-wide uppercase">Bow River Pathway — Since 2007</span>
           </div>
 
-          <h1 class="animate-fade-up delay-100 text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-extrabold text-cream leading-[0.95] tracking-tight">
+          <h1 class="animate-fade-up delay-100 text-3xl sm:text-5xl lg:text-6xl xl:text-7xl 3xl:text-8xl font-display font-extrabold text-cream leading-[0.95] tracking-tight">
             Calgary's Shipping Container
             <span class="block text-red mt-1 sm:mt-2">Bike Shop.</span>
           </h1>
 
-          <p class="animate-fade-up delay-200 mt-5 sm:mt-6 text-base sm:text-lg lg:text-xl text-cream/60 leading-relaxed max-w-md">
+          <p class="animate-fade-up delay-200 mt-5 sm:mt-6 text-base sm:text-lg lg:text-xl 3xl:text-2xl text-cream/60 leading-relaxed max-w-md 3xl:max-w-lg">
             Expert repairs, quality rentals, and honest advice — all from a steel shipping container right on the Bow River pathway.
           </p>
 
@@ -77,12 +77,12 @@ import Base from '../layouts/Base.astro';
 
         <!-- Right: Logo showcase -->
         <div class="hidden lg:flex items-center justify-center animate-fade-in delay-500">
-          <div class="relative w-full max-w-md flex items-center justify-center">
+          <div class="relative w-full max-w-2xl 3xl:max-w-3xl flex items-center justify-center">
             <!-- Industrial ring accents -->
-            <div class="absolute w-80 h-80 rounded-full border border-cream/5"></div>
-            <div class="absolute w-96 h-96 rounded-full border border-dashed border-cream/3 animate-[spin_120s_linear_infinite]"></div>
-            <!-- Logo -->
-            <img src="/logo.webp" alt="Joe's Garage — Rentals & Repairs" class="relative w-80 drop-shadow-2xl" width="400" height="285" />
+            <div class="absolute w-[520px] h-[520px] 3xl:w-[640px] 3xl:h-[640px] rounded-full border border-cream/5"></div>
+            <div class="absolute w-[600px] h-[600px] 3xl:w-[720px] 3xl:h-[720px] rounded-full border border-dashed border-cream/3 animate-[spin_120s_linear_infinite]"></div>
+            <!-- Logo (high-res 1200x857 source) -->
+            <img src="/logo-hero.png" alt="Joe's Garage — Rentals & Repairs" class="relative w-[520px] 3xl:w-[640px] drop-shadow-2xl" width="1200" height="857" />
           </div>
         </div>
       </div>
@@ -92,27 +92,54 @@ import Base from '../layouts/Base.astro';
     <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-cream to-transparent"></div>
   </section>
 
+  <!-- ═══════════════════════════════════════════════════
+       SEASONAL BANNER — Winter prep reminder
+       ═══════════════════════════════════════════════════ -->
+  <div class="bg-gradient-to-r from-amber/5 via-amber/10 to-amber/5 border-y border-amber/15">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center">
+        <span class="text-lg sm:text-xl">&#10052;</span>
+        <p class="text-sm sm:text-base text-ink-muted">
+          <strong class="text-ink">Spring tune-up season is almost here.</strong>
+          <span class="hidden sm:inline"> Beat the rush &mdash;</span> Book your tune-up now and be ready to ride when the snow melts.
+        </p>
+        <a href="/services" class="inline-flex items-center gap-1.5 text-sm font-bold text-amber hover:text-amber-dark transition-colors whitespace-nowrap">
+          View services
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══════════════════════════════════════════════════
        THE CONTAINER — Unique selling point
        ═══════════════════════════════════════════════════ -->
   <section class="py-10 sm:py-16 lg:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-center">
-        <!-- Photo placeholder (CMS-managed) — hidden on mobile since no image yet -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-center" data-reveal>
+        <!-- Photo placeholder (CMS-managed) -->
         <div class="hidden sm:block lg:col-span-2 relative">
-          <div class="aspect-[4/3] rounded-2xl bg-coal overflow-hidden flex items-center justify-center relative">
+          <div class="aspect-[4/3] rounded-2xl bg-coal overflow-hidden flex items-center justify-center relative group">
             <div class="absolute inset-0 pattern-corrugated"></div>
             <div class="absolute inset-0 grain"></div>
+            <!-- Decorative bike wheel SVG -->
             <div class="relative text-center p-8">
-              <svg class="w-16 h-16 text-cream/20 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/>
+              <svg class="w-24 h-24 text-cream/10 mx-auto mb-4 animate-[spin_30s_linear_infinite]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1">
+                <circle cx="50" cy="50" r="45"/>
+                <circle cx="50" cy="50" r="8"/>
+                <line x1="50" y1="5" x2="50" y2="42"/><line x1="50" y1="58" x2="50" y2="95"/>
+                <line x1="5" y1="50" x2="42" y2="50"/><line x1="58" y1="50" x2="95" y2="50"/>
+                <line x1="18" y1="18" x2="44" y2="44"/><line x1="56" y1="56" x2="82" y2="82"/>
+                <line x1="82" y1="18" x2="56" y2="44"/><line x1="44" y1="56" x2="18" y2="82"/>
               </svg>
-              <p class="text-cream/40 text-sm">Photo of the container</p>
-              <p class="text-cream/20 text-xs mt-1">Upload via CMS admin panel</p>
+              <p class="text-cream/30 text-sm font-medium">Photo coming soon</p>
+              <p class="text-cream/15 text-xs mt-1">The container on the pathway</p>
             </div>
+            <!-- Accent glow -->
+            <div class="absolute inset-0 bg-gradient-to-tr from-red/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
           <div class="absolute -bottom-3 -right-3 w-20 h-20 rounded-xl bg-red/10 -z-10"></div>
+          <div class="absolute -top-3 -left-3 w-12 h-12 rounded-lg bg-amber/5 -z-10"></div>
         </div>
 
         <!-- Text -->
@@ -127,9 +154,9 @@ import Base from '../layouts/Base.astro';
           <p class="mt-3 text-base sm:text-lg text-ink-muted leading-relaxed">
             No fancy storefront, no overhead. Just 30+ years of experience, right where Calgary's cyclists actually ride.
           </p>
-          <a href="/about" class="inline-flex items-center gap-2 mt-6 text-sm font-bold text-red hover:text-red-dark transition-colors">
+          <a href="/about" class="group inline-flex items-center gap-2 mt-6 text-sm font-bold text-red hover:text-red-dark transition-colors">
             Read Joe's full story
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
           </a>
         </div>
       </div>
@@ -147,12 +174,12 @@ import Base from '../layouts/Base.astro';
         <h2 class="mt-2 text-2xl sm:text-4xl lg:text-5xl font-display font-extrabold text-coal tracking-tight">
           Everything Two Wheels
         </h2>
-        <p class="mt-3 text-base sm:text-lg text-ink-muted leading-relaxed">
+        <p class="mt-3 text-base sm:text-lg 3xl:text-xl text-ink-muted leading-relaxed">
           From a flat tire to a full fleet rental, we've got you covered.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 3xl:gap-8" data-reveal-stagger>
         <!-- Card: Repairs -->
         <div class="group relative p-7 sm:p-8 rounded-2xl bg-cream border border-parchment hover:border-red/20 hover:shadow-lg hover:shadow-red/5 transition-all duration-300">
           <div class="w-12 h-12 mb-5 rounded-xl bg-red/10 flex items-center justify-center group-hover:bg-red/15 transition-colors">
@@ -229,7 +256,7 @@ import Base from '../layouts/Base.astro';
         </p>
       </div>
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 3xl:gap-12" data-reveal-stagger>
         <!-- Step 1 -->
         <div class="relative text-center">
           <div class="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-coal text-red font-display font-extrabold text-lg sm:text-xl mb-4">
@@ -297,7 +324,7 @@ import Base from '../layouts/Base.astro';
         </h2>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 3xl:gap-8" data-reveal-stagger>
         <!-- Testimonial 1 -->
         <div class="p-7 rounded-2xl bg-cream/5 border border-cream/10">
           <div class="flex gap-1 mb-4">
@@ -348,7 +375,7 @@ import Base from '../layouts/Base.astro';
     <!-- Dot pattern -->
     <div class="absolute inset-0 pattern-dots opacity-20 pointer-events-none"></div>
 
-    <div class="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+    <div class="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center" data-reveal>
       <h2 class="text-2xl sm:text-4xl lg:text-5xl font-display font-extrabold text-coal tracking-tight leading-tight">
         Ready to
         <span class="text-red">ride?</span>

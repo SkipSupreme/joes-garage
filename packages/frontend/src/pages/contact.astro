@@ -12,7 +12,7 @@ import Base from '../layouts/Base.astro';
     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl">
         <span class="text-sm font-medium text-red tracking-wider uppercase">Contact</span>
-        <h1 class="mt-2 text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold text-cream tracking-tight leading-tight">
+        <h1 class="mt-2 text-3xl sm:text-5xl lg:text-6xl 3xl:text-7xl font-display font-extrabold text-cream tracking-tight leading-tight">
           Come on
           <span class="text-red">in.</span>
         </h1>
@@ -28,7 +28,7 @@ import Base from '../layouts/Base.astro';
   <!-- Contact info + form -->
   <section class="py-10 sm:py-16 lg:py-24">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16 3xl:gap-24" data-reveal>
 
         <!-- Left: Contact details -->
         <div class="lg:col-span-2 space-y-10">
@@ -44,8 +44,8 @@ import Base from '../layouts/Base.astro';
                   </svg>
                 </div>
                 <div>
-                  <p class="font-medium text-coal">335 8 St SW</p>
-                  <p class="text-ink-muted">Calgary, AB</p>
+                  <a href="https://maps.app.goo.gl/J1D7gmAV4jtRKa137" target="_blank" rel="noopener noreferrer" class="font-medium text-coal hover:text-amber transition-colors">335 8 St SW</a>
+                  <p class="text-ink-muted text-sm">Calgary, AB</p>
                 </div>
               </div>
 
@@ -110,7 +110,7 @@ import Base from '../layouts/Base.astro';
 
         <!-- Right: Contact form -->
         <div class="lg:col-span-3">
-          <div class="p-8 sm:p-10 rounded-2xl bg-cream-dark border border-parchment">
+          <div class="p-8 sm:p-10 3xl:p-12 rounded-2xl bg-cream-dark border border-parchment">
             <h2 class="text-2xl font-display font-bold text-coal mb-6">Send a Message</h2>
 
             <form class="space-y-5" x-data="{ sending: false, sent: false }" @submit.prevent="sending = true; /* TODO: wire to API */ setTimeout(() => { sending = false; sent = true; }, 1500)">
@@ -182,9 +182,12 @@ import Base from '../layouts/Base.astro';
                 <button
                   type="submit"
                   :disabled="sending"
-                  class="w-full sm:w-auto px-8 py-3.5 bg-coal text-cream font-bold rounded-xl hover:bg-coal-light disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  class="group w-full sm:w-auto px-8 py-3.5 bg-coal text-cream font-bold rounded-xl hover:bg-coal-light disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  <span x-show="!sending">Send Message</span>
+                  <span x-show="!sending" class="inline-flex items-center gap-2">
+                    Send Message
+                    <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                  </span>
                   <span x-show="sending" x-cloak class="flex items-center gap-2">
                     <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                     Sending...
@@ -206,13 +209,13 @@ import Base from '../layouts/Base.astro';
   </section>
 
   <!-- Map -->
-  <section class="pb-10 sm:pb-16 lg:pb-20">
+  <section class="pb-10 sm:pb-16 lg:pb-20" data-reveal>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="rounded-2xl overflow-hidden border border-parchment">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2508.5!2d-114.0719!3d51.0447!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x537171e589a6a1cb%3A0x3b44f651a9e9e1ca!2sJoe&#39;s%20Garage%20Bicycle%20Rental%20and%20Repair!5e0!3m2!1sen!2sca!4v1700000000000!5m2!1sen!2sca"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2508.5!2d-114.0823453!3d51.0506619!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x53716fe596b443d9%3A0x5f4c539560c88155!2s335%208%20St%20SW%2C%20Calgary%2C%20AB!5e0!3m2!1sen!2sca!4v1700000000000!5m2!1sen!2sca"
           width="100%"
-          height="400"
+          height="450"
           style="border:0;"
           allowfullscreen=""
           loading="lazy"
