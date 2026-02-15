@@ -944,28 +944,39 @@ body:has(.message-detail) .doc-header__title {
     overflow: visible !important;
   }
 
-  /* Hide the divider line and metadata in the save bar */
+  /* Hide everything except the save button */
   .doc-controls__divider,
-  .doc-controls__meta,
+  .doc-controls__content,
   .doc-controls .popup {
     display: none !important;
   }
 
+  /* Full-width save button: override Payload's flex chain.
+     Payload's .doc-controls__controls is display:flex with
+     overflow:auto, which causes width:100% on children to
+     resolve smaller than expected. Switching to display:block
+     lets the button fill the full container width. */
+  .doc-controls__wrapper,
   .doc-controls__controls-wrapper {
     width: 100% !important;
+    padding: 0 !important;
+    gap: 0 !important;
   }
 
   .doc-controls__controls {
     width: 100% !important;
-    display: flex !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
   }
 
   .doc-controls .form-submit {
-    flex: 1 !important;
+    width: 100% !important;
   }
 
   .doc-controls .form-submit .btn {
     width: 100% !important;
+    display: block !important;
     min-height: 48px !important;
     font-size: 15px !important;
   }
@@ -1086,26 +1097,33 @@ body:has(.message-detail) .doc-header__title {
   }
 
   .doc-controls__divider,
-  .doc-controls__meta,
+  .doc-controls__content,
   .doc-controls .popup {
     display: none !important;
   }
 
+  /* Full-width save button: same fix as mobile */
+  .doc-controls__wrapper,
   .doc-controls__controls-wrapper {
     width: 100% !important;
+    padding: 0 !important;
+    gap: 0 !important;
   }
 
   .doc-controls__controls {
     width: 100% !important;
-    display: flex !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
   }
 
   .doc-controls .form-submit {
-    flex: 1 !important;
+    width: 100% !important;
   }
 
   .doc-controls .form-submit .btn {
     width: 100% !important;
+    display: block !important;
     min-height: 48px !important;
     font-size: 15px !important;
   }
