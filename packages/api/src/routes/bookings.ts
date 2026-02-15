@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { type Router as IRouter, Router } from 'express';
 import { z } from 'zod';
 import pool from '../db/pool.js';
 import { preAuthorize, capture, voidTransaction } from '../services/moneris.js';
 import { sendBookingConfirmation, sendAdminNotification } from '../services/email.js';
 import { getWaiverPdf } from '../services/storage.js';
 
-export const bookingsRouter = Router();
+export const bookingsRouter: IRouter = Router();
 
 const MAX_RENTAL_DAYS = 30;
 

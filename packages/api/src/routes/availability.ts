@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { type Router as IRouter, Router } from 'express';
 import { z } from 'zod';
 import pool from '../db/pool.js';
 
-export const availabilityRouter = Router();
+export const availabilityRouter: IRouter = Router();
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 

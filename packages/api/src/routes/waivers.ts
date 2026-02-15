@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { type Router as IRouter, Router } from 'express';
 import { z } from 'zod';
 import pool from '../db/pool.js';
 import { generateWaiverPdf } from '../services/waiver-pdf.js';
 import { uploadWaiverPdf } from '../services/storage.js';
 
-export const waiversRouter = Router();
+export const waiversRouter: IRouter = Router();
 
 // Signature data URL: must be a PNG, max ~1MB base64 (reasonable for a drawn signature)
 const MAX_SIGNATURE_LENGTH = 1_500_000;

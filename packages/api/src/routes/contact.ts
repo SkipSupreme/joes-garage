@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { type Router as IRouter, Router } from 'express';
 import { z } from 'zod';
 import { sendContactNotification } from '../services/email.js';
 
-export const contactRouter = Router();
+export const contactRouter: IRouter = Router();
 
 const PAYLOAD_URL = process.env.PAYLOAD_URL || 'http://localhost:3003';
 
