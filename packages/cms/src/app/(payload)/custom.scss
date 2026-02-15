@@ -925,12 +925,8 @@ body:has(.message-detail) .doc-header__title {
   }
 
   /* --- Fixed Save Button Bar --- */
-  /* On long forms (like Site Settings), the Save button
-     must always be reachable without scrolling back up.
-     doc-controls is ABOVE the form fields in the DOM,
-     so sticky:bottom doesn't work — use fixed instead.
-     Must constrain height because .doc-controls has a
-     divider child that would expand it to fill viewport. */
+  /* Pin Save to the bottom of the screen so Joe never
+     has to scroll back up on long forms like Site Settings */
   .doc-controls {
     position: fixed !important;
     top: auto !important;
@@ -940,12 +936,19 @@ body:has(.message-detail) .doc-header__title {
     z-index: 100 !important;
     background: var(--theme-bg) !important;
     border-top: 1px solid var(--theme-elevation-200) !important;
-    padding: 10px 16px !important;
-    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    padding: 12px 16px !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25) !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
+    display: flex !important;
+    align-items: center !important;
+
+    /* Hide everything inside except the save button */
+    & > *:not(.doc-controls__controls-wrapper) {
+      display: none !important;
+    }
   }
 
   .doc-controls__divider {
@@ -957,17 +960,16 @@ body:has(.message-detail) .doc-header__title {
   }
 
   .doc-controls__controls-wrapper {
-    width: 100%;
+    width: 100% !important;
   }
 
   .doc-controls__controls {
-    width: 100%;
-    display: flex;
-    justify-content: stretch;
+    width: 100% !important;
+    display: flex !important;
   }
 
   .doc-controls .form-submit {
-    flex: 1;
+    flex: 1 !important;
   }
 
   .doc-controls .form-submit .btn {
@@ -1083,12 +1085,18 @@ body:has(.message-detail) .doc-header__title {
     z-index: 100 !important;
     background: var(--theme-bg) !important;
     border-top: 1px solid var(--theme-elevation-200) !important;
-    padding: 12px 16px !important;
+    padding: 12px 24px !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2) !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
-    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    display: flex !important;
+    align-items: center !important;
+
+    & > *:not(.doc-controls__controls-wrapper) {
+      display: none !important;
+    }
   }
 
   .doc-controls__divider {
@@ -1097,6 +1105,25 @@ body:has(.message-detail) .doc-header__title {
 
   .doc-controls__meta {
     display: none !important;
+  }
+
+  .doc-controls__controls-wrapper {
+    width: 100% !important;
+  }
+
+  .doc-controls__controls {
+    width: 100% !important;
+    display: flex !important;
+  }
+
+  .doc-controls .form-submit {
+    flex: 1 !important;
+  }
+
+  .doc-controls .form-submit .btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 15px !important;
   }
 
   .document-fields {
