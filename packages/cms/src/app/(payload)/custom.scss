@@ -805,6 +805,14 @@ a[href*="/collections/messages/create"] {
   display: none !important;
 }
 
+/* ─── Hide Document Tabs ("Edit" label) ────── */
+/* Payload shows an "Edit" tab on every document page that
+   looks like a big button but does nothing — just confusing.
+   Joe doesn't need API tabs either, so hide the whole bar. */
+.doc-tabs {
+  display: none !important;
+}
+
 /* ─── Back Button on Edit Pages ─────────────── */
 /* Make the breadcrumb collection link look like a back button
    so Joe can easily navigate back to the list view */
