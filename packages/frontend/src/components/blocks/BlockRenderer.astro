@@ -5,6 +5,16 @@ import Gallery from './Gallery.astro';
 import SideBySide from './SideBySide.astro';
 import Testimonials from './Testimonials.astro';
 import CTA from './CTA.astro';
+import PageHeader from './PageHeader.astro';
+import LogoHero from './LogoHero.astro';
+import FeatureCards from './FeatureCards.astro';
+import Steps from './Steps.astro';
+import ServicesGrid from './ServicesGrid.astro';
+import Stats from './Stats.astro';
+import Timeline from './Timeline.astro';
+import ValuesGrid from './ValuesGrid.astro';
+import ContactSection from './ContactSection.astro';
+import MapEmbed from './MapEmbed.astro';
 
 interface Props {
   blocks: Array<{ blockType: string; [key: string]: any }>;
@@ -19,6 +29,16 @@ const blockComponents: Record<string, any> = {
   sideBySide: SideBySide,
   testimonials: Testimonials,
   cta: CTA,
+  pageHeader: PageHeader,
+  logoHero: LogoHero,
+  featureCards: FeatureCards,
+  steps: Steps,
+  servicesGrid: ServicesGrid,
+  stats: Stats,
+  timeline: Timeline,
+  valuesGrid: ValuesGrid,
+  contactSection: ContactSection,
+  mapEmbed: MapEmbed,
 };
 ---
 

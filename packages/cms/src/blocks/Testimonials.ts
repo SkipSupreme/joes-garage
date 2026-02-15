@@ -17,6 +17,10 @@ export const TestimonialsBlock: Block = {
       type: 'relationship',
       relationTo: 'testimonials',
       hasMany: true,
+      admin: {
+        description:
+          'Select existing testimonials or create new ones. Click the pencil icon to edit inline.',
+      },
     },
   ],
 };

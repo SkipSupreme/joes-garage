@@ -1,0 +1,38 @@
+---
+interface Props {
+  heading: string;
+  milestones: Array<{
+    year: string;
+    title: string;
+    description: string;
+    highlighted?: boolean;
+  }>;
+}
+
+const { heading, milestones } = Astro.props;
+---
+
+<section class="py-10 sm:py-16 bg-coal text-cream overflow-hidden">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+      <h2 class="text-2xl sm:text-4xl font-display font-extrabold tracking-tight">
+        {heading}
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 3xl:gap-8" data-reveal-stagger>
+      {milestones.map((milestone) => (
+        <div class:list={[
+          'p-6 rounded-2xl border',
+          milestone.highlighted
+            ? 'bg-red/10 border-red/20 hover:shadow-lg hover:shadow-red/10'
+            : 'bg-cream/5 border-cream/10',
+        ]}>
+          <div class="text-red font-display font-bold text-lg mb-2">{milestone.year}</div>
+          <h3 class="font-bold text-cream mb-2">{milestone.title}</h3>
+          <p class="text-cream/50 text-sm leading-relaxed">{milestone.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

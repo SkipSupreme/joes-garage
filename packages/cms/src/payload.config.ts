@@ -11,6 +11,7 @@ import { Pages } from './collections/Pages';
 import { Bikes } from './collections/Bikes';
 import { Services } from './collections/Services';
 import { Testimonials } from './collections/Testimonials';
+import { Messages } from './collections/Messages';
 import { SiteSettings } from './globals/SiteSettings';
 
 const filename = fileURLToPath(import.meta.url);
@@ -29,11 +30,11 @@ export default buildConfig({
         Icon: '/src/components/admin/Icon',
       },
       beforeLogin: ['/src/components/admin/BeforeLogin'],
-      providers: ['/src/components/admin/DarkThemeProvider'],
+      providers: ['/src/components/admin/DarkThemeProvider', '/src/components/admin/FileUploadFix'],
     },
   },
 
-  collections: [Users, Media, Pages, Bikes, Services, Testimonials],
+  collections: [Users, Media, Pages, Bikes, Services, Testimonials, Messages],
 
   globals: [SiteSettings],
 

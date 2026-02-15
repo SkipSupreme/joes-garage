@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import { getSiteSettings } from '../lib/payload';
 
 interface Props {
   title: string;
@@ -16,6 +17,58 @@ const {
 } = Astro.props;
 
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
+
+// Fetch site settings from CMS for structured data
+let settings: any = null;
+try {
+  settings = await getSiteSettings();
+} catch {
+  // CMS not available — use hardcoded fallback
+}
+
+const shopName = settings?.shopName || "Joe's Garage";
+const phone = settings?.phone || '(403) 874-5637';
+const email = settings?.email || 'joe@joesgarage.mobi';
+const address = settings?.address || '355 8 St SW, Calgary, AB';
+
+// Parse address parts for structured data
+const addressParts = address.split(',').map((p: string) => p.trim());
+const streetAddress = addressParts[0] || '355 8 St SW';
+const cityProvince = addressParts[1] || 'Calgary, AB';
+const [city, province] = cityProvince.includes(' ')
+  ? [cityProvince.replace(/\s+\w{2}$/, '').trim(), cityProvince.match(/\w{2}$/)?.[0] || 'AB']
+  : ['Calgary', 'AB'];
+
+// Build hours for Schema.org from CMS
+const cmsHours = settings?.hours?.length ? settings.hours : null;
+const schemaHours = cmsHours
+  ? (() => {
+      const dayMap: Record<string, string> = {};
+      for (const h of cmsHours) {
+        const key = `${h.open}-${h.close}`;
+        if (!dayMap[key]) dayMap[key] = '';
+        dayMap[key] += (dayMap[key] ? ',' : '') + h.day;
+      }
+      return Object.entries(dayMap).map(([timeRange, days]) => {
+        const [opens, closes] = timeRange.split('-');
+        // Convert "10:00 AM" to "10:00" 24h format
+        const to24 = (t: string) => {
+          const match = t.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+          if (!match) return t;
+          let hr = parseInt(match[1]);
+          if (match[3]?.toUpperCase() === 'PM' && hr !== 12) hr += 12;
+          if (match[3]?.toUpperCase() === 'AM' && hr === 12) hr = 0;
+          return `${hr.toString().padStart(2, '0')}:${match[2]}`;
+        };
+        return {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": days.split(','),
+          "opens": to24(opens),
+          "closes": to24(closes),
+        };
+      });
+    })()
+  : [{ "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"], "opens": "10:00", "closes": "19:00" }];
 ---
 
 <!doctype html>
@@ -49,27 +102,23 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     <script type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      "name": "Joe's Garage",
+      "name": shopName,
       "description": "Calgary's neighbourhood bike shop. Expert bicycle repairs and quality rentals.",
       "url": "https://joes-garage.ca",
-      "telephone": "(403) 555-0199",
+      "telephone": phone,
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "335 8 St SW",
-        "addressLocality": "Calgary",
-        "addressRegion": "AB",
+        "streetAddress": streetAddress,
+        "addressLocality": city,
+        "addressRegion": province,
         "addressCountry": "CA"
       },
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": 51.0506619,
-        "longitude": -114.0823453
+        "latitude": 51.0506254,
+        "longitude": -114.082628
       },
-      "openingHoursSpecification": [
-        { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "09:00", "closes": "18:00" },
-        { "@type": "OpeningHoursSpecification", "dayOfWeek": "Saturday", "opens": "10:00", "closes": "17:00" },
-        { "@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "11:00", "closes": "16:00" }
-      ],
+      "openingHoursSpecification": schemaHours,
       "priceRange": "$$",
       "hasOfferCatalog": {
         "@type": "OfferCatalog",

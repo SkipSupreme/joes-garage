@@ -1,0 +1,27 @@
+---
+interface Props {
+  embedUrl: string;
+  address?: string;
+  height?: number;
+}
+
+const { embedUrl, address, height = 450 } = Astro.props;
+---
+
+<section class="pb-10 sm:pb-16 lg:pb-20" data-reveal>
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="rounded-2xl overflow-hidden border border-parchment">
+      <iframe
+        src={embedUrl}
+        width="100%"
+        height={height}
+        style="border:0;"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title={address ? `${address} on Google Maps` : "Joe's Garage location on Google Maps"}
+        class="w-full"
+      ></iframe>
+    </div>
+  </div>
+</section>

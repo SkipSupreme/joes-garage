@@ -1,8 +1,21 @@
 ---
 import Base from '../../layouts/Base.astro';
+import { getSiteSettings } from '../../lib/payload';
 
 // This page will be SSR (server-rendered) to fetch booking data securely
 // export const prerender = false;
+
+// Fetch contact info from CMS so it stays in sync
+let settings: any = null;
+try {
+  settings = await getSiteSettings();
+} catch {
+  // CMS not available — use fallback
+}
+
+const phone = settings?.phone || '(403) 874-5637';
+const email = settings?.email || 'joe@joesgarage.mobi';
+const phoneTel = 'tel:+1' + phone.replace(/[^\d]/g, '');
 ---
 
 <Base title="Booking Confirmed" description="Your bike rental is confirmed! Check your email for the waiver PDF.">
@@ -82,13 +95,13 @@ import Base from '../../layouts/Base.astro';
         <a href="/" class="inline-flex items-center justify-center px-6 py-3 bg-coal text-cream font-bold rounded-xl hover:bg-coal-light transition-colors">
           Back to Home
         </a>
-        <a href="tel:+14038748189" class="inline-flex items-center justify-center px-6 py-3 text-coal font-medium rounded-xl border border-coal/15 hover:border-coal/30 transition-colors">
-          Call (403) 874-8189
+        <a href={phoneTel} class="inline-flex items-center justify-center px-6 py-3 text-coal font-medium rounded-xl border border-coal/15 hover:border-coal/30 transition-colors">
+          Call {phone}
         </a>
       </div>
 
       <p class="mt-8 text-sm text-ink-light animate-fade-up delay-400">
-        Questions? Call us at (403) 874-8189 or email info@joes-garage.ca
+        Questions? Call us at {phone} or email {email}
       </p>
     </div>
   </section>

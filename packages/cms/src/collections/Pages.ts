@@ -5,6 +5,16 @@ import { GalleryBlock } from '../blocks/Gallery';
 import { SideBySideBlock } from '../blocks/SideBySide';
 import { TestimonialsBlock } from '../blocks/Testimonials';
 import { CTABlock } from '../blocks/CTA';
+import { PageHeaderBlock } from '../blocks/PageHeader';
+import { LogoHeroBlock } from '../blocks/LogoHero';
+import { FeatureCardsBlock } from '../blocks/FeatureCards';
+import { StepsBlock } from '../blocks/Steps';
+import { ServicesGridBlock } from '../blocks/ServicesGrid';
+import { StatsBlock } from '../blocks/Stats';
+import { TimelineBlock } from '../blocks/Timeline';
+import { ValuesGridBlock } from '../blocks/ValuesGrid';
+import { ContactSectionBlock } from '../blocks/ContactSection';
+import { MapEmbedBlock } from '../blocks/MapEmbed';
 import { rebuildFrontend } from '../hooks/rebuildFrontend';
 
 export const Pages: CollectionConfig = {
@@ -15,6 +25,7 @@ export const Pages: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'updatedAt'],
+    hideAPIURL: true,
   },
   hooks: {
     afterChange: [rebuildFrontend],
@@ -57,6 +68,16 @@ export const Pages: CollectionConfig = {
         SideBySideBlock,
         TestimonialsBlock,
         CTABlock,
+        PageHeaderBlock,
+        LogoHeroBlock,
+        FeatureCardsBlock,
+        StepsBlock,
+        ServicesGridBlock,
+        StatsBlock,
+        TimelineBlock,
+        ValuesGridBlock,
+        ContactSectionBlock,
+        MapEmbedBlock,
       ],
     },
     {

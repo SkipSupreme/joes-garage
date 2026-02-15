@@ -10,6 +10,7 @@ export const Services: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'price', 'estimatedTime'],
   },
+  defaultSort: 'price',
   hooks: {
     afterChange: [rebuildFrontend],
   },

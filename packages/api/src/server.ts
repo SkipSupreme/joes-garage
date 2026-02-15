@@ -6,6 +6,7 @@ import cron from 'node-cron';
 import { availabilityRouter } from './routes/availability.js';
 import { bookingsRouter } from './routes/bookings.js';
 import { waiversRouter } from './routes/waivers.js';
+import { contactRouter } from './routes/contact.js';
 import pool from './db/pool.js';
 
 const app = express();
@@ -80,6 +81,7 @@ app.get('/api/health', async (_req, res) => {
 app.use('/api/availability', availabilityRouter);
 app.use('/api/bookings', bookingLimiter, bookingsRouter);
 app.use('/api/waivers', bookingLimiter, waiversRouter);
+app.use('/api/contact', bookingLimiter, contactRouter);
 
 // 404 handler
 app.use((_req, res) => {

@@ -1,0 +1,90 @@
+---
+interface Props {
+  eyebrow?: string;
+  heading: string;
+  subtitle?: string;
+  cards: Array<{
+    title: string;
+    description: string;
+    icon?: string;
+    link?: string;
+    linkText?: string;
+    featured?: boolean;
+  }>;
+}
+
+const { eyebrow, heading, subtitle, cards } = Astro.props;
+
+const iconMap: Record<string, string> = {
+  star: '<path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.384 3.158c-.767.45-1.736-.15-1.614-1.003l.83-5.977a2.028 2.028 0 00-.586-1.797L.66 5.449c-.622-.605-.29-1.674.567-1.795l6.015-.877a2.03 2.03 0 001.526-1.11L11.42.963c.385-.78 1.518-.78 1.902 0l2.652 5.704c.27.58.79.996 1.417 1.1l5.865.855c.857.125 1.19 1.19.567 1.795l-4.248 4.102a2.028 2.028 0 00-.586 1.797l.83 5.977c.122.853-.846 1.453-1.614 1.003L12.42 15.17a2.03 2.03 0 00-1 0z"/>',
+  clock: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+  chat: '<path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>',
+  wrench: '<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z"/>',
+  shield: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>',
+  heart: '<path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>',
+};
+---
+
+<section class="py-10 sm:py-16 lg:py-20 bg-cream-dark">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+      {eyebrow && (
+        <span class="text-sm font-medium text-red tracking-wider uppercase">{eyebrow}</span>
+      )}
+      <h2 class="mt-2 text-2xl sm:text-4xl lg:text-5xl font-display font-extrabold text-coal tracking-tight">
+        {heading}
+      </h2>
+      {subtitle && (
+        <p class="mt-3 text-base sm:text-lg 3xl:text-xl text-ink-muted leading-relaxed">
+          {subtitle}
+        </p>
+      )}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 3xl:gap-8" data-reveal-stagger>
+      {cards.map((card) => (
+        <div class:list={[
+          'group relative p-7 sm:p-8 rounded-2xl border transition-all duration-300',
+          card.featured
+            ? 'bg-coal text-cream border-coal-lighter hover:border-red/40 hover:shadow-lg hover:shadow-red/10'
+            : 'bg-cream border-parchment hover:border-red/20 hover:shadow-lg hover:shadow-red/5',
+        ]}>
+          {card.featured && (
+            <div class="absolute top-4 right-4">
+              <span class="px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase bg-red text-cream rounded-full">Popular</span>
+            </div>
+          )}
+          <div class:list={[
+            'w-12 h-12 mb-5 rounded-xl flex items-center justify-center transition-colors',
+            card.featured ? 'bg-red/10 group-hover:bg-red/20' : 'bg-red/10 group-hover:bg-red/15',
+          ]}>
+            <svg class:list={['w-6 h-6', card.featured ? 'text-red-light' : 'text-red']} fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <Fragment set:html={iconMap[card.icon || 'star'] || iconMap.star} />
+            </svg>
+          </div>
+          <h3 class:list={[
+            'text-xl font-display font-bold mb-2',
+            card.featured ? 'text-cream' : 'text-coal',
+          ]}>
+            {card.title}
+          </h3>
+          <p class:list={[
+            'leading-relaxed',
+            card.featured ? 'text-cream/60' : 'text-ink-muted',
+          ]}>
+            {card.description}
+          </p>
+          {card.link && card.linkText && (
+            <a href={card.link} class:list={[
+              'inline-flex items-center gap-1.5 mt-5 text-sm font-medium transition-colors',
+              card.featured ? 'text-amber-light hover:text-cream' : 'text-red hover:text-red-dark',
+            ]}>
+              {card.linkText}
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -73,6 +73,7 @@ export interface Config {
     bikes: Bike;
     services: Service;
     testimonials: Testimonial;
+    messages: Message;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +87,7 @@ export interface Config {
     bikes: BikesSelect<false> | BikesSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    messages: MessagesSelect<false> | MessagesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -247,6 +249,9 @@ export interface Page {
           }
         | {
             heading?: string | null;
+            /**
+             * Select existing testimonials or create new ones. Click the pencil icon to edit inline.
+             */
             testimonials?: (number | Testimonial)[] | null;
             id?: string | null;
             blockName?: string | null;
@@ -274,6 +279,208 @@ export interface Page {
             id?: string | null;
             blockName?: string | null;
             blockType: 'cta';
+          }
+        | {
+            /**
+             * Small text above the heading (e.g., "Repair Services")
+             */
+            eyebrow?: string | null;
+            heading: string;
+            /**
+             * Colored accent word/phrase (e.g., "Properly." in red)
+             */
+            headingAccent?: string | null;
+            subtitle?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'pageHeader';
+          }
+        | {
+            eyebrow?: string | null;
+            heading: string;
+            /**
+             * Colored line below the main heading
+             */
+            headingAccent?: string | null;
+            subtitle?: string | null;
+            ctaButtons?:
+              | {
+                  text: string;
+                  link: string;
+                  style?: ('primary' | 'secondary') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            trustIndicators?:
+              | {
+                  text: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'logoHero';
+          }
+        | {
+            eyebrow?: string | null;
+            heading: string;
+            subtitle?: string | null;
+            cards: {
+              title: string;
+              description: string;
+              icon?: ('star' | 'clock' | 'chat' | 'wrench' | 'shield' | 'heart') | null;
+              link?: string | null;
+              linkText?: string | null;
+              /**
+               * Featured cards get a dark background with a "Popular" badge
+               */
+              featured?: boolean | null;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featureCards';
+          }
+        | {
+            eyebrow?: string | null;
+            heading: string;
+            subtitle?: string | null;
+            steps: {
+              title: string;
+              description: string;
+              id?: string | null;
+            }[];
+            ctaText?: string | null;
+            ctaLink?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'steps';
+          }
+        | {
+            /**
+             * Optional override heading. If empty, services are shown without a heading.
+             */
+            heading?: string | null;
+            subtitle?: string | null;
+            /**
+             * Disclaimer text below the grid (e.g., "Prices are starting estimates...")
+             */
+            noteText?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'servicesGrid';
+          }
+        | {
+            stats: {
+              /**
+               * The number or value (e.g., "2007", "30")
+               */
+              value: string;
+              /**
+               * Accent suffix (e.g., "+", "★")
+               */
+              suffix?: string | null;
+              /**
+               * Description below the number (e.g., "Years wrenching")
+               */
+              label: string;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'stats';
+          }
+        | {
+            heading: string;
+            milestones: {
+              /**
+               * Year or period (e.g., "2007", "2010s", "Today")
+               */
+              year: string;
+              title: string;
+              description: string;
+              /**
+               * Highlight this milestone with an accent color
+               */
+              highlighted?: boolean | null;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'timeline';
+          }
+        | {
+            heading: string;
+            values: {
+              title: string;
+              description: string;
+              icon?: ('shield' | 'star' | 'people' | 'heart' | 'wrench' | 'check') | null;
+              id?: string | null;
+            }[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'valuesGrid';
+          }
+        | {
+            showForm?: boolean | null;
+            infoItems?:
+              | {
+                  icon: 'mapPin' | 'phone' | 'email';
+                  /**
+                   * Display text (e.g., "335 8 St SW")
+                   */
+                  label: string;
+                  /**
+                   * Secondary text (e.g., "Calgary, AB")
+                   */
+                  sublabel?: string | null;
+                  /**
+                   * Link URL (e.g., "tel:+14038748189")
+                   */
+                  href?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            hours?:
+              | {
+                  /**
+                   * e.g., "Monday – Friday"
+                   */
+                  days: string;
+                  /**
+                   * e.g., "10:00 AM – 6:00 PM" or "Closed"
+                   */
+                  hours: string;
+                  id?: string | null;
+                }[]
+              | null;
+            socialLinks?:
+              | {
+                  platform: 'facebook' | 'instagram';
+                  url: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'contactSection';
+          }
+        | {
+            /**
+             * The full iframe src URL from Google Maps
+             */
+            embedUrl: string;
+            /**
+             * Accessible label for the map (e.g., "335 8 St SW, Calgary, AB")
+             */
+            address?: string | null;
+            /**
+             * Map height in pixels
+             */
+            height?: number | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'mapEmbed';
           }
       )[]
     | null;
@@ -376,6 +583,26 @@ export interface Service {
   createdAt: string;
 }
 /**
+ * Messages submitted via the contact form on the website.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "messages".
+ */
+export interface Message {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject: 'repair' | 'rental' | 'general' | 'other';
+  message: string;
+  /**
+   * Mark as read after reviewing
+   */
+  read?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -422,6 +649,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'testimonials';
         value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'messages';
+        value: number | Message;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -574,6 +805,171 @@ export interface PagesSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        pageHeader?:
+          | T
+          | {
+              eyebrow?: T;
+              heading?: T;
+              headingAccent?: T;
+              subtitle?: T;
+              id?: T;
+              blockName?: T;
+            };
+        logoHero?:
+          | T
+          | {
+              eyebrow?: T;
+              heading?: T;
+              headingAccent?: T;
+              subtitle?: T;
+              ctaButtons?:
+                | T
+                | {
+                    text?: T;
+                    link?: T;
+                    style?: T;
+                    id?: T;
+                  };
+              trustIndicators?:
+                | T
+                | {
+                    text?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        featureCards?:
+          | T
+          | {
+              eyebrow?: T;
+              heading?: T;
+              subtitle?: T;
+              cards?:
+                | T
+                | {
+                    title?: T;
+                    description?: T;
+                    icon?: T;
+                    link?: T;
+                    linkText?: T;
+                    featured?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        steps?:
+          | T
+          | {
+              eyebrow?: T;
+              heading?: T;
+              subtitle?: T;
+              steps?:
+                | T
+                | {
+                    title?: T;
+                    description?: T;
+                    id?: T;
+                  };
+              ctaText?: T;
+              ctaLink?: T;
+              id?: T;
+              blockName?: T;
+            };
+        servicesGrid?:
+          | T
+          | {
+              heading?: T;
+              subtitle?: T;
+              noteText?: T;
+              id?: T;
+              blockName?: T;
+            };
+        stats?:
+          | T
+          | {
+              stats?:
+                | T
+                | {
+                    value?: T;
+                    suffix?: T;
+                    label?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        timeline?:
+          | T
+          | {
+              heading?: T;
+              milestones?:
+                | T
+                | {
+                    year?: T;
+                    title?: T;
+                    description?: T;
+                    highlighted?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        valuesGrid?:
+          | T
+          | {
+              heading?: T;
+              values?:
+                | T
+                | {
+                    title?: T;
+                    description?: T;
+                    icon?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        contactSection?:
+          | T
+          | {
+              showForm?: T;
+              infoItems?:
+                | T
+                | {
+                    icon?: T;
+                    label?: T;
+                    sublabel?: T;
+                    href?: T;
+                    id?: T;
+                  };
+              hours?:
+                | T
+                | {
+                    days?: T;
+                    hours?: T;
+                    id?: T;
+                  };
+              socialLinks?:
+                | T
+                | {
+                    platform?: T;
+                    url?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        mapEmbed?:
+          | T
+          | {
+              embedUrl?: T;
+              address?: T;
+              height?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   meta?:
     | T
@@ -629,6 +1025,20 @@ export interface TestimonialsSelect<T extends boolean = true> {
   name?: T;
   photo?: T;
   rating?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "messages_select".
+ */
+export interface MessagesSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  subject?: T;
+  message?: T;
+  read?: T;
   updatedAt?: T;
   createdAt?: T;
 }

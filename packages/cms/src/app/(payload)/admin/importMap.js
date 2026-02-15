@@ -25,6 +25,7 @@ import { default as default_b04c0db8d89d68ff5dd20d513b3034b9 } from '../../../..
 import { default as default_4522c7900ab0b0df414ce3e1574aaee4 } from '../../../../src/components/admin/Logo'
 import { default as default_a98b774adea8aca98f799ac1c0a96329 } from '../../../../src/components/admin/BeforeLogin'
 import { default as default_fa447dbecc2f15601e9512b5d3c174f0 } from '../../../../src/components/admin/DarkThemeProvider'
+import { default as default_2fc7bcfc8d125596bec834f81c946832 } from '../../../../src/components/admin/FileUploadFix'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
@@ -55,5 +56,6 @@ export const importMap = {
   "/src/components/admin/Logo#default": default_4522c7900ab0b0df414ce3e1574aaee4,
   "/src/components/admin/BeforeLogin#default": default_a98b774adea8aca98f799ac1c0a96329,
   "/src/components/admin/DarkThemeProvider#default": default_fa447dbecc2f15601e9512b5d3c174f0,
+  "/src/components/admin/FileUploadFix#default": default_2fc7bcfc8d125596bec834f81c946832,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

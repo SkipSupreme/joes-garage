@@ -1,26 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
 import BlockRenderer from '../components/blocks/BlockRenderer.astro';
-import { getPages, getPage } from '../lib/payload';
+import { getPage } from '../lib/payload';
 
-// Build-time: generate paths for all CMS pages
-export async function getStaticPaths() {
-  try {
-    const pages = await getPages();
-    return pages.map((page: any) => ({
-      params: { slug: page.slug },
-      props: { page },
-    }));
-  } catch {
-    // CMS not available at build time — return empty array
-    return [];
-  }
+// SSR: fetch the page from CMS on each request
+const { slug } = Astro.params;
+
+let page: any = null;
+try {
+  page = slug ? await getPage(slug) : null;
+} catch {
+  // CMS not available
 }
 
-const { page } = Astro.props;
-
 if (!page) {
-  return Astro.redirect('/404');
+  return new Response(null, { status: 404 });
 }
 
 const { title, layout, meta } = page;

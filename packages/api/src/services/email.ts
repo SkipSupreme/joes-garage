@@ -198,6 +198,68 @@ export async function sendAdminNotification(details: BookingDetails): Promise<vo
   }
 }
 
+/**
+ * Send a contact form notification to Joe (admin).
+ */
+interface ContactDetails {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+}
+
+const subjectLabels: Record<string, string> = {
+  repair: 'Repair Quote',
+  rental: 'Rental Question',
+  general: 'General Inquiry',
+  other: 'Something Else',
+};
+
+export async function sendContactNotification(details: ContactDetails): Promise<void> {
+  const transport = await getTransporter();
+
+  const subjectLabel = subjectLabels[details.subject] || details.subject;
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; color: #1a1a1a;">
+      <div style="background: #c41e1e; padding: 20px 24px; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #fff; margin: 0; font-size: 20px;">New Contact Form Message</h1>
+      </div>
+
+      <div style="background: #faf8f5; padding: 24px; border: 1px solid #e8e0d4; border-top: none; border-radius: 0 0 8px 8px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+          <tr><td style="padding: 6px 0; color: #666; width: 80px;">From</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(details.name)}</td></tr>
+          <tr><td style="padding: 6px 0; color: #666;">Email</td><td style="padding: 6px 0;"><a href="mailto:${escapeHtml(details.email)}" style="color: #c41e1e;">${escapeHtml(details.email)}</a></td></tr>
+          ${details.phone ? `<tr><td style="padding: 6px 0; color: #666;">Phone</td><td style="padding: 6px 0;">${escapeHtml(details.phone)}</td></tr>` : ''}
+          <tr><td style="padding: 6px 0; color: #666;">Topic</td><td style="padding: 6px 0;">${escapeHtml(subjectLabel)}</td></tr>
+        </table>
+
+        <div style="background: #fff; border: 1px solid #e8e0d4; border-radius: 6px; padding: 16px;">
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(details.message)}</p>
+        </div>
+
+        <p style="font-size: 12px; color: #999; margin: 16px 0 0;">
+          Reply directly to this email to respond to ${escapeHtml(details.name)}.
+        </p>
+      </div>
+    </div>
+  `;
+
+  const info = await transport.sendMail({
+    from: FROM_ADDRESS,
+    to: ADMIN_EMAIL,
+    replyTo: details.email,
+    subject: `Contact: ${escapeHtml(subjectLabel)} from ${escapeHtml(details.name)}`,
+    html,
+  });
+
+  const previewUrl = nodemailer.getTestMessageUrl(info);
+  if (previewUrl) {
+    console.log(`📧 Contact email preview: ${previewUrl}`);
+  }
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')

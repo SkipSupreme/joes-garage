@@ -35,3 +35,15 @@ packages/cms/payload-types.ts
 
 # Branding source files (large Pixelmator files)
 *.pxd
+
+# Screenshots (debug/testing artifacts)
+*.png
+!packages/cms/media/*.png
+!public/**/*.png
+!packages/frontend/public/**/*.png
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Network logs
+network-log.txt

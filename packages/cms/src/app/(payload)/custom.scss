@@ -16,6 +16,7 @@
 /* ─── 1. Payload Core Styles ──────────────────── */
 
 @import '@payloadcms/ui/scss/app.scss';
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
 /* ─── 2. Missing Template + Nav Layout CSS ────── */
 /* Source: @payloadcms/next/src/templates/Default/ */
@@ -305,10 +306,6 @@
   --theme-success-500: #22C55E;
   --theme-warning-500: #F59E0B;
 }
-
-/* ─── Google Fonts Import ───────────────────── */
-
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
 /* ─── Base Typography ───────────────────────── */
 
@@ -614,6 +611,7 @@ button[type="submit"].btn {
 .app-header {
   height: auto !important;
   min-height: var(--app-header-height, 56px);
+  padding: 12px 16px !important;
 }
 
 .dashboard-breadcrumb-dropdown__editing {
@@ -719,6 +717,26 @@ button[type="submit"].btn {
   }
 }
 
+/* ─── Document Fields Scroll Padding ──────────
+   Ensures the bottom of long forms (like the homepage
+   with 6+ layout blocks expanded) is always scrollable
+   into view on all viewport heights. Mobile/tablet get
+   this via the fixed save bar spacing; desktop needs it
+   explicitly since doc-controls is not fixed. */
+
+.document-fields {
+  padding-bottom: 120px;
+}
+
+/* ─── Hide API Tab in Document Editor ─────────
+   The API tab shows raw JSON and confuses
+   non-developer users. Developer tool only. */
+
+.doc-tab[href$="/api"],
+a[href*="/api"][class*="doc-tab"] {
+  display: none !important;
+}
+
 /* ─── Table Rows ────────────────────────────── */
 
 .table .row:hover {
@@ -730,6 +748,24 @@ button[type="submit"].btn {
 .rich-text {
   border-radius: 10px !important;
   overflow: hidden;
+}
+
+/* ─── Upload Field: Fix "Select a file" button ───── */
+/* Payload's file input has `hidden` attr which sets display:none.
+   .click() on display:none inputs silently fails to open file dialogs.
+   FileUploadFix.tsx removes the hidden attr via JS (MutationObserver).
+   This CSS is a fallback: override display:none from [hidden] attr. */
+
+input[type='file'][hidden],
+.file-field__hidden-input {
+  display: block !important;
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0.01 !important;
+  overflow: hidden !important;
 }
 
 /* ─── Pills / Status Badges ─────────────────── */
@@ -758,6 +794,31 @@ button[type="submit"].btn {
 
   &:hover {
     background: var(--theme-elevation-400);
+  }
+}
+
+/* ─── Back Button on Edit Pages ─────────────── */
+/* Make the breadcrumb collection link look like a back button
+   so Joe can easily navigate back to the list view */
+
+.step-nav a[href*="/collections/"]:not(.step-nav__home) {
+  background: var(--theme-elevation-100) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px 4px 6px !important;
+  font-weight: 500 !important;
+  transition: background 0.15s ease;
+  display: inline-flex !important;
+  align-items: center !important;
+
+  &::before {
+    content: '\2190'; /* ← arrow */
+    margin-right: 4px;
+    font-size: 1em;
+    line-height: 1;
+  }
+
+  &:hover {
+    background: var(--theme-elevation-200) !important;
   }
 }
 
@@ -857,10 +918,11 @@ button[type="submit"].btn {
     background: var(--theme-bg) !important;
     border-top: 1px solid var(--theme-elevation-200) !important;
     padding: 10px 16px !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25) !important;
     height: auto !important;
-    max-height: 70px !important;
-    overflow: hidden !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
   .doc-controls__divider {
@@ -918,14 +980,58 @@ button[type="submit"].btn {
     padding: 8px 10px !important;
   }
 
+  /* --- Collection List Header --- */
+  /* Stack title and Create New button on separate lines */
+  .list-header__title-and-actions {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  /* Tame the Create New button — compact pill, not bloated */
+  .list-create-new-doc__create-new-button {
+    min-height: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+    padding: 0 14px !important;
+    white-space: nowrap;
+  }
+
   /* --- Table (Collection List) --- */
+  .collection-list__wrap {
+    overflow-x: visible !important;
+    max-width: 100%;
+  }
+
   .table {
     font-size: 13px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 0 !important;
   }
 
   .table th,
   .table td {
     padding: 8px 10px !important;
+  }
+
+  /* Hide checkbox and non-essential columns on narrow screens
+     to keep Name and Price readable without scrolling */
+  .table th:first-child,
+  .table td:first-child {
+    display: none !important; /* select-all checkbox */
+  }
+
+  .table th:nth-child(n+4),
+  .table td:nth-child(n+4) {
+    display: none !important; /* Estimated Time and beyond */
+  }
+
+  /* --- Back Button on Edit Pages (mobile enhancement) --- */
+  /* On mobile, make it chunkier for easier thumb tapping */
+  .step-nav a[href*="/collections/"]:not(.step-nav__home) {
+    padding: 6px 12px 6px 8px !important;
+    font-size: 13px !important;
   }
 
   /* --- Document fields area --- */
@@ -957,8 +1063,9 @@ button[type="submit"].btn {
     padding: 12px 16px !important;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2) !important;
     height: auto !important;
-    max-height: 70px !important;
-    overflow: hidden !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
   }
 
   .doc-controls__divider {
@@ -971,6 +1078,19 @@ button[type="submit"].btn {
 
   .document-fields {
     padding-bottom: 72px !important;
+  }
+
+  /* --- Table (Collection List) tablet fix --- */
+  /* Payload's .table expands to full viewport width,
+     ignoring parent padding on the right side.
+     Constrain it to stay within its container. */
+  .collection-list__wrap {
+    overflow: hidden !important;
+  }
+
+  .table {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 }
 
