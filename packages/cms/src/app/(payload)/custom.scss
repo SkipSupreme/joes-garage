@@ -1111,3 +1111,125 @@ textarea,
 select {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ─── Messages Detail View ─────────────────── */
+/* Clean, inbox-style message view for Joe to read
+   contact form submissions without form clutter */
+
+.message-detail {
+  padding: 24px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-150);
+}
+
+.message-detail__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.message-detail__name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin-bottom: 6px;
+}
+
+.message-detail__badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--theme-elevation-150);
+  color: var(--theme-elevation-600);
+}
+
+.message-detail__date {
+  font-size: 13px;
+  color: var(--theme-elevation-400);
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+.message-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.message-detail__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--theme-text) !important;
+  text-decoration: none !important;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--theme-elevation-100);
+  border: 1px solid var(--theme-elevation-200);
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--theme-elevation-200);
+    border-color: var(--theme-elevation-300);
+  }
+
+  svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+}
+
+.message-detail__body {
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--theme-elevation-0);
+  border: 1px solid var(--theme-elevation-100);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--theme-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Hide the Save/Edit button on Messages edit view —
+   the only editable field is the Read checkbox, and
+   Payload auto-saves checkbox changes. We keep the
+   save button functional but hide confusing controls. */
+.doc-header:has(~ .document-fields .message-detail) {
+  .doc-controls__controls .btn:not(.form-submit .btn) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .message-detail {
+    padding: 16px;
+  }
+
+  .message-detail__header {
+    flex-direction: column;
+  }
+
+  .message-detail__name {
+    font-size: 18px;
+  }
+
+  .message-detail__actions {
+    flex-direction: column;
+  }
+
+  .message-detail__link {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}

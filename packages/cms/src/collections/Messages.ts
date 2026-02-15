@@ -14,7 +14,6 @@ export const Messages: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'subject', 'email', 'read', 'createdAt'],
     description: 'Incoming messages from the website contact form.',
-    // Hide the "Create New" button — messages come from the website, not the admin
     hideAPIURL: true,
     components: {
       beforeListTable: ['/src/components/admin/MessagesInbox'],
@@ -22,22 +21,32 @@ export const Messages: CollectionConfig = {
   },
   defaultSort: '-createdAt',
   fields: [
+    // Custom message view — replaces the default form fields with a clean card
+    {
+      name: 'messageView',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/src/components/admin/MessageDetail',
+        },
+      },
+    },
     {
       name: 'name',
       type: 'text',
       required: true,
-      admin: { readOnly: true },
+      admin: { readOnly: true, hidden: true },
     },
     {
       name: 'email',
       type: 'email',
       required: true,
-      admin: { readOnly: true },
+      admin: { readOnly: true, hidden: true },
     },
     {
       name: 'phone',
       type: 'text',
-      admin: { readOnly: true },
+      admin: { readOnly: true, hidden: true },
     },
     {
       name: 'subject',
@@ -49,20 +58,20 @@ export const Messages: CollectionConfig = {
         { label: 'General Inquiry', value: 'general' },
         { label: 'Something Else', value: 'other' },
       ],
-      admin: { readOnly: true },
+      admin: { readOnly: true, hidden: true },
     },
     {
       name: 'message',
       type: 'textarea',
       required: true,
-      admin: { readOnly: true },
+      admin: { readOnly: true, hidden: true },
     },
     {
       name: 'read',
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Check this after you\'ve read the message',
+        description: 'Check this when you\'ve read the message',
       },
     },
   ],
