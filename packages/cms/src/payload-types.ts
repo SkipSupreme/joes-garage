@@ -583,7 +583,7 @@ export interface Service {
   createdAt: string;
 }
 /**
- * Messages submitted via the contact form on the website.
+ * Incoming messages from the website contact form.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "messages".
@@ -596,7 +596,7 @@ export interface Message {
   subject: 'repair' | 'rental' | 'general' | 'other';
   message: string;
   /**
-   * Mark as read after reviewing
+   * Check this when you've read the message
    */
   read?: boolean | null;
   updatedAt: string;
