@@ -13,7 +13,6 @@ export const Messages: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'subject', 'email', 'read', 'createdAt'],
-    description: 'Incoming messages from the website contact form.',
     hideAPIURL: true,
     components: {
       beforeListTable: ['/src/components/admin/MessagesInbox'],

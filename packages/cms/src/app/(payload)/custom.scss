@@ -808,7 +808,7 @@ a[href*="/collections/messages/create"] {
 /* ─── Messages Edit: Hide duplicate title ──── */
 /* The sender name already shows in the MessageDetail card,
    so hide the Payload doc-header title to avoid duplication */
-.doc-header:has(~ .document-fields .message-detail) .doc-header__title {
+body:has(.message-detail) .doc-header__title {
   display: none !important;
 }
 
