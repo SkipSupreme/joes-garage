@@ -3,7 +3,7 @@ import type { CollectionConfig } from 'payload';
 export const Messages: CollectionConfig = {
   slug: 'messages',
   access: {
-    // Anyone can create (public contact form via API)
+    // Public contact form can create via API
     create: () => true,
     // Only logged-in admins can read/update/delete
     read: ({ req: { user } }) => Boolean(user),
@@ -13,7 +13,12 @@ export const Messages: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'subject', 'email', 'read', 'createdAt'],
-    description: 'Messages submitted via the contact form on the website.',
+    description: 'Incoming messages from the website contact form.',
+    // Hide the "Create New" button — messages come from the website, not the admin
+    hideAPIURL: true,
+    components: {
+      beforeListTable: ['/src/components/admin/MessagesInbox'],
+    },
   },
   defaultSort: '-createdAt',
   fields: [
@@ -21,15 +26,18 @@ export const Messages: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      admin: { readOnly: true },
     },
     {
       name: 'email',
       type: 'email',
       required: true,
+      admin: { readOnly: true },
     },
     {
       name: 'phone',
       type: 'text',
+      admin: { readOnly: true },
     },
     {
       name: 'subject',
@@ -41,18 +49,20 @@ export const Messages: CollectionConfig = {
         { label: 'General Inquiry', value: 'general' },
         { label: 'Something Else', value: 'other' },
       ],
+      admin: { readOnly: true },
     },
     {
       name: 'message',
       type: 'textarea',
       required: true,
+      admin: { readOnly: true },
     },
     {
       name: 'read',
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Mark as read after reviewing',
+        description: 'Check this after you\'ve read the message',
       },
     },
   ],

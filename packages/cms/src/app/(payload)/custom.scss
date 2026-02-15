@@ -797,6 +797,14 @@ input[type='file'][hidden],
   }
 }
 
+/* ─── Messages Collection: Hide "Create New" ── */
+/* Messages are incoming from the website — Joe should
+   never create one manually from the admin panel */
+a[href="/admin/collections/messages/create"],
+a[href*="/collections/messages/create"] {
+  display: none !important;
+}
+
 /* ─── Back Button on Edit Pages ─────────────── */
 /* Make the breadcrumb collection link look like a back button
    so Joe can easily navigate back to the list view */
