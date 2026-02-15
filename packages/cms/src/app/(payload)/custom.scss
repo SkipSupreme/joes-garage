@@ -805,6 +805,13 @@ a[href*="/collections/messages/create"] {
   display: none !important;
 }
 
+/* ─── Messages Edit: Hide duplicate title ──── */
+/* The sender name already shows in the MessageDetail card,
+   so hide the Payload doc-header title to avoid duplication */
+.doc-header:has(~ .document-fields .message-detail) .doc-header__title {
+  display: none !important;
+}
+
 /* ─── Hide Document Tabs ("Edit" label) ────── */
 /* Payload shows an "Edit" tab on every document page that
    looks like a big button but does nothing — just confusing.
