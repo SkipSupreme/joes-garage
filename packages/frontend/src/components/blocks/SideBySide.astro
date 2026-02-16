@@ -1,4 +1,6 @@
 ---
+import { sanitizeHtml } from '../../lib/sanitize-html';
+
 interface Props {
   image: { url: string; alt?: string };
   content: string; // Rich text HTML
@@ -36,7 +38,7 @@ const { image, content, imagePosition = 'left' } = Astro.props;
         prose-p:text-ink-muted prose-p:leading-relaxed
         prose-a:text-amber prose-a:no-underline hover:prose-a:text-amber-dark
         prose-strong:text-coal
-      " set:html={content}>
+      " set:html={sanitizeHtml(content)}>
       </div>
     </div>
   </div>

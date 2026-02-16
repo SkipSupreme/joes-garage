@@ -1,4 +1,6 @@
 ---
+import { sanitizeHtml } from '../../lib/sanitize-html';
+
 interface Props {
   content: string; // Rich text HTML from Payload's Lexical editor
 }
@@ -15,7 +17,7 @@ const { content } = Astro.props;
       prose-strong:text-coal
       prose-blockquote:border-l-amber prose-blockquote:text-ink-muted
       prose-img:rounded-xl
-    " set:html={content}>
+    " set:html={sanitizeHtml(content)}>
     </div>
   </div>
 </section>

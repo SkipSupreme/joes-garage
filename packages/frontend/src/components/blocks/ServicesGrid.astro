@@ -1,5 +1,6 @@
 ---
 import { getServices } from '../../lib/payload';
+import { sanitizeHtml } from '../../lib/sanitize-html';
 
 interface Props {
   heading?: string;
@@ -64,7 +65,7 @@ try {
                     isPopular ? 'text-cream/60' : 'text-ink-muted',
                   ]}>
                     {typeof service.description === 'string'
-                      ? <Fragment set:html={service.description} />
+                      ? <Fragment set:html={sanitizeHtml(service.description)} />
                       : service.description}
                   </p>
                 )}
@@ -105,7 +106,7 @@ try {
     {noteText && (
       <div class="mt-12 p-6 rounded-xl bg-amber/5 border border-amber/15 text-center" data-reveal>
         <p class="text-sm text-ink-muted">
-          <Fragment set:html={noteText} />
+          <Fragment set:html={sanitizeHtml(noteText)} />
         </p>
       </div>
     )}

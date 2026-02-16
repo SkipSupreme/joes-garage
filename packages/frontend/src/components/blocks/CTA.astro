@@ -1,4 +1,6 @@
 ---
+import { sanitizeHtml } from '../../lib/sanitize-html';
+
 interface Props {
   heading: string;
   content?: string; // Rich text HTML
@@ -21,7 +23,7 @@ const isExternal = buttonLink.startsWith('http');
     </h2>
 
     {content && (
-      <div class="mt-6 text-lg text-cream/50 max-w-xl mx-auto prose prose-invert prose-p:text-cream/50" set:html={content}>
+      <div class="mt-6 text-lg text-cream/50 max-w-xl mx-auto prose prose-invert prose-p:text-cream/50" set:html={sanitizeHtml(content)}>
       </div>
     )}
 

@@ -17,6 +17,10 @@ import { SiteSettings } from './globals/SiteSettings';
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
+if (!process.env.PAYLOAD_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('PAYLOAD_SECRET environment variable is required in production');
+}
+
 export default buildConfig({
   admin: {
     user: Users.slug,
