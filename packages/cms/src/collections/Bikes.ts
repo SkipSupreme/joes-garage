@@ -8,7 +8,7 @@ export const Bikes: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'type', 'pricePerDay', 'status'],
+    defaultColumns: ['name', 'type', 'price2h', 'price4h', 'pricePerDay', 'status'],
   },
   hooks: {
     afterChange: [rebuildFrontend],
@@ -24,12 +24,14 @@ export const Bikes: CollectionConfig = {
       type: 'select',
       required: true,
       options: [
+        { label: 'City', value: 'city' },
+        { label: 'Cruiser', value: 'cruiser' },
         { label: 'Mountain', value: 'mountain' },
         { label: 'Road', value: 'road' },
         { label: 'Hybrid', value: 'hybrid' },
-        { label: 'Cruiser', value: 'cruiser' },
-        { label: 'E-Bike', value: 'e-bike' },
+        { label: 'Coaster', value: 'coaster' },
         { label: 'Kids', value: 'kids' },
+        { label: 'Trail-a-Bike', value: 'trail-a-bike' },
       ],
     },
     {
@@ -43,12 +45,39 @@ export const Bikes: CollectionConfig = {
       ],
     },
     {
+      name: 'price2h',
+      type: 'number',
+      required: true,
+      min: 0,
+      admin: {
+        description: '2-hour rental rate in CAD',
+      },
+    },
+    {
+      name: 'price4h',
+      type: 'number',
+      required: true,
+      min: 0,
+      admin: {
+        description: '4-hour rental rate in CAD',
+      },
+    },
+    {
+      name: 'price8h',
+      type: 'number',
+      required: true,
+      min: 0,
+      admin: {
+        description: '8-hour (full day) rental rate in CAD',
+      },
+    },
+    {
       name: 'pricePerDay',
       type: 'number',
       required: true,
       min: 0,
       admin: {
-        description: 'Daily rental rate in CAD',
+        description: 'Multi-day rental rate per day in CAD',
       },
     },
     {

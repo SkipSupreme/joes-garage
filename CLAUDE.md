@@ -158,3 +158,15 @@ All Payload packages are pinned to `3.76.1` in `packages/cms/package.json` to pr
 ### Verified Working Pages
 - Login, Forgot Password, Dashboard, Collection List, Document Edit, Account, Site Settings
 - Mobile responsive (375px iPhone tested)
+
+---
+
+## Screenshots & Debug Artifacts
+
+**All screenshots MUST go in the `screenshots/` folder** in the project root. Do NOT save screenshots, Playwright captures, or debug images to the project root.
+
+- `screenshots/` — Dedicated folder for all debug/test screenshots
+- `.playwright-mcp/` — Playwright MCP artifacts (gitignored)
+- If the `screenshots/` folder doesn't exist, create it before saving screenshots
+- The `.gitignore` ignores `screenshots/*` contents but keeps the folder via `.gitkeep`
+- The only PNG allowed in the project root is `logo.png`

@@ -7,12 +7,13 @@ import { availabilityRouter } from './routes/availability.js';
 import { bookingsRouter } from './routes/bookings.js';
 import { waiversRouter } from './routes/waivers.js';
 import { contactRouter } from './routes/contact.js';
+import { adminRouter } from './routes/admin.js';
 import pool from './db/pool.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4321')
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4321,http://localhost:3003')
   .split(',')
   .map((o) => o.trim());
 
@@ -37,7 +38,7 @@ app.use(
 app.use(
   cors({
     origin: allowedOrigins,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PATCH'],
     allowedHeaders: ['Content-Type'],
     maxAge: 86400,
   }),
@@ -82,6 +83,7 @@ app.use('/api/availability', availabilityRouter);
 app.use('/api/bookings', bookingLimiter, bookingsRouter);
 app.use('/api/waivers', bookingLimiter, waiversRouter);
 app.use('/api/contact', bookingLimiter, contactRouter);
+app.use('/api/admin', adminRouter);
 
 // 404 handler
 app.use((_req, res) => {

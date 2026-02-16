@@ -32,6 +32,8 @@ const waiverSchema = z.object({
     }, 'Invalid date of birth'),
   consentElectronic: z.literal(true),
   consentTerms: z.literal(true),
+  isMinor: z.boolean().default(false),
+  guardianName: z.string().min(2).max(200).trim().optional(),
 });
 
 /**
@@ -62,17 +64,6 @@ waiversRouter.post('/', async (req, res) => {
     if (reservationCheck.rowCount === 0) {
       await client.query('ROLLBACK');
       res.status(404).json({ error: 'Reservation not found or hold expired' });
-      return;
-    }
-
-    // Check if waiver already exists for this reservation (prevent duplicates)
-    const existingWaiver = await client.query(
-      `SELECT id FROM bookings.waivers WHERE reservation_id = $1`,
-      [data.reservationId],
-    );
-    if (existingWaiver.rowCount && existingWaiver.rowCount > 0) {
-      await client.query('ROLLBACK');
-      res.status(409).json({ error: 'Waiver already signed for this reservation' });
       return;
     }
 
@@ -109,15 +100,31 @@ waiversRouter.post('/', async (req, res) => {
       signerUa,
     });
 
-    // Store PDF
-    const storageKey = `waivers/${data.reservationId}.pdf`;
+    // Store PDF — unique per rider (customerId) to support multiple waivers per reservation
+    const storageKey = `waivers/${data.reservationId}-${customerId}.pdf`;
     await uploadWaiverPdf(storageKey, pdfBuffer);
+
+    // Look up guardian customer if this is a minor
+    let guardianCustomerId: string | null = null;
+    if (data.isMinor && data.guardianName) {
+      // Find guardian among existing customers linked to this booking's waivers
+      const guardianResult = await client.query(
+        `SELECT c.id FROM bookings.customers c
+         JOIN bookings.waivers w ON w.customer_id = c.id
+         WHERE w.reservation_id = $1 AND c.full_name = $2
+         LIMIT 1`,
+        [data.reservationId, data.guardianName],
+      );
+      if (guardianResult.rowCount && guardianResult.rowCount > 0) {
+        guardianCustomerId = guardianResult.rows[0].id;
+      }
+    }
 
     const waiverResult = await client.query(
       `
       INSERT INTO bookings.waivers
-        (reservation_id, customer_id, pdf_storage_key, pdf_sha256, signed_at, signer_ip, signer_ua, consent_electronic, consent_terms)
-      VALUES ($1, $2, $3, $4, NOW(), $5::inet, $6, $7, $8)
+        (reservation_id, customer_id, pdf_storage_key, pdf_sha256, signed_at, signer_ip, signer_ua, consent_electronic, consent_terms, is_minor, guardian_customer_id)
+      VALUES ($1, $2, $3, $4, NOW(), $5::inet, $6, $7, $8, $9, $10)
       RETURNING id
       `,
       [
@@ -129,6 +136,8 @@ waiversRouter.post('/', async (req, res) => {
         signerUa,
         data.consentElectronic,
         data.consentTerms,
+        data.isMinor,
+        guardianCustomerId,
       ],
     );
 

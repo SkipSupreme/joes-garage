@@ -69,14 +69,35 @@ const phoneTel = 'tel:+1' + phone.replace(/[^\d]/g, '');
                 <span class="text-ink-muted">Email</span>
                 <span class="font-medium text-coal" x-text="booking.email"></span>
               </div>
+              <template x-if="booking.duration_type">
+                <div class="flex justify-between">
+                  <span class="text-ink-muted">Duration</span>
+                  <span class="font-medium text-coal" x-text="durationLabel"></span>
+                </div>
+              </template>
               <div class="flex justify-between">
-                <span class="text-ink-muted">Rental Period</span>
-                <span class="font-medium text-coal" x-text="booking.rental_dates"></span>
+                <span class="text-ink-muted">Bike</span>
+                <span class="font-medium text-coal" x-text="booking.bike_name"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-ink-muted">When</span>
+                <span class="font-medium text-coal text-right" x-text="formatPeriod(booking.rental_period)"></span>
               </div>
               <template x-if="booking.total_amount">
-                <div class="flex justify-between border-t border-parchment pt-4">
-                  <span class="font-medium text-coal">Total Charged</span>
-                  <span class="font-display font-extrabold text-coal">$<span x-text="parseFloat(booking.total_amount).toFixed(2)"></span></span>
+                <div class="border-t border-parchment pt-4 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-ink-muted">Rental (<span x-text="durationLabel"></span>)</span>
+                    <span class="font-medium text-coal">$<span x-text="parseFloat(booking.rental_amount).toFixed(2)"></span></span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-ink-muted">Security deposit <span class="text-xs">(refunded on return)</span></span>
+                    <span class="font-medium text-coal">$<span x-text="parseFloat(booking.deposit_amount).toFixed(2)"></span></span>
+                  </div>
+                  <div class="flex justify-between pt-2 border-t border-parchment">
+                    <span class="font-medium text-coal">Total pre-authorized</span>
+                    <span class="font-display font-extrabold text-coal">$<span x-text="parseFloat(booking.total_amount).toFixed(2)"></span></span>
+                  </div>
+                  <p class="text-xs text-ink-light mt-1">The $<span x-text="parseFloat(booking.deposit_amount).toFixed(2)"></span> deposit is a hold on your card and will be released when you return the bike in good condition.</p>
                 </div>
               </template>
             </div>

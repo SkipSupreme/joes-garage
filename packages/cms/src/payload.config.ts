@@ -31,6 +31,14 @@ export default buildConfig({
       },
       beforeLogin: ['/src/components/admin/BeforeLogin'],
       providers: ['/src/components/admin/DarkThemeProvider', '/src/components/admin/FileUploadFix'],
+      afterNavLinks: ['/src/components/nav/BookingsNavLink#BookingsNavLink'],
+      views: {
+        bookings: {
+          Component: '/src/components/views/Bookings/index#BookingsView',
+          path: '/bookings',
+          exact: true,
+        },
+      },
     },
   },
 

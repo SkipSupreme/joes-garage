@@ -1,0 +1,295 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const { ref } = Astro.params;
+---
+
+<Base title="Sign Waiver" description="Sign the rental waiver for your Joe's Garage bike booking.">
+
+  <!-- Waiver page header -->
+  <section class="relative overflow-hidden bg-coal py-10 sm:py-14">
+    <div class="absolute inset-0 grain"></div>
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <span class="text-sm font-medium text-red tracking-wider uppercase">Bike Rental</span>
+        <h1 class="mt-2 text-2xl sm:text-4xl font-display font-extrabold text-cream tracking-tight leading-tight">
+          Sign your <span class="text-red">waiver.</span>
+        </h1>
+        <p class="mt-2 text-base text-cream/50 max-w-xl">
+          Complete the form below to sign the rental waiver for your booking.
+        </p>
+      </div>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-cream to-transparent"></div>
+  </section>
+
+  <!-- Waiver content -->
+  <section class="py-10 sm:py-16">
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8" x-data="waiverPage" data-ref={ref}>
+
+      <!-- Loading state -->
+      <template x-if="loading">
+        <div class="text-center py-20">
+          <svg class="w-10 h-10 animate-spin text-ink-light mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          <p class="mt-4 text-ink-muted">Loading booking details...</p>
+        </div>
+      </template>
+
+      <!-- Error state (no booking) -->
+      <template x-if="!loading && error && !booking">
+        <div class="text-center py-20">
+          <svg class="w-12 h-12 text-ink-light mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+          <p class="text-ink-muted text-lg" x-text="error"></p>
+          <a href="/" class="mt-6 inline-flex items-center px-6 py-3 bg-coal text-cream font-bold rounded-xl hover:bg-coal-light transition-colors">
+            Back to Home
+          </a>
+        </div>
+      </template>
+
+      <!-- Booking found -->
+      <template x-if="!loading && booking">
+        <div class="space-y-8">
+
+          <!-- Booking summary card -->
+          <div class="rounded-2xl bg-cream-dark border border-parchment p-6">
+            <h2 class="text-sm font-display font-bold text-coal uppercase tracking-wide mb-4">Booking Details</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span class="text-ink-muted block">Confirmation</span>
+                <span class="font-mono font-bold text-coal" x-text="booking.id?.split('-')[0]?.toUpperCase()"></span>
+              </div>
+              <div>
+                <span class="text-ink-muted block">Duration</span>
+                <span class="font-medium text-coal" x-text="durationLabel"></span>
+              </div>
+              <div>
+                <span class="text-ink-muted block">Bikes</span>
+                <span class="font-medium text-coal" x-text="itemCount + ' bike' + (itemCount !== 1 ? 's' : '')"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Waiver status -->
+          <div class="rounded-2xl bg-cream-dark border border-parchment p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-display font-bold text-coal uppercase tracking-wide">Waivers Signed</h2>
+              <span
+                :class="allSigned ? 'bg-success/10 text-success' : 'bg-amber/10 text-amber'"
+                class="text-xs font-bold px-3 py-1 rounded-full"
+                x-text="waivers.length + ' / ' + itemCount"
+              ></span>
+            </div>
+
+            <!-- Signed waivers list -->
+            <template x-if="waivers.length > 0">
+              <div class="space-y-2">
+                <template x-for="w in waivers" :key="w.id">
+                  <div class="flex items-center gap-3 p-3 rounded-xl bg-white border border-parchment/60">
+                    <div class="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-coal truncate" x-text="w.full_name"></p>
+                      <p class="text-xs text-ink-light" x-text="w.email"></p>
+                    </div>
+                    <span class="text-xs text-ink-light shrink-0">Signed</span>
+                  </div>
+                </template>
+              </div>
+            </template>
+
+            <template x-if="waivers.length === 0">
+              <p class="text-sm text-ink-muted">No waivers signed yet.</p>
+            </template>
+
+            <!-- Remaining count -->
+            <template x-if="!allSigned">
+              <p class="mt-3 text-sm text-ink-muted">
+                <span class="font-medium text-coal" x-text="remainingWaivers"></span> more rider<span x-show="remainingWaivers !== 1">s</span> still need<span x-show="remainingWaivers === 1">s</span> to sign.
+              </p>
+            </template>
+          </div>
+
+          <!-- All signed message -->
+          <template x-if="allSigned">
+            <div class="text-center py-12 rounded-2xl bg-success/5 border border-success/20">
+              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mb-4">
+                <svg class="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <h3 class="text-xl font-display font-bold text-coal">All waivers complete!</h3>
+              <p class="mt-2 text-ink-muted">Everyone in the group has signed. You're ready to ride.</p>
+            </div>
+          </template>
+
+          <!-- Success message after submitting -->
+          <template x-if="successMessage">
+            <div class="p-4 rounded-xl bg-success/5 border border-success/20">
+              <p class="text-sm text-success font-medium" x-text="successMessage"></p>
+            </div>
+          </template>
+
+          <!-- Error message -->
+          <template x-if="error && booking">
+            <div class="p-4 rounded-xl bg-error/5 border border-error/15">
+              <p class="text-sm text-error" x-text="error"></p>
+            </div>
+          </template>
+
+          <!-- Waiver form (hidden when all signed) -->
+          <template x-if="!allSigned">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+              <!-- Left: Form (3/5 width) -->
+              <div class="lg:col-span-3">
+                <h2 class="text-xl font-display font-bold text-coal mb-1">Sign the Waiver</h2>
+                <p class="text-ink-muted text-sm mb-6">Fill in your details and sign below.</p>
+
+                <form @submit.prevent="submitWaiver()" class="space-y-5">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label class="block text-sm font-medium text-coal mb-1.5">Full Name</label>
+                      <input type="text" x-model="waiver.fullName" required minlength="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Your full name" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-coal mb-1.5">Email</label>
+                      <input type="email" x-model="waiver.email" required maxlength="254" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="you@email.com" />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label class="block text-sm font-medium text-coal mb-1.5">Phone</label>
+                      <input type="tel" x-model="waiver.phone" required minlength="7" maxlength="20" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="(403) 555-1234" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-coal mb-1.5">Date of Birth</label>
+                      <div class="grid grid-cols-3 gap-2">
+                        <select x-model="waiver.dobMonth" required class="w-full px-3 py-3 rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
+                          <option value="" disabled selected>Month</option>
+                          <template x-for="(name, i) in dobMonths" :key="i">
+                            <option :value="i + 1" x-text="name.slice(0, 3)"></option>
+                          </template>
+                        </select>
+                        <select x-model="waiver.dobDay" required class="w-full px-3 py-3 rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
+                          <option value="" disabled selected>Day</option>
+                          <template x-for="d in dobDays" :key="d">
+                            <option :value="d" x-text="d"></option>
+                          </template>
+                        </select>
+                        <select x-model="waiver.dobYear" required class="w-full px-3 py-3 rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
+                          <option value="" disabled selected>Year</option>
+                          <template x-for="y in dobYears" :key="y">
+                            <option :value="y" x-text="y"></option>
+                          </template>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Minor checkbox -->
+                  <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" x-model="waiver.isMinor" class="w-5 h-5 rounded border-parchment text-amber focus:ring-amber/30 accent-amber" />
+                    <span class="text-sm text-ink-muted group-hover:text-ink transition-colors">This rider is under 18 (minor)</span>
+                  </label>
+
+                  <!-- Guardian name (shown for minors) -->
+                  <template x-if="waiver.isMinor">
+                    <div>
+                      <label class="block text-sm font-medium text-coal mb-1.5">Parent / Guardian Name</label>
+                      <input type="text" x-model="waiver.guardianName" required minlength="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Guardian's full name" />
+                    </div>
+                  </template>
+
+                  <!-- Signature pad -->
+                  <div>
+                    <label class="block text-sm font-medium text-coal mb-1.5">Your Signature</label>
+                    <div class="relative rounded-xl border-2 border-dashed border-parchment bg-white overflow-hidden">
+                      <canvas
+                        id="waiver-signature-pad"
+                        class="w-full"
+                        style="height: 160px; touch-action: none;"
+                      ></canvas>
+                      <button
+                        type="button"
+                        @click="clearSignature()"
+                        class="absolute top-2 right-2 px-2.5 py-1 text-xs font-medium text-ink-muted bg-cream-dark rounded-lg hover:text-coal transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <p class="text-xs text-ink-light mt-1.5">Draw your signature above using your mouse or finger.</p>
+                  </div>
+
+                  <!-- Consent checkboxes -->
+                  <div class="space-y-3">
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                      <input type="checkbox" x-model="waiver.consentElectronic" required class="mt-0.5 w-5 h-5 rounded border-parchment text-amber focus:ring-amber/30 accent-amber" />
+                      <span class="text-sm text-ink-muted group-hover:text-ink transition-colors">I consent to sign this waiver electronically</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer group">
+                      <input type="checkbox" x-model="waiver.consentTerms" required class="mt-0.5 w-5 h-5 rounded border-parchment text-amber focus:ring-amber/30 accent-amber" />
+                      <span class="text-sm text-ink-muted group-hover:text-ink transition-colors">I have read and agree to the waiver terms</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    :disabled="submitting || !waiver.consentElectronic || !waiver.consentTerms"
+                    class="w-full px-6 py-3.5 bg-red text-cream font-bold rounded-xl hover:bg-red-light disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  >
+                    <span x-show="!submitting">Sign Waiver</span>
+                    <span x-show="submitting" x-cloak class="flex items-center gap-2">
+                      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                      Submitting...
+                    </span>
+                  </button>
+                </form>
+              </div>
+
+              <!-- Right: Waiver text sidebar (2/5 width) -->
+              <div class="lg:col-span-2">
+                <div class="lg:sticky lg:top-24 rounded-2xl bg-cream-dark border border-parchment p-6">
+                  <h3 class="text-sm font-display font-bold text-coal uppercase tracking-wide mb-4">Rental Waiver Agreement</h3>
+                  <div class="text-sm text-ink-muted leading-relaxed space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <p class="font-semibold text-coal">RELEASE OF LIABILITY, WAIVER OF CLAIMS, ASSUMPTION OF RISKS &amp; INDEMNITY AGREEMENT</p>
+
+                    <p class="font-medium text-coal">1. Assumption of Risks</p>
+                    <p>I acknowledge that renting and riding a bicycle from Joe's Garage (the "Provider"), located at 335 8 St SW, Calgary, Alberta, involves inherent risks, dangers, and hazards that may result in serious personal injury, permanent disability, or death. These risks include but are not limited to: falls, collisions with vehicles, pedestrians, or stationary objects; mechanical failure of the bicycle; unpredictable road, trail, or weather conditions; and my own physical condition and ability. I freely and voluntarily assume all such risks, both known and unknown.</p>
+
+                    <p class="font-medium text-coal">2. Release of Liability</p>
+                    <p>In consideration of being permitted to rent and use the bicycle, I (acting for myself, my heirs, executors, administrators, and assigns) hereby release, waive, and forever discharge the Provider, its owners, employees, agents, and representatives from any and all claims, demands, actions, or causes of action for personal injury, property damage, or wrongful death arising from my use of the rental bicycle, to the fullest extent permitted by the laws of the Province of Alberta.</p>
+
+                    <p class="font-medium text-coal">3. Waiver of Claims</p>
+                    <p>I waive any and all claims I may have against the Provider arising from my participation in this bicycle rental, including claims arising from the negligence of the Provider, its employees, or agents, except where such claims arise from the gross negligence or wilful misconduct of the Provider, as those terms are understood under Alberta law.</p>
+
+                    <p class="font-medium text-coal">4. Indemnity</p>
+                    <p>I agree to indemnify and hold harmless the Provider from any and all claims, actions, costs, expenses, and demands (including legal fees on a solicitor-client basis) arising from my use of the rental bicycle or my breach of this agreement, whether brought by me or any third party.</p>
+
+                    <p class="font-medium text-coal">5. Equipment Responsibility</p>
+                    <p>I accept full responsibility for the rental bicycle from the time of pickup to the time of return. I agree to inspect the bicycle before use, report any defects immediately, and return it in the same condition as received, subject to normal wear and tear. I agree to pay for repair or replacement costs for any damage, loss, or theft of the bicycle during the rental period.</p>
+
+                    <p class="font-medium text-coal">6. Safety &amp; Helmet Use</p>
+                    <p>I understand that under the <em>Traffic Safety Act</em> (Alberta), riders under the age of 18 are required by law to wear a properly fitted and fastened bicycle helmet. I agree to comply with all applicable laws and municipal bylaws of the City of Calgary while operating the rental bicycle, including but not limited to the <em>Traffic Safety Act</em> (RSA 2000, c T-6) and the <em>City of Calgary Traffic Bylaw 26M96</em>.</p>
+
+                    <p class="font-medium text-coal">7. Age &amp; Fitness</p>
+                    <p>I confirm that I am at least 18 years of age (or have the written consent of a parent or legal guardian), that I am physically capable of safely operating a bicycle, and that I am not under the influence of alcohol, drugs, or any substance that may impair my ability to ride safely.</p>
+
+                    <p class="font-medium text-coal">8. Electronic Signature</p>
+                    <p>I agree that my electronic signature below shall have the same legal force and effect as a handwritten signature, in accordance with the <em>Electronic Transactions Act</em> (SA 2001, c E-5.5) of the Province of Alberta.</p>
+
+                    <p class="font-medium text-coal">9. Governing Law &amp; Severability</p>
+                    <p>This agreement is governed by the laws of the Province of Alberta and the federal laws of Canada applicable therein. If any provision of this agreement is found to be unenforceable, the remaining provisions shall continue in full force and effect. The courts of the Province of Alberta shall have exclusive jurisdiction over any disputes arising under this agreement.</p>
+
+                    <p class="text-xs text-ink-light mt-2">By signing below, I confirm that I have read and understood this agreement in its entirety and agree to be bound by its terms.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+        </div>
+      </template>
+
+    </div>
+  </section>
+
+</Base>

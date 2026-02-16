@@ -47,15 +47,33 @@ const FROM_ADDRESS = process.env.EMAIL_FROM || 'Joe\'s Garage <bookings@joes-gar
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'joe@joes-garage.ca';
 const SHOP_PHONE = process.env.SHOP_PHONE || '(403) 555-0199';
 
+const DURATION_LABELS: Record<string, string> = {
+  '2h': '2 Hours',
+  '4h': '4 Hours',
+  '8h': 'Full Day',
+  'multi-day': 'Multi-Day',
+};
+
+interface BookingItem {
+  bikeName: string;
+  bikeType: string;
+  rentalPrice: string;
+  depositAmount: string;
+}
+
 interface BookingDetails {
   bookingId: string;
   confirmationNumber: string;
   customerName: string;
   customerEmail: string;
-  bikeName: string;
-  bikeType: string;
+  /** @deprecated Use items[] instead */
+  bikeName?: string;
+  /** @deprecated Use items[] instead */
+  bikeType?: string;
+  items?: BookingItem[];
   startDate: string;
   endDate: string;
+  durationType: string;
   totalAmount: string;
   depositAmount: string;
   waiverStorageKey?: string;
@@ -84,6 +102,29 @@ export async function sendBookingConfirmation(details: BookingDetails): Promise<
     }
   }
 
+  // Build bike rows — supports both single-bike (legacy) and multi-bike (items[])
+  const items = details.items && details.items.length > 0
+    ? details.items
+    : details.bikeName
+      ? [{ bikeName: details.bikeName, bikeType: details.bikeType || '', rentalPrice: '0', depositAmount: '0' }]
+      : [];
+
+  const isMultiBike = items.length > 1;
+
+  const bikeRowsHtml = isMultiBike
+    ? items.map((item, i) => `
+            <tr>
+              <td style="padding: 8px 0; color: #666;">${i === 0 ? 'Bikes' : ''}</td>
+              <td style="padding: 8px 0;">${escapeHtml(item.bikeName)} (${escapeHtml(item.bikeType)}) &mdash; $${item.rentalPrice} + $${item.depositAmount} deposit</td>
+            </tr>`).join('')
+    : items.length === 1
+      ? `
+            <tr>
+              <td style="padding: 8px 0; color: #666;">Bike</td>
+              <td style="padding: 8px 0;">${escapeHtml(items[0].bikeName)} (${escapeHtml(items[0].bikeType)})</td>
+            </tr>`
+      : '';
+
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
       <div style="background: #c41e1e; padding: 24px 32px; border-radius: 8px 8px 0 0;">
@@ -104,17 +145,18 @@ export async function sendBookingConfirmation(details: BookingDetails): Promise<
               <td style="padding: 8px 0; color: #666; width: 140px;">Confirmation #</td>
               <td style="padding: 8px 0; font-weight: 600; font-size: 18px; letter-spacing: 1px;">${escapeHtml(details.confirmationNumber)}</td>
             </tr>
+            ${bikeRowsHtml}
             <tr>
-              <td style="padding: 8px 0; color: #666;">Bike</td>
-              <td style="padding: 8px 0;">${escapeHtml(details.bikeName)} (${escapeHtml(details.bikeType)})</td>
+              <td style="padding: 8px 0; color: #666;">Duration</td>
+              <td style="padding: 8px 0;">${escapeHtml(DURATION_LABELS[details.durationType] || details.durationType)}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; color: #666;">Pickup Date</td>
-              <td style="padding: 8px 0;">${formatDate(details.startDate)}</td>
+              <td style="padding: 8px 0; color: #666;">Pickup</td>
+              <td style="padding: 8px 0;">${formatTimestamp(details.startDate)}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; color: #666;">Return Date</td>
-              <td style="padding: 8px 0;">${formatDate(details.endDate)}</td>
+              <td style="padding: 8px 0; color: #666;">Return</td>
+              <td style="padding: 8px 0;">${formatTimestamp(details.endDate)}</td>
             </tr>
             <tr style="border-top: 1px solid #e8e0d4;">
               <td style="padding: 12px 0 4px; color: #666;">Deposit (pre-authorized)</td>
@@ -129,7 +171,7 @@ export async function sendBookingConfirmation(details: BookingDetails): Promise<
 
         <div style="background: #fef3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 16px; margin: 0 0 24px; font-size: 14px;">
           <strong>Pickup Instructions:</strong> Please arrive at Joe's Garage with a valid photo ID.
-          We'll walk you through the bike and get you on your way!
+          We'll walk you through the bike${isMultiBike ? 's' : ''} and get you on your way!
         </div>
 
         ${details.waiverStorageKey ? '<p style="font-size: 14px; color: #666; margin: 0 0 24px;">Your signed waiver is attached to this email as a PDF for your records.</p>' : ''}
@@ -168,6 +210,26 @@ export async function sendBookingConfirmation(details: BookingDetails): Promise<
 export async function sendAdminNotification(details: BookingDetails): Promise<void> {
   const transport = await getTransporter();
 
+  // Build bike rows for admin email — supports both legacy and multi-bike
+  const adminItems = details.items && details.items.length > 0
+    ? details.items
+    : details.bikeName
+      ? [{ bikeName: details.bikeName, bikeType: details.bikeType || '', rentalPrice: '0', depositAmount: '0' }]
+      : [];
+
+  const adminBikeRowsHtml = adminItems.length > 1
+    ? adminItems.map((item, i) => `
+        <tr><td style="padding: 6px 0; color: #666;">${i === 0 ? 'Bikes' : ''}</td><td style="padding: 6px 0;">${escapeHtml(item.bikeName)} (${escapeHtml(item.bikeType)}) &mdash; $${item.rentalPrice} + $${item.depositAmount} dep.</td></tr>`).join('')
+    : adminItems.length === 1
+      ? `<tr><td style="padding: 6px 0; color: #666;">Bike</td><td style="padding: 6px 0;">${escapeHtml(adminItems[0].bikeName)} (${escapeHtml(adminItems[0].bikeType)})</td></tr>`
+      : '';
+
+  const adminSubjectBike = adminItems.length > 1
+    ? `${adminItems.length} bikes`
+    : adminItems.length === 1
+      ? escapeHtml(adminItems[0].bikeName)
+      : 'Rental';
+
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; color: #1a1a1a;">
       <h2 style="margin: 0 0 16px; color: #c41e1e;">New Bike Rental Booking</h2>
@@ -175,8 +237,9 @@ export async function sendAdminNotification(details: BookingDetails): Promise<vo
       <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
         <tr><td style="padding: 6px 0; color: #666; width: 120px;">Confirmation</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(details.confirmationNumber)}</td></tr>
         <tr><td style="padding: 6px 0; color: #666;">Customer</td><td style="padding: 6px 0;">${escapeHtml(details.customerName)} (${escapeHtml(details.customerEmail)})</td></tr>
-        <tr><td style="padding: 6px 0; color: #666;">Bike</td><td style="padding: 6px 0;">${escapeHtml(details.bikeName)} (${escapeHtml(details.bikeType)})</td></tr>
-        <tr><td style="padding: 6px 0; color: #666;">Dates</td><td style="padding: 6px 0;">${formatDate(details.startDate)} → ${formatDate(details.endDate)}</td></tr>
+        ${adminBikeRowsHtml}
+        <tr><td style="padding: 6px 0; color: #666;">Duration</td><td style="padding: 6px 0;">${escapeHtml(DURATION_LABELS[details.durationType] || details.durationType)}</td></tr>
+        <tr><td style="padding: 6px 0; color: #666;">Period</td><td style="padding: 6px 0;">${formatTimestamp(details.startDate)} &rarr; ${formatTimestamp(details.endDate)}</td></tr>
         <tr><td style="padding: 6px 0; color: #666;">Deposit</td><td style="padding: 6px 0;">$${details.depositAmount}</td></tr>
         <tr><td style="padding: 6px 0; color: #666;">Total</td><td style="padding: 6px 0; font-weight: 600;">$${details.totalAmount}</td></tr>
       </table>
@@ -188,7 +251,7 @@ export async function sendAdminNotification(details: BookingDetails): Promise<vo
   const info = await transport.sendMail({
     from: FROM_ADDRESS,
     to: ADMIN_EMAIL,
-    subject: `New Booking: ${escapeHtml(details.customerName)} — ${escapeHtml(details.bikeName)}`,
+    subject: `New Booking: ${escapeHtml(details.customerName)} — ${adminSubjectBike}`,
     html,
   });
 
@@ -271,4 +334,19 @@ function escapeHtml(str: string): string {
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00');
   return d.toLocaleDateString('en-CA', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatTimestamp(tsStr: string): string {
+  if (!tsStr) return 'N/A';
+  const d = new Date(tsStr);
+  if (isNaN(d.getTime())) return tsStr;
+  return d.toLocaleString('en-CA', {
+    timeZone: 'America/Edmonton',
+    weekday: 'short',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }

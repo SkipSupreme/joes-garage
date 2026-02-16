@@ -36,11 +36,14 @@ packages/cms/payload-types.ts
 # Branding source files (large Pixelmator files)
 *.pxd
 
-# Screenshots (debug/testing artifacts)
+# Screenshots (debug/testing artifacts — save to screenshots/ folder)
+screenshots/*
+!screenshots/.gitkeep
 *.png
 !packages/cms/media/*.png
 !public/**/*.png
 !packages/frontend/public/**/*.png
+!logo.png
 
 # Playwright MCP artifacts
 .playwright-mcp/

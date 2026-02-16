@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 ---
 
-<Base title="Book a Rental" description="Book a bike rental from Joe's Garage, Calgary. Pick your dates, choose a bike, sign the waiver, and pay — all online.">
+<Base title="Book a Rental" description="Book a bike rental from Joe's Garage, Calgary. Pick your date, choose a duration, select a bike, sign the waiver, and pay — all online.">
 
   <!-- Booking page header -->
   <section class="relative overflow-hidden bg-coal py-10 sm:py-16 lg:py-24">
@@ -15,7 +15,7 @@ import Base from '../../layouts/Base.astro';
           Book your <span class="text-red">ride.</span>
         </h1>
         <p class="mt-4 text-lg 3xl:text-xl text-cream/50 max-w-xl 3xl:max-w-2xl">
-          Pick dates, choose a bike, sign the waiver, and pay. Takes about 5 minutes.
+          Pick a date, choose how long, grab a bike. Takes about 3 minutes.
         </p>
       </div>
     </div>
@@ -28,7 +28,7 @@ import Base from '../../layouts/Base.astro';
 
       <!-- Step indicators -->
       <div class="flex items-center justify-between mb-12 3xl:mb-16">
-        <template x-for="(label, i) in ['Dates', 'Bike', 'Waiver', 'Payment']" :key="i">
+        <template x-for="(label, i) in ['When', 'Bike', 'Waiver', 'Payment']" :key="i">
           <div class="flex items-center flex-1 last:flex-none">
             <div class="flex items-center gap-2 shrink-0">
               <div
@@ -59,44 +59,104 @@ import Base from '../../layouts/Base.astro';
         </template>
       </div>
 
-      <!-- ═══ STEP 1: Date Selection ═══ -->
+      <!-- ═══ STEP 1: Date + Duration + Time Selection ═══ -->
       <div x-show="step === 1" x-transition:enter="animate-fade-up">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 3xl:gap-24 items-start">
           <!-- Left: Form -->
           <div class="rounded-2xl bg-cream-dark border border-parchment p-8 3xl:p-10">
             <h2 class="text-2xl 3xl:text-3xl font-display font-bold text-coal mb-2">When do you want to ride?</h2>
-            <p class="text-ink-muted 3xl:text-lg mb-8">Select your rental start and end dates.</p>
+            <p class="text-ink-muted 3xl:text-lg mb-8">Pick a date, choose your duration, and select a time.</p>
 
-            <div class="space-y-5">
-              <div class="grid grid-cols-2 gap-4 3xl:gap-6">
-                <div>
-                  <label for="start-date" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Start Date</label>
-                  <input
-                    type="date"
-                    id="start-date"
-                    x-model="startDate"
-                    :min="today"
-                    required
-                    class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
-                  />
+            <div class="space-y-6">
+              <!-- Date picker -->
+              <div>
+                <label for="ride-date" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Date</label>
+                <input
+                  type="date"
+                  id="ride-date"
+                  x-model="selectedDate"
+                  :min="today"
+                  required
+                  class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
+                />
+              </div>
+
+              <!-- Duration chips (2x2 grid) -->
+              <div>
+                <label class="block text-sm 3xl:text-base font-medium text-coal mb-2">How long?</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <template x-for="d in [{val: '2h', label: '2 Hours'}, {val: '4h', label: '4 Hours'}, {val: '8h', label: 'Full Day'}, {val: 'multi-day', label: 'Multi-Day'}]" :key="d.val">
+                    <button
+                      type="button"
+                      @click="duration = d.val"
+                      :class="duration === d.val
+                        ? 'border-amber bg-amber/10 text-coal ring-1 ring-amber/30'
+                        : 'border-parchment bg-white text-ink-muted hover:border-amber/30 hover:text-coal'"
+                      class="px-4 py-3 3xl:py-4 3xl:text-lg rounded-xl border font-medium text-center transition-all"
+                      x-text="d.label"
+                    ></button>
+                  </template>
                 </div>
+              </div>
+
+              <!-- Full Day info -->
+              <template x-if="isFullDay">
+                <div class="p-4 rounded-xl bg-cream-dark border border-parchment">
+                  <p class="text-sm 3xl:text-base text-coal font-medium">9:30 AM – 6:00 PM</p>
+                  <p class="text-xs 3xl:text-sm text-ink-muted mt-1">Pick up and drop off anytime within this window. Includes helmet, lock & basket.</p>
+                </div>
+              </template>
+
+              <!-- Time slot grid (2h / 4h only) -->
+              <template x-if="isHourly && duration">
+                <div>
+                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-2">Pick a start time</label>
+                  <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <template x-for="slot in availableTimeSlots" :key="slot">
+                      <button
+                        type="button"
+                        @click="startTime = slot"
+                        :class="startTime === slot
+                          ? 'border-amber bg-amber/10 text-coal ring-1 ring-amber/30 font-bold'
+                          : 'border-parchment bg-white text-ink-muted hover:border-amber/30 hover:text-coal'"
+                        class="px-2 py-2.5 3xl:py-3 3xl:text-base rounded-lg border text-sm font-medium text-center transition-all"
+                        x-text="formatTime(slot)"
+                      ></button>
+                    </template>
+                  </div>
+                  <p class="text-xs text-ink-light mt-2">10-minute grace period included for pickup and return.</p>
+                </div>
+              </template>
+
+              <!-- End date picker (multi-day only) -->
+              <template x-if="duration === 'multi-day'">
                 <div>
                   <label for="end-date" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">End Date</label>
                   <input
                     type="date"
                     id="end-date"
                     x-model="endDate"
-                    :min="startDate || today"
+                    :min="selectedDate || today"
                     required
                     class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
                   />
                 </div>
-              </div>
+              </template>
 
-              <template x-if="startDate && endDate">
+              <!-- Summary pill -->
+              <template x-if="canCheckAvailability">
                 <div class="p-4 rounded-xl bg-amber/5 border border-amber/15">
                   <p class="text-sm 3xl:text-base text-ink">
-                    <span class="font-medium" x-text="rentalDays"></span> day<span x-show="rentalDays > 1">s</span> rental
+                    <span class="font-medium" x-text="durationLabel"></span>
+                    <template x-if="isHourly">
+                      <span> starting at <span class="font-medium" x-text="formatTime(startTime)"></span></span>
+                    </template>
+                    <template x-if="isFullDay">
+                      <span> &middot; 9:30 AM – 6:00 PM</span>
+                    </template>
+                    <template x-if="duration === 'multi-day'">
+                      <span> &middot; <span class="font-medium" x-text="rentalDays"></span> day<span x-show="rentalDays > 1">s</span></span>
+                    </template>
                   </p>
                 </div>
               </template>
@@ -109,7 +169,7 @@ import Base from '../../layouts/Base.astro';
 
               <button
                 @click="checkAvailability()"
-                :disabled="!startDate || !endDate || loading || !!dateError"
+                :disabled="!canCheckAvailability || loading"
                 class="w-full px-6 py-3.5 3xl:py-4 3xl:text-lg bg-coal text-cream font-bold rounded-xl hover:bg-coal-light disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
                 <span x-show="!loading">Check Availability</span>
@@ -131,15 +191,15 @@ import Base from '../../layouts/Base.astro';
                   <div class="flex gap-4">
                     <div class="w-8 h-8 rounded-full bg-red/20 text-red flex items-center justify-center shrink-0 text-sm font-bold">1</div>
                     <div>
-                      <p class="font-medium 3xl:text-lg">Pick your dates</p>
-                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">Choose when you want to start and end your rental.</p>
+                      <p class="font-medium 3xl:text-lg">Pick your time</p>
+                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">Choose a date, duration, and start time for your rental.</p>
                     </div>
                   </div>
                   <div class="flex gap-4">
                     <div class="w-8 h-8 rounded-full bg-red/20 text-red flex items-center justify-center shrink-0 text-sm font-bold">2</div>
                     <div>
-                      <p class="font-medium 3xl:text-lg">Choose a bike</p>
-                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">Browse available bikes and pick the one that fits.</p>
+                      <p class="font-medium 3xl:text-lg">Tap a bike</p>
+                      <p class="text-sm 3xl:text-base text-cream/50 mt-1">One tap reserves it instantly. No extra steps.</p>
                     </div>
                   </div>
                   <div class="flex gap-4">
@@ -194,98 +254,129 @@ import Base from '../../layouts/Base.astro';
         </div>
       </div>
 
-      <!-- ═══ STEP 2: Bike Selection ═══ -->
+      <!-- ═══ STEP 2: Bike Selection with Cart ═══ -->
       <div x-show="step === 2" x-transition:enter="animate-fade-up">
         <div class="flex items-center justify-between mb-8 3xl:mb-12">
           <div>
-            <h2 class="text-2xl 3xl:text-3xl font-display font-bold text-coal">Pick your bike</h2>
+            <h2 class="text-2xl 3xl:text-3xl font-display font-bold text-coal">Choose your bikes</h2>
             <p class="text-ink-muted 3xl:text-lg mt-1">
-              <span x-text="bikes.length"></span> bike<span x-show="bikes.length !== 1">s</span> available for
-              <span class="font-medium text-coal" x-text="startDate"></span> to <span class="font-medium text-coal" x-text="endDate"></span>
+              <span x-text="bikes.reduce((sum, b) => sum + b.available_count, 0)"></span> bike<span x-show="bikes.reduce((sum, b) => sum + b.available_count, 0) !== 1">s</span> available &middot;
+              <span class="font-medium text-coal" x-text="durationLabel"></span>
+              <template x-if="isHourly">
+                <span> at <span class="font-medium text-coal" x-text="formatTime(startTime)"></span></span>
+              </template>
+              <template x-if="isFullDay">
+                <span class="text-ink-light"> (9:30 AM–6 PM)</span>
+              </template>
             </p>
           </div>
-          <button @click="step = 1" class="text-sm 3xl:text-base text-ink-muted hover:text-coal transition-colors flex items-center gap-1">
+          <button @click="step = 1; bikes = []; cart = [];" class="text-sm 3xl:text-base text-ink-muted hover:text-coal transition-colors flex items-center gap-1">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-            Change dates
+            Change time
           </button>
         </div>
-
-        <!-- Hold timer -->
-        <template x-if="holdExpires">
-          <div class="mb-6 p-3 rounded-xl bg-amber/5 border border-amber/15 flex items-center justify-between">
-            <span class="text-sm text-ink-muted">Hold expires in</span>
-            <span class="font-mono font-bold text-amber" x-text="holdCountdown"></span>
-          </div>
-        </template>
 
         <template x-if="bikes.length === 0">
           <div class="text-center py-16 px-8 rounded-2xl bg-cream-dark border border-parchment">
             <svg class="w-12 h-12 text-ink-light mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 16.318A4.486 4.486 0 0012.016 15a4.486 4.486 0 00-3.198 1.318M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z"/></svg>
-            <p class="text-ink-muted">No bikes available for these dates. Try different dates?</p>
-            <button @click="step = 1" class="mt-4 text-sm font-medium text-amber hover:text-amber-dark transition-colors">Change dates</button>
+            <p class="text-ink-muted">No bikes available for this time. Try a different slot?</p>
+            <button @click="step = 1" class="mt-4 text-sm font-medium text-amber hover:text-amber-dark transition-colors">Change time</button>
           </div>
         </template>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 3xl:grid-cols-3 gap-4 3xl:gap-6">
           <template x-for="bike in bikes" :key="bike.id">
             <div
-              @click="selectBike(bike)"
-              :class="selectedBike?.id === bike.id ? 'border-amber shadow-lg shadow-amber/10' : 'border-parchment hover:border-amber/30'"
-              class="group p-6 3xl:p-8 rounded-2xl bg-cream-dark border cursor-pointer transition-all duration-200"
+              :class="getCartQuantity(bike.id) > 0 ? 'border-amber ring-1 ring-amber/30' : 'border-parchment hover:border-amber/30'"
+              class="group relative p-6 3xl:p-8 rounded-2xl bg-cream-dark border transition-all duration-200"
             >
-              <!-- Bike image placeholder -->
-              <div class="aspect-[3/2] rounded-xl bg-parchment mb-4 flex items-center justify-center">
-                <svg class="w-10 h-10 text-ink-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+              <!-- Bike photo -->
+              <div class="aspect-[3/2] rounded-xl bg-white mb-4 flex items-center justify-center overflow-hidden relative">
+                <template x-if="bike.photo_url">
+                  <img :src="bike.photo_url" :alt="bike.photo_alt || bike.name" class="w-full h-full object-contain p-2" loading="lazy" />
+                </template>
+                <template x-if="!bike.photo_url">
+                  <svg class="w-10 h-10 text-ink-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
+                </template>
+                <!-- Available count badge -->
+                <div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-coal/80 text-cream text-xs font-bold backdrop-blur-sm">
+                  <span x-text="bike.available_count"></span> available
+                </div>
               </div>
               <div class="flex items-start justify-between gap-2">
                 <div>
                   <h3 class="font-display font-bold text-coal 3xl:text-lg" x-text="bike.name"></h3>
-                  <p class="text-xs 3xl:text-sm text-ink-muted mt-0.5" x-text="bike.type + ' · Size ' + bike.size"></p>
+                  <p class="text-xs 3xl:text-sm text-ink-muted mt-0.5">
+                    <span class="capitalize" x-text="bike.type"></span>
+                    <span x-show="bike.size"> &middot; </span>
+                    <span x-show="bike.size" class="capitalize" x-text="bike.size"></span>
+                  </p>
                 </div>
                 <div class="text-right">
-                  <div class="font-display font-extrabold text-coal 3xl:text-lg">$<span x-text="bike.price_per_day"></span></div>
-                  <div class="text-xs text-ink-light">/day</div>
+                  <div class="font-display font-extrabold text-coal 3xl:text-lg">$<span x-text="getRentalPriceForBike(bike).toFixed(0)"></span></div>
+                  <div class="text-xs text-ink-light" x-text="duration === 'multi-day' ? '/day' : durationLabel"></div>
                 </div>
               </div>
-              <div class="mt-3 flex items-center justify-between">
-                <span class="text-sm 3xl:text-base font-medium text-amber">
-                  $<span x-text="(bike.price_per_day * rentalDays).toFixed(2)"></span> total
-                </span>
-                <span x-show="selectedBike?.id === bike.id" class="text-xs font-bold text-amber flex items-center gap-1">
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  Selected
-                </span>
+              <template x-if="parseFloat(bike.deposit_amount) > 0">
+                <p class="text-xs text-ink-light mt-1">+ $<span x-text="parseFloat(bike.deposit_amount).toFixed(0)"></span> deposit</p>
+              </template>
+
+              <!-- Quantity controls -->
+              <div class="mt-3 pt-3 border-t border-parchment/60 flex items-center justify-between">
+                <template x-if="getCartQuantity(bike.id) === 0">
+                  <button
+                    @click="addToCart(bike)"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-coal text-cream text-sm font-semibold hover:bg-coal-light transition-all"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    Add to booking
+                  </button>
+                </template>
+                <template x-if="getCartQuantity(bike.id) > 0">
+                  <div class="w-full flex items-center justify-between">
+                    <button
+                      @click="removeFromCart(bike.id)"
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-cream border border-parchment text-coal hover:bg-parchment transition-colors"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15"/></svg>
+                    </button>
+                    <span class="font-display font-bold text-lg text-coal" x-text="getCartQuantity(bike.id)"></span>
+                    <button
+                      @click="addToCart(bike)"
+                      :disabled="getCartQuantity(bike.id) >= bike.available_count"
+                      class="w-10 h-10 flex items-center justify-center rounded-xl bg-coal text-cream hover:bg-coal-light disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    </button>
+                  </div>
+                </template>
               </div>
             </div>
           </template>
         </div>
 
-        <template x-if="selectedBike && !holdExpires">
-          <div class="mt-8 max-w-xl 3xl:max-w-2xl mx-auto">
-            <button
-              @click="createHold()"
-              :disabled="loading"
-              class="w-full px-6 py-3.5 3xl:py-4 3xl:text-lg bg-red text-cream font-bold rounded-xl hover:bg-red-light disabled:opacity-40 transition-all flex items-center justify-center gap-2"
-            >
-              <span x-show="!loading">Reserve This Bike</span>
-              <span x-show="loading" x-cloak class="flex items-center gap-2">
-                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                Reserving...
-              </span>
-            </button>
+        <!-- Sticky cart summary bar -->
+        <div x-show="cartItemCount > 0" x-transition class="sticky bottom-0 z-20 -mx-4 sm:-mx-6 lg:-mx-8 mt-6">
+          <div class="bg-coal border-t border-cream/10 px-4 sm:px-6 lg:px-8 py-4 shadow-2xl shadow-coal/50">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="text-cream text-sm sm:text-base">
+                <span class="font-semibold" x-text="cartItemCount + ' bike' + (cartItemCount > 1 ? 's' : '')"></span>
+                <span class="text-cream/50 ml-2">
+                  Rental: $<span x-text="cartTotalRental.toFixed(2)"></span>
+                  &middot; Deposit: $<span x-text="cartTotalDeposit.toFixed(2)"></span>
+                </span>
+              </div>
+              <button @click="holdCart()" :disabled="loading || cartItemCount === 0"
+                      class="w-full sm:w-auto bg-red text-cream px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-red-light disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                <span x-show="!loading">Continue to Waiver</span>
+                <span x-show="loading" x-cloak class="flex items-center gap-2">
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  Reserving...
+                </span>
+              </button>
+            </div>
           </div>
-        </template>
-
-        <template x-if="holdExpires">
-          <div class="mt-8 max-w-xl 3xl:max-w-2xl mx-auto">
-            <button
-              @click="step = 3"
-              class="w-full px-6 py-3.5 3xl:py-4 3xl:text-lg bg-red text-cream font-bold rounded-xl hover:bg-red-light transition-all"
-            >
-              Continue to Waiver
-            </button>
-          </div>
-        </template>
+        </div>
       </div>
 
       <!-- ═══ STEP 3: Waiver ═══ -->
@@ -325,7 +416,26 @@ import Base from '../../layouts/Base.astro';
                 </div>
                 <div>
                   <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Date of Birth</label>
-                  <input type="date" x-model="waiver.dateOfBirth" required class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" />
+                  <div class="grid grid-cols-3 gap-2">
+                    <select x-model="waiver.dobMonth" required class="w-full px-3 py-3 3xl:px-4 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
+                      <option value="" disabled selected>Month</option>
+                      <template x-for="(name, i) in dobMonths" :key="i">
+                        <option :value="i + 1" x-text="name.slice(0, 3)"></option>
+                      </template>
+                    </select>
+                    <select x-model="waiver.dobDay" required class="w-full px-3 py-3 3xl:px-4 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
+                      <option value="" disabled selected>Day</option>
+                      <template x-for="d in dobDays" :key="d">
+                        <option :value="d" x-text="d"></option>
+                      </template>
+                    </select>
+                    <select x-model="waiver.dobYear" required class="w-full px-3 py-3 3xl:px-4 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
+                      <option value="" disabled selected>Year</option>
+                      <template x-for="y in dobYears" :key="y">
+                        <option :value="y" x-text="y"></option>
+                      </template>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -378,6 +488,13 @@ import Base from '../../layouts/Base.astro';
                   Submitting...
                 </span>
               </button>
+
+              <template x-if="cartItemCount > 1">
+                <p class="text-sm text-ink-muted mt-4 p-4 rounded-xl bg-amber/5 border border-amber/15">
+                  Booking for a group? After completing your waiver, additional riders can sign at:
+                  <span class="text-red font-mono font-medium block mt-1" x-text="'joes-garage.ca/waiver/' + reservationId"></span>
+                </p>
+              </template>
             </form>
           </div>
 
@@ -385,11 +502,37 @@ import Base from '../../layouts/Base.astro';
           <div class="lg:col-span-2">
             <div class="lg:sticky lg:top-24 rounded-2xl bg-cream-dark border border-parchment p-6 3xl:p-8">
               <h3 class="text-sm 3xl:text-base font-display font-bold text-coal uppercase tracking-wide mb-4">Rental Waiver Agreement</h3>
-              <div class="text-sm 3xl:text-base text-ink-muted leading-relaxed space-y-4 max-h-[60vh] overflow-y-auto">
-                <p>By signing this waiver, I acknowledge that cycling involves inherent risks including but not limited to falls, collisions, and equipment failure. I agree to wear a helmet at all times while riding a rental bicycle from Joe's Garage.</p>
-                <p>I accept full responsibility for the rental bicycle during the rental period and agree to return it in the same condition. I agree to pay for any damages beyond normal wear and tear.</p>
-                <p>Joe's Garage is not responsible for personal injury, property damage, or theft during the rental period.</p>
-                <p>I confirm that I am physically able to operate a bicycle safely and that I am at least 18 years of age (or have parental/guardian consent).</p>
+              <div class="text-sm 3xl:text-base text-ink-muted leading-relaxed space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <p class="font-semibold text-coal">RELEASE OF LIABILITY, WAIVER OF CLAIMS, ASSUMPTION OF RISKS &amp; INDEMNITY AGREEMENT</p>
+
+                <p class="font-medium text-coal">1. Assumption of Risks</p>
+                <p>I acknowledge that renting and riding a bicycle from Joe's Garage (the "Provider"), located at 335 8 St SW, Calgary, Alberta, involves inherent risks, dangers, and hazards that may result in serious personal injury, permanent disability, or death. These risks include but are not limited to: falls, collisions with vehicles, pedestrians, or stationary objects; mechanical failure of the bicycle; unpredictable road, trail, or weather conditions; and my own physical condition and ability. I freely and voluntarily assume all such risks, both known and unknown.</p>
+
+                <p class="font-medium text-coal">2. Release of Liability</p>
+                <p>In consideration of being permitted to rent and use the bicycle, I (acting for myself, my heirs, executors, administrators, and assigns) hereby release, waive, and forever discharge the Provider, its owners, employees, agents, and representatives from any and all claims, demands, actions, or causes of action for personal injury, property damage, or wrongful death arising from my use of the rental bicycle, to the fullest extent permitted by the laws of the Province of Alberta.</p>
+
+                <p class="font-medium text-coal">3. Waiver of Claims</p>
+                <p>I waive any and all claims I may have against the Provider arising from my participation in this bicycle rental, including claims arising from the negligence of the Provider, its employees, or agents, except where such claims arise from the gross negligence or wilful misconduct of the Provider, as those terms are understood under Alberta law.</p>
+
+                <p class="font-medium text-coal">4. Indemnity</p>
+                <p>I agree to indemnify and hold harmless the Provider from any and all claims, actions, costs, expenses, and demands (including legal fees on a solicitor-client basis) arising from my use of the rental bicycle or my breach of this agreement, whether brought by me or any third party.</p>
+
+                <p class="font-medium text-coal">5. Equipment Responsibility</p>
+                <p>I accept full responsibility for the rental bicycle from the time of pickup to the time of return. I agree to inspect the bicycle before use, report any defects immediately, and return it in the same condition as received, subject to normal wear and tear. I agree to pay for repair or replacement costs for any damage, loss, or theft of the bicycle during the rental period.</p>
+
+                <p class="font-medium text-coal">6. Safety &amp; Helmet Use</p>
+                <p>I understand that under the <em>Traffic Safety Act</em> (Alberta), riders under the age of 18 are required by law to wear a properly fitted and fastened bicycle helmet. I agree to comply with all applicable laws and municipal bylaws of the City of Calgary while operating the rental bicycle, including but not limited to the <em>Traffic Safety Act</em> (RSA 2000, c T-6) and the <em>City of Calgary Traffic Bylaw 26M96</em>.</p>
+
+                <p class="font-medium text-coal">7. Age &amp; Fitness</p>
+                <p>I confirm that I am at least 18 years of age (or have the written consent of a parent or legal guardian), that I am physically capable of safely operating a bicycle, and that I am not under the influence of alcohol, drugs, or any substance that may impair my ability to ride safely.</p>
+
+                <p class="font-medium text-coal">8. Electronic Signature</p>
+                <p>I agree that my electronic signature below shall have the same legal force and effect as a handwritten signature, in accordance with the <em>Electronic Transactions Act</em> (SA 2001, c E-5.5) of the Province of Alberta.</p>
+
+                <p class="font-medium text-coal">9. Governing Law &amp; Severability</p>
+                <p>This agreement is governed by the laws of the Province of Alberta and the federal laws of Canada applicable therein. If any provision of this agreement is found to be unenforceable, the remaining provisions shall continue in full force and effect. The courts of the Province of Alberta shall have exclusive jurisdiction over any disputes arising under this agreement.</p>
+
+                <p class="text-xs text-ink-light mt-2">By signing below, I confirm that I have read and understood this agreement in its entirety and agree to be bound by its terms.</p>
               </div>
             </div>
           </div>
@@ -407,37 +550,58 @@ import Base from '../../layouts/Base.astro';
             <h3 class="text-sm 3xl:text-base font-display font-bold text-coal uppercase tracking-wide mb-4">Order Summary</h3>
             <div class="space-y-3 text-sm 3xl:text-base">
               <div class="flex justify-between">
-                <span class="text-ink-muted">Bike</span>
-                <span class="font-medium text-coal" x-text="selectedBike?.name"></span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-ink-muted">Dates</span>
-                <span class="font-medium text-coal" x-text="startDate + ' → ' + endDate"></span>
-              </div>
-              <div class="flex justify-between">
                 <span class="text-ink-muted">Duration</span>
-                <span class="font-medium text-coal"><span x-text="rentalDays"></span> days</span>
+                <span class="font-medium text-coal" x-text="durationLabel"></span>
               </div>
+              <template x-if="isHourly">
+                <div class="flex justify-between">
+                  <span class="text-ink-muted">Date & Time</span>
+                  <span class="font-medium text-coal" x-text="selectedDate + ' at ' + formatTime(startTime)"></span>
+                </div>
+              </template>
+              <template x-if="isFullDay">
+                <div class="flex justify-between">
+                  <span class="text-ink-muted">Date</span>
+                  <span class="font-medium text-coal"><span x-text="selectedDate"></span> <span class="text-ink-light text-xs">(9:30 AM–6 PM)</span></span>
+                </div>
+              </template>
+              <template x-if="duration === 'multi-day'">
+                <div class="flex justify-between">
+                  <span class="text-ink-muted">Dates</span>
+                  <span class="font-medium text-coal" x-text="selectedDate + ' &rarr; ' + endDate"></span>
+                </div>
+              </template>
               <div class="border-t border-parchment my-3"></div>
-              <div class="flex justify-between">
-                <span class="text-ink-muted">Rental (<span x-text="rentalDays"></span> x $<span x-text="selectedBike?.price_per_day"></span>)</span>
-                <span class="font-medium text-coal">$<span x-text="(selectedBike?.price_per_day * rentalDays).toFixed(2)"></span></span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-ink-muted">Security Deposit</span>
-                <span class="font-medium text-coal">$<span x-text="selectedBike?.deposit_amount?.toFixed(2) || '0.00'"></span></span>
+              <!-- Bikes in cart -->
+              <template x-for="item in cart" :key="item.bike.id">
+                <div class="flex justify-between py-1">
+                  <span class="text-ink-muted" x-text="item.bike.name + (item.quantity > 1 ? ' &times; ' + item.quantity : '')"></span>
+                  <span class="font-medium text-coal" x-text="'$' + (getRentalPriceForBike(item.bike) * item.quantity).toFixed(2)"></span>
+                </div>
+              </template>
+              <div class="flex justify-between border-t border-parchment pt-2 mt-2">
+                <span class="text-ink-muted">Security Deposits</span>
+                <span class="font-medium text-coal" x-text="'$' + cartTotalDeposit.toFixed(2)"></span>
               </div>
               <div class="border-t border-parchment my-3"></div>
               <div class="flex justify-between text-base 3xl:text-lg">
                 <span class="font-bold text-coal">Total</span>
-                <span class="font-display font-extrabold text-coal">$<span x-text="totalAmount.toFixed(2)"></span></span>
+                <span class="font-display font-extrabold text-coal">$<span x-text="cartTotal.toFixed(2)"></span></span>
               </div>
             </div>
-            <p class="mt-4 text-xs 3xl:text-sm text-ink-light">Deposit is pre-authorized and refunded upon bike return in good condition.</p>
+            <p class="mt-4 text-xs 3xl:text-sm text-ink-light">Deposits are pre-authorized and refunded upon bike return in good condition.</p>
           </div>
 
           <!-- Right: Payment -->
           <div>
+            <!-- Hold timer -->
+            <template x-if="holdExpires">
+              <div class="mb-6 p-3 rounded-xl bg-amber/5 border border-amber/15 flex items-center justify-between">
+                <span class="text-sm text-ink-muted">Hold expires in</span>
+                <span class="font-mono font-bold text-amber" x-text="holdCountdown"></span>
+              </div>
+            </template>
+
             <!-- Moneris iframe placeholder -->
             <div class="rounded-xl border border-parchment bg-white p-6 mb-6">
               <div class="text-center py-8">
@@ -458,7 +622,7 @@ import Base from '../../layouts/Base.astro';
               :disabled="loading"
               class="w-full px-6 py-4 3xl:py-5 3xl:text-xl bg-amber text-coal font-bold text-lg rounded-xl hover:bg-amber-light hover:shadow-xl hover:shadow-amber/20 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
             >
-              <span x-show="!loading">Pay $<span x-text="totalAmount.toFixed(2)"></span></span>
+              <span x-show="!loading">Pay $<span x-text="cartTotal.toFixed(2)"></span></span>
               <span x-show="loading" x-cloak class="flex items-center gap-2">
                 <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 Processing...

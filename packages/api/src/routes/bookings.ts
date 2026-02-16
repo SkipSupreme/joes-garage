@@ -8,28 +8,58 @@ import { getWaiverPdf } from '../services/storage.js';
 export const bookingsRouter: IRouter = Router();
 
 const MAX_RENTAL_DAYS = 30;
+const TIMEZONE = 'America/Edmonton';
+const DURATION_HOURS: Record<string, number> = { '2h': 2, '4h': 4, '8h': 8 };
+
+/**
+ * Map duration type → price column in the bikes table.
+ */
+const PRICE_COLUMN: Record<string, string> = {
+  '2h': 'price2h',
+  '4h': 'price4h',
+  '8h': 'price8h',
+  'multi-day': 'price_per_day',
+};
+
+const DURATION_LABELS: Record<string, string> = {
+  '2h': '2 Hours',
+  '4h': '4 Hours',
+  '8h': 'Full Day',
+  'multi-day': 'Multi-Day',
+};
 
 const holdSchema = z
   .object({
-    bikeId: z.number().int().positive(),
-    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    bikes: z.array(z.object({ bikeId: z.number().int().positive() })).min(1).max(10),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    duration: z.enum(['2h', '4h', '8h', 'multi-day']),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   })
   .refine(
     (data) => {
-      const start = new Date(data.startDate);
-      const end = new Date(data.endDate);
+      if (data.duration === 'multi-day') return !!data.endDate;
+      if (data.duration === '8h') return true; // Full Day uses fixed shop hours
+      return !!data.startTime;
+    },
+    { message: '2h/4h rentals require startTime; multi-day requires endDate' },
+  )
+  .refine(
+    (data) => {
+      const start = new Date(data.date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
       if (start < today) return false;
-      if (end < start) return false;
-      const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-      if (diffDays > MAX_RENTAL_DAYS) return false;
 
+      if (data.duration === 'multi-day' && data.endDate) {
+        const end = new Date(data.endDate);
+        if (end < start) return false;
+        const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays > MAX_RENTAL_DAYS) return false;
+      }
       return true;
     },
-    { message: `Invalid date range. Start must be today or later. Max rental: ${MAX_RENTAL_DAYS} days.` },
+    { message: `Invalid dates. Start must be today or later. Max rental: ${MAX_RENTAL_DAYS} days.` },
   );
 
 const paySchema = z.object({
@@ -40,55 +70,186 @@ const paySchema = z.object({
 const uuidParam = z.string().uuid();
 
 /**
+ * Build TSTZRANGE start/end strings from hold params.
+ */
+function buildRangeBounds(
+  date: string,
+  duration: string,
+  startTime?: string,
+  endDate?: string,
+): { rangeStart: string; rangeEnd: string } {
+  if (duration === 'multi-day') {
+    const end = new Date(endDate!);
+    end.setDate(end.getDate() + 1);
+    return {
+      rangeStart: `${date} 00:00`,
+      rangeEnd: `${end.toISOString().split('T')[0]} 00:00`,
+    };
+  }
+
+  if (duration === '8h') {
+    // Full Day: fixed shop hours 9:30 AM – 6:00 PM
+    return {
+      rangeStart: `${date} 09:30`,
+      rangeEnd: `${date} 18:00`,
+    };
+  }
+
+  // Hourly (2h/4h)
+  const hours = DURATION_HOURS[duration];
+  const [h, m] = startTime!.split(':').map(Number);
+  const endH = h + hours;
+  const rangeStart = `${date} ${startTime}`;
+  let rangeEnd: string;
+
+  if (endH >= 24) {
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + 1);
+    rangeEnd = `${nextDate.toISOString().split('T')[0]} ${String(endH - 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  } else {
+    rangeEnd = `${date} ${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  return { rangeStart, rangeEnd };
+}
+
+/**
  * POST /api/bookings/hold
- * Creates a 15-minute hold on a bike for the given date range.
+ * Creates a 15-minute hold on one or more bikes for the given period.
+ * Accepts both old format { bikeId, ... } and new format { bikes: [{ bikeId }], ... }
  */
 bookingsRouter.post('/hold', async (req, res) => {
+  // Backward compat: normalize old single-bike format to new multi-bike format
+  if (req.body.bikeId && !req.body.bikes) {
+    req.body.bikes = [{ bikeId: req.body.bikeId }];
+    delete req.body.bikeId;
+  }
+
   const parsed = holdSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
     return;
   }
 
-  const { bikeId, startDate, endDate } = parsed.data;
+  const { bikes, date, duration, startTime, endDate } = parsed.data;
+  const priceCol = PRICE_COLUMN[duration];
+  const bikeIds = bikes.map((b) => b.bikeId);
+
+  // Check for duplicate bike IDs in the request
+  if (new Set(bikeIds).size !== bikeIds.length) {
+    res.status(400).json({ error: 'Duplicate bike IDs in request' });
+    return;
+  }
+
+  const client = await pool.connect();
 
   try {
-    const bikeCheck = await pool.query(
-      `SELECT id, price_per_day, deposit_amount FROM bikes WHERE id = $1 AND status = 'available'`,
-      [bikeId],
+    await client.query('BEGIN');
+
+    // Fetch all requested bikes in one query
+    const bikeCheck = await client.query(
+      `SELECT id, ${priceCol} AS rental_price, price8h, price_per_day, deposit_amount
+       FROM bikes WHERE id = ANY($1) AND status = 'available'`,
+      [bikeIds],
     );
-    if (bikeCheck.rowCount === 0) {
-      res.status(404).json({ error: 'Bike not found or not available' });
+
+    if (bikeCheck.rowCount !== bikeIds.length) {
+      const foundIds = new Set(bikeCheck.rows.map((b: any) => b.id));
+      const missing = bikeIds.filter((id) => !foundIds.has(id));
+      await client.query('ROLLBACK');
+      res.status(404).json({ error: `Bike(s) not found or not available: ${missing.join(', ')}` });
       return;
     }
 
-    const bike = bikeCheck.rows[0];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const rentalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-    const totalAmount = parseFloat(bike.price_per_day) * rentalDays + parseFloat(bike.deposit_amount);
+    const { rangeStart, rangeEnd } = buildRangeBounds(date, duration, startTime, endDate);
 
-    const result = await pool.query(
+    // Calculate per-bike costs and totals
+    const bikeMap = new Map(bikeCheck.rows.map((b: any) => [b.id, b]));
+    let totalRentalCost = 0;
+    let totalDeposit = 0;
+
+    interface BikeItem {
+      bikeId: number;
+      rentalPrice: number;
+      depositAmount: number;
+    }
+    const itemDetails: BikeItem[] = [];
+
+    for (const bikeId of bikeIds) {
+      const bike = bikeMap.get(bikeId)!;
+      let rentalCost: number;
+      if (duration === 'multi-day') {
+        const start = new Date(date);
+        const end = new Date(endDate!);
+        const rentalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+        const firstDay = parseFloat(bike.price8h);
+        const additionalRate = parseFloat(bike.price_per_day);
+        rentalCost = firstDay + additionalRate * Math.max(0, rentalDays - 1);
+      } else {
+        rentalCost = parseFloat(bike.rental_price);
+      }
+      const deposit = parseFloat(bike.deposit_amount);
+      totalRentalCost += rentalCost;
+      totalDeposit += deposit;
+      itemDetails.push({ bikeId, rentalPrice: rentalCost, depositAmount: deposit });
+    }
+
+    const totalAmount = totalRentalCost + totalDeposit;
+
+    // Create the reservation (bike_id set to first bike for legacy compat)
+    const result = await client.query(
       `
-      INSERT INTO bookings.reservations (bike_id, rental_dates, status, hold_expires, total_amount, deposit_amount)
-      VALUES ($1, daterange($2::date, $3::date, '[]'), 'hold', NOW() + INTERVAL '15 minutes', $4, $5)
+      INSERT INTO bookings.reservations (bike_id, rental_period, duration_type, status, hold_expires, total_amount, deposit_amount)
+      VALUES (
+        $1,
+        tstzrange($2::timestamp AT TIME ZONE $6, $3::timestamp AT TIME ZONE $6, '[)'),
+        $4,
+        'hold',
+        NOW() + INTERVAL '15 minutes',
+        $5,
+        $7
+      )
       RETURNING id, hold_expires
       `,
-      [bikeId, startDate, endDate, totalAmount, bike.deposit_amount],
+      [bikeIds[0], rangeStart, rangeEnd, duration, totalAmount, TIMEZONE, totalDeposit],
     );
 
     const reservation = result.rows[0];
+    const reservationId = reservation.id;
+
+    // Create reservation_items (one per bike)
+    for (const item of itemDetails) {
+      await client.query(
+        `
+        INSERT INTO bookings.reservation_items (reservation_id, bike_id, rental_period, rental_price, deposit_amount)
+        VALUES (
+          $1,
+          $2,
+          tstzrange($3::timestamp AT TIME ZONE $6, $4::timestamp AT TIME ZONE $6, '[)'),
+          $5,
+          $7
+        )
+        `,
+        [reservationId, item.bikeId, rangeStart, rangeEnd, item.rentalPrice, TIMEZONE, item.depositAmount],
+      );
+    }
+
+    await client.query('COMMIT');
+
     res.status(201).json({
-      reservationId: reservation.id,
+      reservationId,
       holdExpiresAt: reservation.hold_expires,
     });
   } catch (err: any) {
+    await client.query('ROLLBACK');
     if (err.code === '23P01') {
-      res.status(409).json({ error: 'This bike is no longer available for the selected dates' });
+      res.status(409).json({ error: 'One or more bikes are no longer available for the selected time' });
       return;
     }
     console.error('Hold creation error:', err);
     res.status(500).json({ error: 'Failed to create hold' });
+  } finally {
+    client.release();
   }
 });
 
@@ -110,13 +271,9 @@ bookingsRouter.post('/pay', async (req, res) => {
     await client.query('BEGIN');
 
     const holdCheck = await client.query(
-      `SELECT r.*, w.id AS waiver_id, w.pdf_storage_key,
-              c.full_name AS customer_name, c.email AS customer_email,
-              b.name AS bike_name, b.type AS bike_type
+      `SELECT r.*, c.full_name AS customer_name, c.email AS customer_email
        FROM bookings.reservations r
-       LEFT JOIN bookings.waivers w ON w.reservation_id = r.id
        LEFT JOIN bookings.customers c ON r.customer_id = c.id
-       LEFT JOIN bikes b ON b.id = r.bike_id
        WHERE r.id = $1 AND r.status = 'hold' AND r.hold_expires > NOW()
        FOR UPDATE OF r`,
       [reservationId],
@@ -130,11 +287,17 @@ bookingsRouter.post('/pay', async (req, res) => {
 
     const reservation = holdCheck.rows[0];
 
-    if (!reservation.waiver_id) {
+    // Check at least one waiver exists
+    const waiverCheck = await client.query(
+      `SELECT w.id, w.pdf_storage_key FROM bookings.waivers w WHERE w.reservation_id = $1 LIMIT 1`,
+      [reservationId],
+    );
+    if (waiverCheck.rowCount === 0) {
       await client.query('ROLLBACK');
       res.status(400).json({ error: 'Waiver must be signed before payment' });
       return;
     }
+    const firstWaiver = waiverCheck.rows[0];
 
     // Pre-authorize the deposit via Moneris
     const amount = parseFloat(reservation.deposit_amount || reservation.total_amount);
@@ -166,25 +329,58 @@ bookingsRouter.post('/pay', async (req, res) => {
       status: 'paid',
     });
 
-    // Extract date range from the reservation's rental_dates
-    const rentalDates = reservation.rental_dates;
-    // PostgreSQL daterange comes back as "[2025-07-01,2025-07-04)" or similar
-    const dateMatch = rentalDates?.match(/[\[(]([\d-]+),([\d-]+)[)\]]/);
-    const startDate = dateMatch?.[1] || '';
-    const endDate = dateMatch?.[2] || '';
+    // Extract period from the reservation's rental_period
+    // PostgreSQL tstzrange comes back as ["2026-07-01 16:00:00+00","2026-07-01 20:00:00+00")
+    const rentalPeriod = reservation.rental_period;
+    const periodMatch = rentalPeriod?.match(/[\[(]([\d\s:.+-]+),([\d\s:.+-]+)[)\]]/);
+    const startTimestamp = periodMatch?.[1]?.trim() || '';
+    const endTimestamp = periodMatch?.[2]?.trim() || '';
+
+    // Fetch all bikes from reservation_items for the email
+    const itemsResult = await pool.query(
+      `SELECT ri.rental_price, ri.deposit_amount, b.name AS bike_name, b.type AS bike_type
+       FROM bookings.reservation_items ri
+       JOIN bikes b ON b.id = ri.bike_id
+       WHERE ri.reservation_id = $1
+       ORDER BY ri.created_at`,
+      [reservationId],
+    );
+
+    const items = itemsResult.rows.map((row: any) => ({
+      bikeName: row.bike_name,
+      bikeType: row.bike_type,
+      rentalPrice: parseFloat(row.rental_price).toFixed(2),
+      depositAmount: parseFloat(row.deposit_amount).toFixed(2),
+    }));
+
+    // Fallback to legacy bike_id join if no reservation_items exist (old bookings)
+    let legacyBikeName: string | undefined;
+    let legacyBikeType: string | undefined;
+    if (items.length === 0 && reservation.bike_id) {
+      const legacyBike = await pool.query(
+        `SELECT name, type FROM bikes WHERE id = $1`,
+        [reservation.bike_id],
+      );
+      if (legacyBike.rowCount && legacyBike.rowCount > 0) {
+        legacyBikeName = legacyBike.rows[0].name;
+        legacyBikeType = legacyBike.rows[0].type;
+      }
+    }
 
     const emailDetails = {
       bookingId: reservationId,
       confirmationNumber,
       customerName: reservation.customer_name || 'Customer',
       customerEmail: reservation.customer_email || '',
-      bikeName: reservation.bike_name || 'Rental Bike',
-      bikeType: reservation.bike_type || '',
-      startDate,
-      endDate,
+      items: items.length > 0 ? items : undefined,
+      bikeName: legacyBikeName || (items.length === 1 ? items[0].bikeName : undefined),
+      bikeType: legacyBikeType || (items.length === 1 ? items[0].bikeType : undefined),
+      startDate: startTimestamp,
+      endDate: endTimestamp,
+      durationType: reservation.duration_type || 'multi-day',
       totalAmount: parseFloat(reservation.total_amount).toFixed(2),
       depositAmount: parseFloat(reservation.deposit_amount).toFixed(2),
-      waiverStorageKey: reservation.pdf_storage_key || undefined,
+      waiverStorageKey: firstWaiver.pdf_storage_key || undefined,
     };
 
     // Fire-and-forget: don't await, just log failures
@@ -212,7 +408,7 @@ bookingsRouter.post('/pay', async (req, res) => {
 bookingsRouter.get('/admin/list', async (_req, res) => {
   try {
     const result = await pool.query(
-      `SELECT r.id, r.bike_id, r.rental_dates, r.status, r.total_amount, r.deposit_amount,
+      `SELECT r.id, r.bike_id, r.rental_period, r.duration_type, r.status, r.total_amount, r.deposit_amount,
               r.created_at, r.hold_expires,
               c.full_name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
               b.name AS bike_name, b.type AS bike_type,
@@ -236,6 +432,7 @@ bookingsRouter.get('/admin/list', async (_req, res) => {
 /**
  * GET /api/bookings/:id
  * Returns booking confirmation details (limited public info).
+ * Includes items[] array with per-bike details for multi-bike bookings.
  */
 bookingsRouter.get('/:id', async (req, res) => {
   const idParsed = uuidParam.safeParse(req.params.id);
@@ -247,7 +444,9 @@ bookingsRouter.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT r.id, r.bike_id, r.rental_dates, r.status, r.total_amount,
+      SELECT r.id, r.bike_id, r.rental_period, r.duration_type, r.status,
+             r.total_amount, r.deposit_amount,
+             (r.total_amount - r.deposit_amount) AS rental_amount,
              r.created_at, c.full_name, c.email,
              b.name AS bike_name, b.type AS bike_type
       FROM bookings.reservations r
@@ -263,7 +462,22 @@ bookingsRouter.get('/:id', async (req, res) => {
       return;
     }
 
-    res.json(result.rows[0]);
+    // Fetch reservation items for multi-bike details
+    const itemsResult = await pool.query(
+      `SELECT ri.bike_id, ri.rental_price, ri.deposit_amount,
+              b.name AS bike_name, b.type AS bike_type
+       FROM bookings.reservation_items ri
+       JOIN bikes b ON b.id = ri.bike_id
+       WHERE ri.reservation_id = $1
+       ORDER BY ri.created_at`,
+      [idParsed.data],
+    );
+
+    const booking = result.rows[0];
+    booking.items = itemsResult.rows;
+    booking.item_count = itemsResult.rows.length || 1; // At least 1 (legacy single-bike)
+
+    res.json(booking);
   } catch (err) {
     console.error('Booking fetch error:', err);
     res.status(500).json({ error: 'Failed to fetch booking' });
@@ -416,4 +630,3 @@ bookingsRouter.get('/:id/waiver', async (req, res) => {
     res.status(500).json({ error: 'Failed to download waiver' });
   }
 });
-
