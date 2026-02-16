@@ -97,15 +97,17 @@ availabilityRouter.get('/', async (req, res) => {
         FROM bikes b
         LEFT JOIN media m ON m.id = b.photo_id
         WHERE b.status = 'available'
-          AND b.id NOT IN (
-            SELECT r.bike_id
-            FROM bookings.reservations r
-            WHERE r.rental_period && tstzrange(
-              ($1::timestamp AT TIME ZONE $3),
-              ($2::timestamp AT TIME ZONE $3),
-              '[)'
-            )
-            AND r.status NOT IN ('cancelled')
+          AND NOT EXISTS (
+            SELECT 1
+            FROM bookings.reservation_items ri
+            JOIN bookings.reservations r ON r.id = ri.reservation_id
+            WHERE ri.bike_id = b.id
+              AND ri.rental_period && tstzrange(
+                ($1::timestamp AT TIME ZONE $3),
+                ($2::timestamp AT TIME ZONE $3),
+                '[)'
+              )
+              AND r.status NOT IN ('cancelled')
           )
       )
       SELECT name, type, size,

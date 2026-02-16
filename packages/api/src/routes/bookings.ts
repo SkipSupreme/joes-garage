@@ -452,7 +452,7 @@ bookingsRouter.get('/:id', async (req, res) => {
       FROM bookings.reservations r
       LEFT JOIN bookings.customers c ON r.customer_id = c.id
       LEFT JOIN bikes b ON b.id = r.bike_id
-      WHERE r.id = $1 AND r.status IN ('paid', 'active', 'completed')
+      WHERE r.id = $1 AND r.status IN ('hold', 'paid', 'active', 'completed')
       `,
       [idParsed.data],
     );
@@ -473,9 +473,20 @@ bookingsRouter.get('/:id', async (req, res) => {
       [idParsed.data],
     );
 
+    // Fetch waivers for this booking (needed by QR waiver page)
+    const waiversResult = await pool.query(
+      `SELECT w.id, w.signed_at, w.is_minor, c.full_name, c.email
+       FROM bookings.waivers w
+       JOIN bookings.customers c ON w.customer_id = c.id
+       WHERE w.reservation_id = $1
+       ORDER BY w.created_at`,
+      [idParsed.data],
+    );
+
     const booking = result.rows[0];
     booking.items = itemsResult.rows;
     booking.item_count = itemsResult.rows.length || 1; // At least 1 (legacy single-bike)
+    booking.waivers = waiversResult.rows;
 
     res.json(booking);
   } catch (err) {

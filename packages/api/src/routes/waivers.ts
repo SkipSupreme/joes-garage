@@ -56,14 +56,20 @@ waiversRouter.post('/', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Verify reservation exists and is in hold status
+    // Verify reservation exists and accepts waivers (hold with active timer, paid, or active)
     const reservationCheck = await client.query(
-      `SELECT id FROM bookings.reservations WHERE id = $1 AND status = 'hold' AND hold_expires > NOW() FOR UPDATE`,
+      `SELECT id FROM bookings.reservations
+       WHERE id = $1
+         AND (
+           (status = 'hold' AND hold_expires > NOW())
+           OR status IN ('paid', 'active')
+         )
+       FOR UPDATE`,
       [data.reservationId],
     );
     if (reservationCheck.rowCount === 0) {
       await client.query('ROLLBACK');
-      res.status(404).json({ error: 'Reservation not found or hold expired' });
+      res.status(404).json({ error: 'Reservation not found or no longer accepting waivers' });
       return;
     }
 
