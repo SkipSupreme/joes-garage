@@ -33,6 +33,7 @@ interface DetailNote {
 
 interface BookingDetailData {
   id: string
+  booking_ref: string
   customer_id: string
   rental_period: string
   duration_type: string
@@ -181,7 +182,7 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
     setNoteText('')
   }
 
-  const shortRef = bookingId.slice(0, 8).toUpperCase()
+  const displayRef = detail?.booking_ref || bookingId.slice(0, 8).toUpperCase()
   const [start, end] = detail ? parseTstzrange(detail.rental_period) : [null, null]
 
   return (
@@ -189,7 +190,7 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
       {/* Header */}
       <div className="booking-detail__header">
         <div className="booking-detail__header-left">
-          <h2 className="booking-detail__ref">#{`JG-${shortRef}`}</h2>
+          <h2 className="booking-detail__ref">#{displayRef}</h2>
           {detail && (
             <>
               <StatusBadge status={detail.status} isOverdue={detail.is_overdue} />

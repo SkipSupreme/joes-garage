@@ -209,7 +209,7 @@ bookingsRouter.post('/hold', async (req, res) => {
         $5,
         $7
       )
-      RETURNING id, hold_expires
+      RETURNING id, booking_ref, hold_expires
       `,
       [bikeIds[0], rangeStart, rangeEnd, duration, totalAmount, TIMEZONE, totalDeposit],
     );
@@ -238,6 +238,7 @@ bookingsRouter.post('/hold', async (req, res) => {
 
     res.status(201).json({
       reservationId,
+      bookingRef: reservation.booking_ref,
       holdExpiresAt: reservation.hold_expires,
     });
   } catch (err: any) {
@@ -432,19 +433,27 @@ bookingsRouter.get('/admin/list', async (_req, res) => {
 /**
  * GET /api/bookings/:id
  * Returns booking confirmation details (limited public info).
+ * Accepts UUID or short booking_ref (e.g. "A3F2XY").
  * Includes items[] array with per-bike details for multi-bike bookings.
  */
 bookingsRouter.get('/:id', async (req, res) => {
-  const idParsed = uuidParam.safeParse(req.params.id);
-  if (!idParsed.success) {
-    res.status(400).json({ error: 'Invalid booking ID' });
+  const param = req.params.id;
+  const isUuid = uuidParam.safeParse(param).success;
+  const isRef = /^[A-Z0-9]{6}$/i.test(param);
+
+  if (!isUuid && !isRef) {
+    res.status(400).json({ error: 'Invalid booking ID or reference' });
     return;
   }
 
   try {
+    const whereClause = isUuid
+      ? 'r.id = $1'
+      : 'UPPER(r.booking_ref) = UPPER($1)';
+
     const result = await pool.query(
       `
-      SELECT r.id, r.bike_id, r.rental_period, r.duration_type, r.status,
+      SELECT r.id, r.booking_ref, r.bike_id, r.rental_period, r.duration_type, r.status,
              r.total_amount, r.deposit_amount,
              (r.total_amount - r.deposit_amount) AS rental_amount,
              r.created_at, c.full_name, c.email,
@@ -452,15 +461,17 @@ bookingsRouter.get('/:id', async (req, res) => {
       FROM bookings.reservations r
       LEFT JOIN bookings.customers c ON r.customer_id = c.id
       LEFT JOIN bikes b ON b.id = r.bike_id
-      WHERE r.id = $1 AND r.status IN ('hold', 'paid', 'active', 'completed')
+      WHERE ${whereClause} AND r.status IN ('hold', 'paid', 'active', 'completed')
       `,
-      [idParsed.data],
+      [param],
     );
 
     if (result.rowCount === 0) {
       res.status(404).json({ error: 'Booking not found' });
       return;
     }
+
+    const bookingId = result.rows[0].id;
 
     // Fetch reservation items for multi-bike details
     const itemsResult = await pool.query(
@@ -470,7 +481,7 @@ bookingsRouter.get('/:id', async (req, res) => {
        JOIN bikes b ON b.id = ri.bike_id
        WHERE ri.reservation_id = $1
        ORDER BY ri.created_at`,
-      [idParsed.data],
+      [bookingId],
     );
 
     // Fetch waivers for this booking (needed by QR waiver page)
@@ -480,7 +491,7 @@ bookingsRouter.get('/:id', async (req, res) => {
        JOIN bookings.customers c ON w.customer_id = c.id
        WHERE w.reservation_id = $1
        ORDER BY w.created_at`,
-      [idParsed.data],
+      [bookingId],
     );
 
     const booking = result.rows[0];

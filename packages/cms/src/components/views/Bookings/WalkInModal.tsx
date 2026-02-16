@@ -45,7 +45,7 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
   const [loading, setLoading] = useState(false)
   const [fetchingBikes, setFetchingBikes] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<{ reservationId: string; waiverUrl: string } | null>(null)
+  const [result, setResult] = useState<{ reservationId: string; bookingRef: string; waiverUrl: string } | null>(null)
 
   // Fetch available bikes when duration changes
   useEffect(() => {
@@ -164,6 +164,7 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
       const data = await res.json()
       setResult({
         reservationId: data.reservationId,
+        bookingRef: data.bookingRef,
         waiverUrl: data.waiverUrl,
       })
       setStep(3)
@@ -372,13 +373,13 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
               </div>
               <h3 className="walk-in-modal__success-title">Walk-in Created</h3>
               <p className="walk-in-modal__success-ref">
-                Booking #{result.reservationId.slice(0, 8).toUpperCase()}
+                Booking #{result.bookingRef}
               </p>
               <div className="walk-in-modal__waiver-section">
                 <p className="walk-in-modal__label">Waiver Link</p>
-                <code className="walk-in-modal__waiver-url">{result.waiverUrl}</code>
+                <code className="walk-in-modal__waiver-url">joes-garage.ca{result.waiverUrl}</code>
                 <p className="walk-in-modal__waiver-hint">
-                  Share this link with the customer to sign their waiver.
+                  Tell the customer to visit the link above, or scan the QR code at the counter.
                 </p>
               </div>
             </div>

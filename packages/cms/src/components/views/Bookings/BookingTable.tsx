@@ -202,11 +202,13 @@ export const BookingTable: React.FC<BookingTableProps> = ({
                     <td>
                       <StatusBadge status={booking.status} isOverdue={booking.is_overdue} />
                     </td>
-                    <td className="booking-table__customer">
-                      <span className="booking-table__customer-name">{booking.customer_name || 'Unknown'}</span>
-                      {booking.source === 'walk-in' && (
-                        <span className="booking-table__source-tag">walk-in</span>
-                      )}
+                    <td>
+                      <div className="booking-table__customer">
+                        <span className="booking-table__customer-name">{booking.customer_name || 'Unknown'}</span>
+                        {booking.source === 'walk-in' && (
+                          <span className="booking-table__source-tag">walk-in</span>
+                        )}
+                      </div>
                     </td>
                     <td>{summarizeBikes(booking.items || [])}</td>
                     <td>{DURATION_LABELS[booking.duration_type] || booking.duration_type}</td>

@@ -181,16 +181,10 @@ adminRouter.get('/bookings', async (req, res) => {
     conditions.push(`upper(r.rental_period) < NOW()`);
   }
 
-  // Search filter
+  // Search filter (name, email, phone, booking ref, or UUID)
   if (search && search.trim()) {
     const searchTerm = `%${search.trim()}%`;
-    // Check if search looks like a UUID (or partial UUID)
-    const isUuidSearch = /^[0-9a-f-]{4,}$/i.test(search.trim());
-    if (isUuidSearch) {
-      conditions.push(`(c.full_name ILIKE $${paramIdx} OR c.email ILIKE $${paramIdx} OR c.phone ILIKE $${paramIdx} OR r.id::text ILIKE $${paramIdx})`);
-    } else {
-      conditions.push(`(c.full_name ILIKE $${paramIdx} OR c.email ILIKE $${paramIdx} OR c.phone ILIKE $${paramIdx})`);
-    }
+    conditions.push(`(c.full_name ILIKE $${paramIdx} OR c.email ILIKE $${paramIdx} OR c.phone ILIKE $${paramIdx} OR r.booking_ref ILIKE $${paramIdx} OR r.id::text ILIKE $${paramIdx})`);
     params.push(searchTerm);
     paramIdx++;
   }
@@ -212,7 +206,7 @@ adminRouter.get('/bookings', async (req, res) => {
     // Fetch bookings with items and waivers as JSON sub-arrays
     const bookingsResult = await pool.query(
       `SELECT
-        r.id, r.customer_id, r.rental_period, r.duration_type, r.status, r.source,
+        r.id, r.booking_ref, r.customer_id, r.rental_period, r.duration_type, r.status, r.source,
         r.hold_expires, r.total_amount, r.deposit_amount, r.created_at, r.updated_at,
         c.full_name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
         (SELECT COUNT(*)::int FROM bookings.reservation_items ri WHERE ri.reservation_id = r.id) AS item_count,
@@ -275,7 +269,7 @@ adminRouter.get('/bookings/:id', async (req, res) => {
     // Reservation + customer
     const resResult = await pool.query(
       `SELECT
-        r.id, r.customer_id, r.bike_id, r.rental_period, r.duration_type, r.status, r.source,
+        r.id, r.booking_ref, r.customer_id, r.bike_id, r.rental_period, r.duration_type, r.status, r.source,
         r.hold_expires, r.payment_token, r.moneris_txn, r.total_amount, r.deposit_amount,
         r.created_at, r.updated_at,
         c.full_name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
@@ -810,10 +804,11 @@ adminRouter.post('/walk-in', async (req, res) => {
          (customer_id, rental_period, duration_type, status, source, total_amount, deposit_amount)
        VALUES
          ($1, tstzrange($2::timestamptz, $3::timestamptz, '[)'), $4, 'active', 'walk-in', $5, $6)
-       RETURNING id`,
+       RETURNING id, booking_ref`,
       [customerId, now.toISOString(), endTime.toISOString(), duration, totalAmount, totalDeposit],
     );
     const reservationId = resResult.rows[0].id;
+    const bookingRef = resResult.rows[0].booking_ref;
 
     // Create reservation_items with checked_out_at = NOW()
     for (const bike of bikesResult.rows) {
@@ -830,8 +825,9 @@ adminRouter.post('/walk-in', async (req, res) => {
 
     res.status(201).json({
       reservationId,
+      bookingRef,
       status: 'active',
-      waiverUrl: `/waiver/${reservationId}`,
+      waiverUrl: `/waiver/${bookingRef}`,
       totalAmount: totalAmount.toFixed(2),
       returnTime: endTime.toISOString(),
     });
