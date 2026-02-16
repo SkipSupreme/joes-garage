@@ -50,3 +50,7 @@ screenshots/*
 
 # Network logs
 network-log.txt
+
+# Waiver PDF storage (local dev)
+storage/
+packages/api/storage/

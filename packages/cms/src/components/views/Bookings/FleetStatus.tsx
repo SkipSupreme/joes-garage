@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
+import { adminFetch } from './adminFetch'
 
 interface FleetType {
   type: string
@@ -21,7 +22,7 @@ export const FleetStatus: React.FC<FleetStatusProps> = ({ apiUrl, visible }) => 
 
   const fetchFleet = useCallback(async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/admin/fleet`)
+      const res = await adminFetch(`${apiUrl}/api/admin/fleet`)
       if (!res.ok) throw new Error('Failed to fetch fleet')
       const data = await res.json()
       setFleet(data.fleet || [])

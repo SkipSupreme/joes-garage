@@ -16,7 +16,6 @@
     "@types/alpinejs": "^3.13.0",
     "alpinejs": "^3.14.0",
     "astro": "^5.2.0",
-    "flatpickr": "^4.6.13",
     "signature_pad": "^5.0.0"
   },
   "devDependencies": {

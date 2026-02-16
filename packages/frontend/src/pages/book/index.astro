@@ -232,6 +232,14 @@ import Base from '../../layouts/Base.astro';
                     Free cancellation anytime
                   </div>
                 </div>
+
+                <div class="mt-6 pt-4 border-t border-cream/10">
+                  <p class="text-sm text-cream/50">
+                    Coming with a group?
+                    <a href="/waiver" class="text-red hover:underline">Sign your waivers ahead of time</a>
+                    to speed things up at the shop.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -492,7 +500,7 @@ import Base from '../../layouts/Base.astro';
               <template x-if="cartItemCount > 1">
                 <p class="text-sm text-ink-muted mt-4 p-4 rounded-xl bg-amber/5 border border-amber/15">
                   Booking for a group? After completing your waiver, additional riders can sign at:
-                  <span class="text-red font-mono font-medium block mt-1" x-text="'joes-garage.ca/waiver/' + reservationId"></span>
+                  <span class="text-red font-mono font-medium block mt-1" x-text="bookingRef ? 'joes-garage.ca/waiver/' + bookingRef + '?token=' + bookingToken : 'joes-garage.ca/waiver/' + reservationId"></span>
                 </p>
               </template>
             </form>

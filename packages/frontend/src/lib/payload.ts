@@ -164,9 +164,19 @@ export async function getSiteSettings() {
   if (settings.waiverText && typeof settings.waiverText === 'object' && settings.waiverText.root) {
     settings.waiverText = lexicalToHtml(settings.waiverText);
   }
-  // Normalize logo
-  if (settings.logo?.url?.startsWith('/')) {
-    settings.logo = { ...settings.logo, url: `${PAYLOAD_URL}${settings.logo.url}` };
+  // Normalize logo URLs (main + generated sizes)
+  if (settings.logo) {
+    if (settings.logo.url?.startsWith('/')) {
+      settings.logo = { ...settings.logo, url: `${PAYLOAD_URL}${settings.logo.url}` };
+    }
+    if (settings.logo.sizes) {
+      for (const key of Object.keys(settings.logo.sizes)) {
+        const size = settings.logo.sizes[key];
+        if (size?.url?.startsWith('/')) {
+          settings.logo.sizes[key] = { ...size, url: `${PAYLOAD_URL}${size.url}` };
+        }
+      }
+    }
   }
   return settings;
 }

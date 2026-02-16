@@ -8,6 +8,7 @@ import { bookingsRouter } from './routes/bookings.js';
 import { waiversRouter } from './routes/waivers.js';
 import { contactRouter } from './routes/contact.js';
 import { adminRouter } from './routes/admin.js';
+import { adminAuth } from './middleware/adminAuth.js';
 import pool from './db/pool.js';
 
 const app = express();
@@ -39,7 +40,7 @@ app.use(
   cors({
     origin: allowedOrigins,
     methods: ['GET', 'POST', 'PATCH'],
-    allowedHeaders: ['Content-Type'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400,
   }),
 );
@@ -69,6 +70,15 @@ const bookingLimiter = rateLimit({
   message: { error: 'Too many booking attempts, please try again later' },
 });
 
+// Admin rate limiter: 30 requests per minute per IP
+const adminLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many admin requests, please try again later' },
+});
+
 // Health check (no rate limit)
 app.get('/api/health', async (_req, res) => {
   try {
@@ -83,7 +93,7 @@ app.use('/api/availability', availabilityRouter);
 app.use('/api/bookings', bookingLimiter, bookingsRouter);
 app.use('/api/waivers', bookingLimiter, waiversRouter);
 app.use('/api/contact', bookingLimiter, contactRouter);
-app.use('/api/admin', adminRouter);
+app.use('/api/admin', adminLimiter, adminAuth, adminRouter);
 
 // 404 handler
 app.use((_req, res) => {

@@ -1,10 +1,13 @@
 import { type Router as IRouter, Router } from 'express';
+import crypto from 'crypto';
 import { z } from 'zod';
 import pool from '../db/pool.js';
+import { capture, voidTransaction } from '../services/moneris.js';
+import { getWaiverPdf } from '../services/storage.js';
+import { generateBookingToken } from './bookings.js';
+import { TIMEZONE, DURATION_HOURS, PRICE_COLUMN } from '../constants.js';
 
 export const adminRouter: IRouter = Router();
-
-const TIMEZONE = 'America/Edmonton';
 
 // ── Validation schemas ──────────────────────────────────────────────────────
 
@@ -49,9 +52,6 @@ const walkInSchema = z.object({
   }),
 });
 
-const DURATION_HOURS: Record<string, number> = { '2h': 2, '4h': 4, '8h': 8 };
-const PRICE_COLUMN: Record<string, string> = { '2h': 'price2h', '4h': 'price4h', '8h': 'price8h' };
-
 // ── 1. GET /dashboard ───────────────────────────────────────────────────────
 
 adminRouter.get('/dashboard', async (_req, res) => {
@@ -71,8 +71,8 @@ adminRouter.get('/dashboard', async (_req, res) => {
          WHERE r.status = 'active'
            AND ri.checked_out_at IS NOT NULL
            AND ri.checked_in_at IS NULL
-           AND upper(ri.rental_period) >= DATE_TRUNC('day', NOW() AT TIME ZONE '${TIMEZONE}') AT TIME ZONE '${TIMEZONE}'
-           AND upper(ri.rental_period) < (DATE_TRUNC('day', NOW() AT TIME ZONE '${TIMEZONE}') + INTERVAL '1 day') AT TIME ZONE '${TIMEZONE}'
+           AND upper(ri.rental_period) >= DATE_TRUNC('day', NOW() AT TIME ZONE $1) AT TIME ZONE $1
+           AND upper(ri.rental_period) < (DATE_TRUNC('day', NOW() AT TIME ZONE $1) + INTERVAL '1 day') AT TIME ZONE $1
         )::int AS returns_due_today,
 
         -- Overdue: past return time
@@ -89,7 +89,7 @@ adminRouter.get('/dashboard', async (_req, res) => {
 
         -- Total fleet
         (SELECT COUNT(*) FROM bikes)::int AS total_fleet
-    `);
+    `, [TIMEZONE]);
 
     const stats = statsResult.rows[0];
 
@@ -116,19 +116,29 @@ adminRouter.get('/dashboard', async (_req, res) => {
       SELECT
         r.id AS reservation_id,
         c.full_name AS customer_name,
-        (SELECT COUNT(*) FROM bookings.reservation_items ri WHERE ri.reservation_id = r.id)::int AS item_count,
-        (SELECT COUNT(*) FROM bookings.waivers w WHERE w.reservation_id = r.id)::int AS waiver_count
+        COUNT(DISTINCT ri.id)::int AS item_count,
+        COUNT(DISTINCT w.id)::int AS waiver_count
       FROM bookings.reservations r
       LEFT JOIN bookings.customers c ON r.customer_id = c.id
+      LEFT JOIN bookings.reservation_items ri ON ri.reservation_id = r.id
+      LEFT JOIN bookings.waivers w ON w.reservation_id = r.id
       WHERE r.status IN ('hold', 'paid')
         AND lower(r.rental_period) >= NOW()
         AND lower(r.rental_period) <= NOW() + INTERVAL '24 hours'
-        AND (SELECT COUNT(*) FROM bookings.waivers w WHERE w.reservation_id = r.id)
-          < (SELECT COUNT(*) FROM bookings.reservation_items ri WHERE ri.reservation_id = r.id)
+      GROUP BY r.id, c.full_name
+      HAVING COUNT(DISTINCT w.id) < COUNT(DISTINCT ri.id)
+    `);
+
+    // Unlinked waivers signed today (available to attach to bookings)
+    const unlinkedResult = await pool.query(`
+      SELECT COUNT(*)::int AS count
+      FROM bookings.waivers
+      WHERE reservation_id IS NULL
+        AND signed_at::date = CURRENT_DATE
     `);
 
     res.json({
-      stats,
+      stats: { ...stats, waivers_ready: unlinkedResult.rows[0].count },
       alerts: {
         overdue: overdueResult.rows,
         unsigned_waivers: unsignedResult.rows,
@@ -145,7 +155,7 @@ adminRouter.get('/dashboard', async (_req, res) => {
 adminRouter.get('/bookings', async (req, res) => {
   const parsed = bookingsQuerySchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid query parameters', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid query parameters' });
     return;
   }
 
@@ -173,8 +183,10 @@ adminRouter.get('/bookings', async (req, res) => {
 
   // Date filter
   if (date === 'today') {
-    conditions.push(`lower(r.rental_period) >= DATE_TRUNC('day', NOW() AT TIME ZONE '${TIMEZONE}') AT TIME ZONE '${TIMEZONE}'`);
-    conditions.push(`lower(r.rental_period) < (DATE_TRUNC('day', NOW() AT TIME ZONE '${TIMEZONE}') + INTERVAL '1 day') AT TIME ZONE '${TIMEZONE}'`);
+    conditions.push(`lower(r.rental_period) >= DATE_TRUNC('day', NOW() AT TIME ZONE $${paramIdx}) AT TIME ZONE $${paramIdx}`);
+    conditions.push(`lower(r.rental_period) < (DATE_TRUNC('day', NOW() AT TIME ZONE $${paramIdx}) + INTERVAL '1 day') AT TIME ZONE $${paramIdx}`);
+    params.push(TIMEZONE);
+    paramIdx++;
   } else if (date === 'upcoming') {
     conditions.push(`lower(r.rental_period) > NOW()`);
   } else if (date === 'past') {
@@ -270,7 +282,7 @@ adminRouter.get('/bookings/:id', async (req, res) => {
     const resResult = await pool.query(
       `SELECT
         r.id, r.booking_ref, r.customer_id, r.bike_id, r.rental_period, r.duration_type, r.status, r.source,
-        r.hold_expires, r.payment_token, r.moneris_txn, r.total_amount, r.deposit_amount,
+        r.hold_expires, r.total_amount, r.deposit_amount,
         r.created_at, r.updated_at,
         c.full_name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
         c.date_of_birth AS customer_dob
@@ -292,6 +304,7 @@ adminRouter.get('/bookings/:id', async (req, res) => {
       `SELECT
         ri.id, ri.bike_id, ri.rental_period, ri.rental_price, ri.deposit_amount,
         ri.checked_out_at, ri.checked_in_at, ri.created_at,
+        upper(ri.rental_period) AS return_time,
         b.name AS bike_name, b.type AS bike_type, b.size AS bike_size
       FROM bookings.reservation_items ri
       LEFT JOIN bikes b ON b.id = ri.bike_id
@@ -328,7 +341,8 @@ adminRouter.get('/bookings/:id', async (req, res) => {
       (item: any) =>
         item.checked_out_at &&
         !item.checked_in_at &&
-        new Date(item.rental_period.replace(/[\[\(]"?/, '').split(',')[1].replace(/["\]\)]/, '').trim()) < new Date(),
+        item.return_time &&
+        new Date(item.return_time) < new Date(),
     );
 
     res.json({
@@ -352,9 +366,9 @@ adminRouter.patch('/bookings/:id/check-out', async (req, res) => {
     res.status(400).json({ error: 'Invalid booking ID' });
     return;
   }
-  const parsed = checkOutSchema.safeParse(req.body);
+  const parsed = checkOutSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
@@ -381,6 +395,19 @@ adminRouter.patch('/bookings/:id/check-out', async (req, res) => {
       await client.query('ROLLBACK');
       res.status(400).json({ error: `Cannot check out from '${status}' status. Booking must be 'paid' or 'active'.` });
       return;
+    }
+
+    // Lock items to prevent concurrent check-out race conditions
+    if (itemIds && itemIds.length > 0) {
+      await client.query(
+        `SELECT id FROM bookings.reservation_items WHERE reservation_id = $1 AND id = ANY($2) FOR UPDATE`,
+        [reservationId, itemIds],
+      );
+    } else {
+      await client.query(
+        `SELECT id FROM bookings.reservation_items WHERE reservation_id = $1 AND checked_out_at IS NULL FOR UPDATE`,
+        [reservationId],
+      );
     }
 
     // Update items
@@ -441,9 +468,9 @@ adminRouter.patch('/bookings/:id/check-in', async (req, res) => {
     res.status(400).json({ error: 'Invalid booking ID' });
     return;
   }
-  const parsed = checkInSchema.safeParse(req.body);
+  const parsed = checkInSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
@@ -469,6 +496,19 @@ adminRouter.patch('/bookings/:id/check-in', async (req, res) => {
       await client.query('ROLLBACK');
       res.status(400).json({ error: `Cannot check in from '${resCheck.rows[0].status}' status. Booking must be 'active'.` });
       return;
+    }
+
+    // Lock items to prevent concurrent check-in race conditions
+    if (itemIds && itemIds.length > 0) {
+      await client.query(
+        `SELECT id FROM bookings.reservation_items WHERE reservation_id = $1 AND id = ANY($2) FOR UPDATE`,
+        [reservationId, itemIds],
+      );
+    } else {
+      await client.query(
+        `SELECT id FROM bookings.reservation_items WHERE reservation_id = $1 AND checked_out_at IS NOT NULL AND checked_in_at IS NULL FOR UPDATE`,
+        [reservationId],
+      );
     }
 
     // Check in items (only those that have been checked out)
@@ -555,41 +595,54 @@ adminRouter.patch('/bookings/:id/cancel', async (req, res) => {
     res.status(400).json({ error: 'Invalid booking ID' });
     return;
   }
-  const parsed = cancelSchema.safeParse(req.body);
+  const parsed = cancelSchema.safeParse(req.body ?? {});
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
   const reservationId = idParsed.data;
   const { reason } = parsed.data;
+  const client = await pool.connect();
 
   try {
-    const result = await pool.query(
-      `UPDATE bookings.reservations
-       SET status = 'cancelled', updated_at = NOW()
-       WHERE id = $1 AND status IN ('hold', 'paid')
-       RETURNING id`,
+    await client.query('BEGIN');
+
+    const resCheck = await client.query(
+      `SELECT id, status FROM bookings.reservations WHERE id = $1 FOR UPDATE`,
       [reservationId],
     );
-
-    if (result.rowCount === 0) {
-      res.status(400).json({ error: 'Booking not found or cannot be cancelled from current status (must be hold or paid)' });
+    if (resCheck.rowCount === 0) {
+      await client.query('ROLLBACK');
+      res.status(404).json({ error: 'Booking not found' });
+      return;
+    }
+    if (!['hold', 'paid'].includes(resCheck.rows[0].status)) {
+      await client.query('ROLLBACK');
+      res.status(400).json({ error: 'Booking cannot be cancelled from current status (must be hold or paid)' });
       return;
     }
 
-    // Add cancellation note if reason provided
+    await client.query(
+      `UPDATE bookings.reservations SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
+      [reservationId],
+    );
+
     if (reason) {
-      await pool.query(
+      await client.query(
         `INSERT INTO bookings.notes (reservation_id, text, created_by) VALUES ($1, $2, 'admin')`,
         [reservationId, `Cancelled: ${reason}`],
       );
     }
 
+    await client.query('COMMIT');
     res.json({ status: 'cancelled' });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Cancel error:', err);
     res.status(500).json({ error: 'Failed to cancel booking' });
+  } finally {
+    client.release();
   }
 });
 
@@ -603,7 +656,7 @@ adminRouter.patch('/bookings/:id/extend', async (req, res) => {
   }
   const parsed = extendSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
@@ -685,7 +738,7 @@ adminRouter.post('/bookings/:id/note', async (req, res) => {
   }
   const parsed = noteSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
@@ -724,19 +777,18 @@ adminRouter.post('/bookings/:id/note', async (req, res) => {
 adminRouter.post('/walk-in', async (req, res) => {
   const parsed = walkInSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
   const { bikes, duration, customer } = parsed.data;
-  const priceCol = PRICE_COLUMN[duration];
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
     // Create/upsert customer
-    const email = customer.email || `walkin-${Date.now()}@placeholder.local`;
+    const email = customer.email || `walkin-${crypto.randomUUID()}@placeholder.local`;
     const customerResult = await client.query(
       `INSERT INTO bookings.customers (full_name, email, phone)
        VALUES ($1, $2, $3)
@@ -750,9 +802,15 @@ adminRouter.post('/walk-in', async (req, res) => {
     // Fetch bike prices and validate availability
     const bikeIds = bikes.map((b) => b.bikeId);
     const bikesResult = await client.query(
-      `SELECT id, name, ${priceCol} AS rental_price, deposit_amount, status
+      `SELECT id, name,
+        CASE $2
+          WHEN '2h' THEN price2h
+          WHEN '4h' THEN price4h
+          WHEN '8h' THEN price8h
+        END AS rental_price,
+        deposit_amount, status
        FROM bikes WHERE id = ANY($1)`,
-      [bikeIds],
+      [bikeIds, duration],
     );
 
     if (bikesResult.rowCount !== bikeIds.length) {
@@ -823,11 +881,14 @@ adminRouter.post('/walk-in', async (req, res) => {
 
     await client.query('COMMIT');
 
+    const bookingToken = generateBookingToken(bookingRef);
+
     res.status(201).json({
       reservationId,
       bookingRef,
+      bookingToken,
       status: 'active',
-      waiverUrl: `/waiver/${bookingRef}`,
+      waiverUrl: `/waiver/${bookingRef}?token=${bookingToken}`,
       totalAmount: totalAmount.toFixed(2),
       returnTime: endTime.toISOString(),
     });
@@ -896,5 +957,239 @@ adminRouter.get('/fleet', async (_req, res) => {
   } catch (err) {
     console.error('Fleet status error:', err);
     res.status(500).json({ error: 'Failed to load fleet status' });
+  }
+});
+
+// ── 11. GET /waivers/unlinked ─────────────────────────────────────────────
+
+adminRouter.get('/waivers/unlinked', async (_req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        w.id AS waiver_id,
+        c.full_name,
+        c.email,
+        c.phone,
+        w.signed_at,
+        w.is_minor
+      FROM bookings.waivers w
+      JOIN bookings.customers c ON w.customer_id = c.id
+      WHERE w.reservation_id IS NULL
+        AND w.signed_at::date = CURRENT_DATE
+      ORDER BY w.signed_at DESC
+    `);
+    res.json({ waivers: result.rows });
+  } catch (err) {
+    console.error('Unlinked waivers error:', err);
+    res.status(500).json({ error: 'Failed to fetch unlinked waivers' });
+  }
+});
+
+// ── 12. PATCH /bookings/:id/link-waivers ─────────────────────────────────
+
+const linkWaiversSchema = z.object({
+  waiverIds: z.array(z.string().uuid()).min(1).max(20),
+});
+
+adminRouter.patch('/bookings/:id/link-waivers', async (req, res) => {
+  const idParsed = uuidParam.safeParse(req.params.id);
+  if (!idParsed.success) {
+    res.status(400).json({ error: 'Invalid booking ID' });
+    return;
+  }
+  const parsed = linkWaiversSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid request' });
+    return;
+  }
+
+  const reservationId = idParsed.data;
+  const { waiverIds } = parsed.data;
+
+  try {
+    const resCheck = await pool.query(
+      `SELECT id FROM bookings.reservations WHERE id = $1`,
+      [reservationId],
+    );
+    if (resCheck.rowCount === 0) {
+      res.status(404).json({ error: 'Booking not found' });
+      return;
+    }
+
+    const updateResult = await pool.query(
+      `UPDATE bookings.waivers
+       SET reservation_id = $1
+       WHERE id = ANY($2)
+         AND reservation_id IS NULL
+       RETURNING id`,
+      [reservationId, waiverIds],
+    );
+
+    // Link first waiver's customer to reservation if it has no customer yet
+    if (updateResult.rowCount && updateResult.rowCount > 0) {
+      const firstWaiver = await pool.query(
+        `SELECT customer_id FROM bookings.waivers WHERE id = $1`,
+        [updateResult.rows[0].id],
+      );
+      if (firstWaiver.rows[0]?.customer_id) {
+        await pool.query(
+          `UPDATE bookings.reservations
+           SET customer_id = COALESCE(customer_id, $2), updated_at = NOW()
+           WHERE id = $1`,
+          [reservationId, firstWaiver.rows[0].customer_id],
+        );
+      }
+    }
+
+    res.json({
+      linked: updateResult.rowCount || 0,
+      message: `${updateResult.rowCount || 0} waiver(s) linked to booking`,
+    });
+  } catch (err) {
+    console.error('Link waivers error:', err);
+    res.status(500).json({ error: 'Failed to link waivers' });
+  }
+});
+
+// ── 13. POST /bookings/:id/capture — Capture pre-authorized payment ────
+
+adminRouter.post('/bookings/:id/capture', async (req, res) => {
+  const idParsed = uuidParam.safeParse(req.params.id);
+  if (!idParsed.success) {
+    res.status(400).json({ error: 'Invalid booking ID' });
+    return;
+  }
+
+  try {
+    const reservation = await pool.query(
+      `SELECT id, moneris_txn, deposit_amount FROM bookings.reservations WHERE id = $1 AND status = 'paid'`,
+      [idParsed.data],
+    );
+    if (reservation.rowCount === 0) {
+      res.status(404).json({ error: 'Booking not found or not in paid state' });
+      return;
+    }
+
+    const { moneris_txn, deposit_amount } = reservation.rows[0];
+    const result = await capture(moneris_txn, parseFloat(deposit_amount));
+
+    if (!result.success) {
+      res.status(500).json({ error: result.message || 'Capture failed' });
+      return;
+    }
+
+    await pool.query(
+      `UPDATE bookings.reservations SET status = 'active', updated_at = NOW() WHERE id = $1`,
+      [idParsed.data],
+    );
+
+    res.json({ status: 'captured' });
+  } catch (err) {
+    console.error('Capture error:', err);
+    res.status(500).json({ error: 'Failed to capture payment' });
+  }
+});
+
+// ── 14. POST /bookings/:id/void — Void pre-authorized payment ──────────
+
+adminRouter.post('/bookings/:id/void', async (req, res) => {
+  const idParsed = uuidParam.safeParse(req.params.id);
+  if (!idParsed.success) {
+    res.status(400).json({ error: 'Invalid booking ID' });
+    return;
+  }
+
+  try {
+    const reservation = await pool.query(
+      `SELECT id, moneris_txn FROM bookings.reservations WHERE id = $1 AND status = 'paid'`,
+      [idParsed.data],
+    );
+    if (reservation.rowCount === 0) {
+      res.status(404).json({ error: 'Booking not found or not in paid state' });
+      return;
+    }
+
+    const result = await voidTransaction(reservation.rows[0].moneris_txn);
+
+    if (!result.success) {
+      res.status(500).json({ error: result.message || 'Void failed' });
+      return;
+    }
+
+    await pool.query(
+      `UPDATE bookings.reservations SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
+      [idParsed.data],
+    );
+
+    res.json({ status: 'voided' });
+  } catch (err) {
+    console.error('Void error:', err);
+    res.status(500).json({ error: 'Failed to void payment' });
+  }
+});
+
+// ── 15. POST /bookings/:id/complete — Mark rental as returned ───────────
+
+adminRouter.post('/bookings/:id/complete', async (req, res) => {
+  const idParsed = uuidParam.safeParse(req.params.id);
+  if (!idParsed.success) {
+    res.status(400).json({ error: 'Invalid booking ID' });
+    return;
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE bookings.reservations SET status = 'completed', updated_at = NOW()
+       WHERE id = $1 AND status IN ('paid', 'active')
+       RETURNING id`,
+      [idParsed.data],
+    );
+
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: 'Booking not found or not in completable state' });
+      return;
+    }
+
+    res.json({ status: 'completed' });
+  } catch (err) {
+    console.error('Complete booking error:', err);
+    res.status(500).json({ error: 'Failed to complete booking' });
+  }
+});
+
+// ── 16. GET /bookings/:id/waiver — Download signed waiver PDF ───────────
+
+adminRouter.get('/bookings/:id/waiver', async (req, res) => {
+  const idParsed = uuidParam.safeParse(req.params.id);
+  if (!idParsed.success) {
+    res.status(400).json({ error: 'Invalid booking ID' });
+    return;
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT w.pdf_storage_key, c.full_name
+       FROM bookings.waivers w
+       JOIN bookings.reservations r ON r.id = w.reservation_id
+       LEFT JOIN bookings.customers c ON w.customer_id = c.id
+       WHERE r.id = $1`,
+      [idParsed.data],
+    );
+
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: 'Waiver not found for this booking' });
+      return;
+    }
+
+    const { pdf_storage_key, full_name } = result.rows[0];
+    const pdfBuffer = await getWaiverPdf(pdf_storage_key);
+    const safeName = (full_name || 'waiver').replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="waiver-${safeName}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Waiver download error:', err);
+    res.status(500).json({ error: 'Failed to download waiver' });
   }
 });

@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { getWaiverPdf } from './storage.js';
+import { DURATION_LABELS } from '../constants.js';
 
 /**
  * Email service — sends booking confirmations and admin notifications.
@@ -46,13 +47,6 @@ async function getTransporter(): Promise<Transporter> {
 const FROM_ADDRESS = process.env.EMAIL_FROM || 'Joe\'s Garage <bookings@joes-garage.ca>';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'joe@joes-garage.ca';
 const SHOP_PHONE = process.env.SHOP_PHONE || '(403) 555-0199';
-
-const DURATION_LABELS: Record<string, string> = {
-  '2h': '2 Hours',
-  '4h': '4 Hours',
-  '8h': 'Full Day',
-  'multi-day': 'Multi-Day',
-};
 
 interface BookingItem {
   bikeName: string;
@@ -329,11 +323,6 @@ function escapeHtml(str: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('en-CA', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function formatTimestamp(tsStr: string): string {

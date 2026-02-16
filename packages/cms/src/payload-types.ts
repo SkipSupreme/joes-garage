@@ -172,6 +172,32 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    medium?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    large?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -512,10 +538,22 @@ export interface Testimonial {
 export interface Bike {
   id: number;
   name: string;
-  type: 'mountain' | 'road' | 'hybrid' | 'cruiser' | 'e-bike' | 'kids';
+  type: 'city' | 'cruiser' | 'mountain' | 'road' | 'hybrid' | 'coaster' | 'kids' | 'trail-a-bike';
   size?: ('small' | 'medium' | 'large' | 'kids') | null;
   /**
-   * Daily rental rate in CAD
+   * 2-hour rental rate in CAD
+   */
+  price2h: number;
+  /**
+   * 4-hour rental rate in CAD
+   */
+  price4h: number;
+  /**
+   * 8-hour (full day) rental rate in CAD
+   */
+  price8h: number;
+  /**
+   * Multi-day rental rate per day in CAD
    */
   pricePerDay: number;
   /**
@@ -583,8 +621,6 @@ export interface Service {
   createdAt: string;
 }
 /**
- * Incoming messages from the website contact form.
- *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "messages".
  */
@@ -736,6 +772,40 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        medium?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        large?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -989,6 +1059,9 @@ export interface BikesSelect<T extends boolean = true> {
   name?: T;
   type?: T;
   size?: T;
+  price2h?: T;
+  price4h?: T;
+  price8h?: T;
   pricePerDay?: T;
   depositAmount?: T;
   photo?: T;

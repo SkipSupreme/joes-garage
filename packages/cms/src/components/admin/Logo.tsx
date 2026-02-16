@@ -1,5 +1,3 @@
-import React from 'react'
-
 const Logo = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <img

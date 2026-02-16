@@ -25,9 +25,11 @@ import { default as default_b90d8a47f2093ca7bc596f18816a0f91 } from '../../../..
 import { default as default_2dbad4c6f7929fed5e153fcf294322a8 } from '../../../../src/components/admin/MessagesInbox'
 import { default as default_b04c0db8d89d68ff5dd20d513b3034b9 } from '../../../../src/components/admin/Icon'
 import { default as default_4522c7900ab0b0df414ce3e1574aaee4 } from '../../../../src/components/admin/Logo'
+import { BookingsNavLink as BookingsNavLink_aea8500c62b9868c6e52fc5d688fb950 } from '../../../../src/components/nav/BookingsNavLink'
 import { default as default_a98b774adea8aca98f799ac1c0a96329 } from '../../../../src/components/admin/BeforeLogin'
 import { default as default_fa447dbecc2f15601e9512b5d3c174f0 } from '../../../../src/components/admin/DarkThemeProvider'
 import { default as default_2fc7bcfc8d125596bec834f81c946832 } from '../../../../src/components/admin/FileUploadFix'
+import { BookingsView as BookingsView_d93a44fd697c739e4006848c932defd2 } from '../../../../src/components/views/Bookings/index'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
@@ -58,8 +60,10 @@ export const importMap = {
   "/src/components/admin/MessagesInbox#default": default_2dbad4c6f7929fed5e153fcf294322a8,
   "/src/components/admin/Icon#default": default_b04c0db8d89d68ff5dd20d513b3034b9,
   "/src/components/admin/Logo#default": default_4522c7900ab0b0df414ce3e1574aaee4,
+  "/src/components/nav/BookingsNavLink#BookingsNavLink": BookingsNavLink_aea8500c62b9868c6e52fc5d688fb950,
   "/src/components/admin/BeforeLogin#default": default_a98b774adea8aca98f799ac1c0a96329,
   "/src/components/admin/DarkThemeProvider#default": default_fa447dbecc2f15601e9512b5d3c174f0,
   "/src/components/admin/FileUploadFix#default": default_2fc7bcfc8d125596bec834f81c946832,
+  "/src/components/views/Bookings/index#BookingsView": BookingsView_d93a44fd697c739e4006848c932defd2,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

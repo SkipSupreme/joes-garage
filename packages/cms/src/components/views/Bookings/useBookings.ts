@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { adminFetch } from './adminFetch'
 
 export type BookingStatus = 'hold' | 'paid' | 'active' | 'overdue' | 'completed' | 'cancelled'
 
@@ -49,6 +50,7 @@ export interface DashboardStats {
   overdue_count: number
   available_fleet: number
   total_fleet: number
+  waivers_ready: number
 }
 
 export interface OverdueAlert {
@@ -117,7 +119,7 @@ export function useBookings(apiUrl: string): UseBookingsReturn {
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/admin/dashboard`)
+      const res = await adminFetch(`${apiUrl}/api/admin/dashboard`)
       if (!res.ok) throw new Error('Failed to fetch dashboard')
       const data = await res.json()
       setStats(data.stats)
@@ -136,7 +138,7 @@ export function useBookings(apiUrl: string): UseBookingsReturn {
       params.set('page', String(filters.page))
       params.set('limit', '25')
 
-      const res = await fetch(`${apiUrl}/api/admin/bookings?${params.toString()}`)
+      const res = await adminFetch(`${apiUrl}/api/admin/bookings?${params.toString()}`)
       if (!res.ok) throw new Error('Failed to fetch bookings')
       const data = await res.json()
       setBookings(data.bookings || [])

@@ -10,11 +10,17 @@
  */
 
 const MONERIS_API_URL = process.env.MONERIS_API_URL || 'https://gatewayt.moneris.com/chkt/request/request.php';
-const MONERIS_STORE_ID = process.env.MONERIS_STORE_ID || 'store1';
-const MONERIS_API_TOKEN = process.env.MONERIS_API_TOKEN || 'yesguy';
+const MONERIS_STORE_ID = process.env.MONERIS_STORE_ID || '';
+const MONERIS_API_TOKEN = process.env.MONERIS_API_TOKEN || '';
 const MONERIS_CHECKOUT_ID = process.env.MONERIS_CHECKOUT_ID || '';
 
 const IS_SANDBOX = !process.env.MONERIS_API_URL || process.env.MONERIS_API_URL.includes('gatewayt');
+
+if (IS_SANDBOX) {
+  console.warn(
+    '\x1b[33m[Moneris] Running in SANDBOX mode. Set MONERIS_API_URL, MONERIS_STORE_ID, and MONERIS_API_TOKEN for production.\x1b[0m'
+  );
+}
 
 interface MonerisResult {
   success: boolean;
@@ -43,6 +49,10 @@ export async function preAuthorize(
       responseCode: '027',
       message: 'APPROVED',
     };
+  }
+
+  if (!MONERIS_STORE_ID || !MONERIS_API_TOKEN) {
+    return { success: false, message: 'Moneris credentials not configured' };
   }
 
   // Production Moneris API call
@@ -94,6 +104,10 @@ export async function capture(transactionId: string, amount: number): Promise<Mo
     return { success: true, transactionId, message: 'CAPTURED' };
   }
 
+  if (!MONERIS_STORE_ID || !MONERIS_API_TOKEN) {
+    return { success: false, message: 'Moneris credentials not configured' };
+  }
+
   // Production: POST to Moneris completion endpoint
   const body = {
     store_id: MONERIS_STORE_ID,
@@ -129,6 +143,10 @@ export async function voidTransaction(transactionId: string): Promise<MonerisRes
   if (IS_SANDBOX) {
     console.log(`[Moneris Sandbox] Void: txn ${transactionId}`);
     return { success: true, transactionId, message: 'VOIDED' };
+  }
+
+  if (!MONERIS_STORE_ID || !MONERIS_API_TOKEN) {
+    return { success: false, message: 'Moneris credentials not configured' };
   }
 
   const body = {

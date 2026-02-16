@@ -1,5 +1,3 @@
-import React from 'react'
-
 const Icon = () => (
   <img
     src="/logo.webp"

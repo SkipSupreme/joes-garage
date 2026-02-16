@@ -1,4 +1,6 @@
 ---
+import { getSiteSettings } from '../lib/payload';
+
 const currentPath = Astro.url.pathname;
 
 const links = [
@@ -8,6 +10,19 @@ const links = [
   { href: '/gallery', label: 'Gallery' },
   { href: '/contact', label: 'Contact' },
 ];
+
+// Fetch logo from CMS with fallback to static file
+let logoSrc = '/logo.webp';
+let logoAlt = "Joe's Garage";
+try {
+  const settings = await getSiteSettings();
+  if (settings?.logo) {
+    logoSrc = settings.logo.sizes?.medium?.url || settings.logo.url || logoSrc;
+    logoAlt = settings.logo.alt || logoAlt;
+  }
+} catch {
+  // CMS unavailable — use static fallback
+}
 ---
 
 <nav
@@ -21,8 +36,8 @@ const links = [
       <!-- Logo — oversized, shifted down to extend below the nav bar -->
       <a href="/" class="flex items-center group relative z-10">
         <img
-          src="/logo.webp"
-          alt="Joe's Garage"
+          src={logoSrc}
+          alt={logoAlt}
           class="relative top-4 sm:top-5 lg:top-8 h-20 sm:h-28 lg:h-36 w-auto transition-transform duration-300 group-hover:scale-105 drop-shadow-lg"
           width="168"
           height="120"

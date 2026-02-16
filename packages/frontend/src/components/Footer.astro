@@ -16,6 +16,10 @@ const phone = settings?.phone || '(403) 874-5637';
 const email = settings?.email || 'joe@joesgarage.mobi';
 const address = settings?.address || '355 8 St SW, Calgary, AB';
 
+// Logo from CMS with fallback to static file
+const logoSrc = settings?.logo?.sizes?.thumbnail?.url || settings?.logo?.url || '/logo.webp';
+const logoAlt = settings?.logo?.alt || shopName;
+
 // Parse hours from CMS or use defaults
 const hours = settings?.hours?.length
   ? settings.hours
@@ -105,7 +109,7 @@ const socialIcons: Record<string, string> = {
       <!-- Brand column -->
       <div class="lg:col-span-1">
         <div class="mb-4">
-          <img src="/logo.webp" alt={shopName} class="h-12 w-auto" width="168" height="120" loading="lazy" />
+          <img src={logoSrc} alt={logoAlt} class="h-12 w-auto" width="168" height="120" loading="lazy" />
         </div>
         <p class="text-sm text-cream/60 leading-relaxed mb-6">
           Calgary's neighbourhood bike shop. Expert repairs, quality rentals, and honest advice since day one.

@@ -74,6 +74,11 @@ export const BookingsClient: React.FC<BookingsClientProps> = ({ apiUrl }) => {
             </svg>
             Fleet Status
           </button>
+          {stats?.waivers_ready != null && stats.waivers_ready > 0 && (
+            <span className="waivers-ready-badge">
+              {stats.waivers_ready} waiver{stats.waivers_ready !== 1 ? 's' : ''} ready
+            </span>
+          )}
           <button
             className="bookings-dashboard__walk-in-btn"
             onClick={() => setShowWalkIn(true)}

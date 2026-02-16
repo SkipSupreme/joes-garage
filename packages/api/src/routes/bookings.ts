@@ -1,32 +1,24 @@
 import { type Router as IRouter, Router } from 'express';
+import { createHmac } from 'crypto';
 import { z } from 'zod';
 import pool from '../db/pool.js';
-import { preAuthorize, capture, voidTransaction } from '../services/moneris.js';
+import { preAuthorize } from '../services/moneris.js';
 import { sendBookingConfirmation, sendAdminNotification } from '../services/email.js';
-import { getWaiverPdf } from '../services/storage.js';
+import { TIMEZONE, DURATION_HOURS, PRICE_COLUMN, DURATION_LABELS } from '../constants.js';
 
 export const bookingsRouter: IRouter = Router();
 
 const MAX_RENTAL_DAYS = 30;
-const TIMEZONE = 'America/Edmonton';
-const DURATION_HOURS: Record<string, number> = { '2h': 2, '4h': 4, '8h': 8 };
 
-/**
- * Map duration type → price column in the bikes table.
- */
-const PRICE_COLUMN: Record<string, string> = {
-  '2h': 'price2h',
-  '4h': 'price4h',
-  '8h': 'price8h',
-  'multi-day': 'price_per_day',
-};
+const BOOKING_HMAC_SECRET = process.env.BOOKING_HMAC_SECRET || 'dev-booking-hmac-secret';
 
-const DURATION_LABELS: Record<string, string> = {
-  '2h': '2 Hours',
-  '4h': '4 Hours',
-  '8h': 'Full Day',
-  'multi-day': 'Multi-Day',
-};
+/** Generate a short HMAC token for a booking ref (used in confirmation URLs) */
+export function generateBookingToken(bookingRef: string): string {
+  return createHmac('sha256', BOOKING_HMAC_SECRET)
+    .update(bookingRef.toUpperCase())
+    .digest('hex')
+    .slice(0, 12);
+}
 
 const holdSchema = z
   .object({
@@ -127,12 +119,11 @@ bookingsRouter.post('/hold', async (req, res) => {
 
   const parsed = holdSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
   const { bikes, date, duration, startTime, endDate } = parsed.data;
-  const priceCol = PRICE_COLUMN[duration];
   const bikeIds = bikes.map((b) => b.bikeId);
 
   // Check for duplicate bike IDs in the request
@@ -148,9 +139,16 @@ bookingsRouter.post('/hold', async (req, res) => {
 
     // Fetch all requested bikes in one query
     const bikeCheck = await client.query(
-      `SELECT id, ${priceCol} AS rental_price, price8h, price_per_day, deposit_amount
+      `SELECT id,
+        CASE $2
+          WHEN '2h' THEN price2h
+          WHEN '4h' THEN price4h
+          WHEN '8h' THEN price8h
+          WHEN 'multi-day' THEN price_per_day
+        END AS rental_price,
+        price8h, price_per_day, deposit_amount
        FROM bikes WHERE id = ANY($1) AND status = 'available'`,
-      [bikeIds],
+      [bikeIds, duration],
     );
 
     if (bikeCheck.rowCount !== bikeIds.length) {
@@ -181,6 +179,8 @@ bookingsRouter.post('/hold', async (req, res) => {
       if (duration === 'multi-day') {
         const start = new Date(date);
         const end = new Date(endDate!);
+        // Inclusive day count: booking Feb 1→Feb 3 = 3 rental days (Feb 1, Feb 2, Feb 3)
+        // The +1 is for inclusive date counting; buildRangeBounds separately adds +1 for the exclusive tstzrange upper bound
         const rentalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
         const firstDay = parseFloat(bike.price8h);
         const additionalRate = parseFloat(bike.price_per_day);
@@ -239,6 +239,7 @@ bookingsRouter.post('/hold', async (req, res) => {
     res.status(201).json({
       reservationId,
       bookingRef: reservation.booking_ref,
+      bookingToken: generateBookingToken(reservation.booking_ref),
       holdExpiresAt: reservation.hold_expires,
     });
   } catch (err: any) {
@@ -261,7 +262,7 @@ bookingsRouter.post('/hold', async (req, res) => {
 bookingsRouter.post('/pay', async (req, res) => {
   const parsed = paySchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    res.status(400).json({ error: 'Invalid request' });
     return;
   }
 
@@ -323,10 +324,19 @@ bookingsRouter.post('/pay', async (req, res) => {
 
     const confirmationNumber = reservationId.split('-')[0].toUpperCase();
 
+    // Fetch booking_ref for the token
+    const bookingRefResult = await pool.query(
+      `SELECT booking_ref FROM bookings.reservations WHERE id = $1`,
+      [reservationId],
+    );
+    const bookingRef = bookingRefResult.rows[0]?.booking_ref || '';
+
     // Respond immediately — emails are fire-and-forget
     res.json({
       bookingId: reservationId,
       confirmationNumber,
+      bookingRef,
+      bookingToken: generateBookingToken(bookingRef),
       status: 'paid',
     });
 
@@ -403,34 +413,6 @@ bookingsRouter.post('/pay', async (req, res) => {
 });
 
 /**
- * GET /api/bookings/admin/list — List all bookings for admin dashboard.
- * Must be registered BEFORE /:id to avoid Express treating "admin" as a UUID param.
- */
-bookingsRouter.get('/admin/list', async (_req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT r.id, r.bike_id, r.rental_period, r.duration_type, r.status, r.total_amount, r.deposit_amount,
-              r.created_at, r.hold_expires,
-              c.full_name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
-              b.name AS bike_name, b.type AS bike_type,
-              w.id AS waiver_id, w.signed_at AS waiver_signed_at
-       FROM bookings.reservations r
-       LEFT JOIN bookings.customers c ON r.customer_id = c.id
-       LEFT JOIN bikes b ON b.id = r.bike_id
-       LEFT JOIN bookings.waivers w ON w.reservation_id = r.id
-       WHERE r.status NOT IN ('cancelled')
-       ORDER BY r.created_at DESC
-       LIMIT 100`,
-    );
-
-    res.json({ bookings: result.rows });
-  } catch (err) {
-    console.error('Admin list error:', err);
-    res.status(500).json({ error: 'Failed to list bookings' });
-  }
-});
-
-/**
  * GET /api/bookings/:id
  * Returns booking confirmation details (limited public info).
  * Accepts UUID or short booking_ref (e.g. "A3F2XY").
@@ -444,6 +426,15 @@ bookingsRouter.get('/:id', async (req, res) => {
   if (!isUuid && !isRef) {
     res.status(400).json({ error: 'Invalid booking ID or reference' });
     return;
+  }
+
+  // HMAC token validation for booking ref lookups (prevents enumeration)
+  if (isRef) {
+    const token = req.query.token as string | undefined;
+    if (!token || token !== generateBookingToken(param.toUpperCase())) {
+      res.status(403).json({ error: 'Invalid or missing booking token' });
+      return;
+    }
   }
 
   try {
@@ -506,149 +497,3 @@ bookingsRouter.get('/:id', async (req, res) => {
   }
 });
 
-/**
- * POST /api/bookings/:id/capture — Capture pre-authorized payment (admin).
- */
-bookingsRouter.post('/:id/capture', async (req, res) => {
-  const idParsed = uuidParam.safeParse(req.params.id);
-  if (!idParsed.success) {
-    res.status(400).json({ error: 'Invalid booking ID' });
-    return;
-  }
-
-  try {
-    const reservation = await pool.query(
-      `SELECT id, moneris_txn, deposit_amount FROM bookings.reservations WHERE id = $1 AND status = 'paid'`,
-      [idParsed.data],
-    );
-    if (reservation.rowCount === 0) {
-      res.status(404).json({ error: 'Booking not found or not in paid state' });
-      return;
-    }
-
-    const { moneris_txn, deposit_amount } = reservation.rows[0];
-    const result = await capture(moneris_txn, parseFloat(deposit_amount));
-
-    if (!result.success) {
-      res.status(500).json({ error: result.message || 'Capture failed' });
-      return;
-    }
-
-    await pool.query(
-      `UPDATE bookings.reservations SET status = 'active', updated_at = NOW() WHERE id = $1`,
-      [idParsed.data],
-    );
-
-    res.json({ status: 'captured' });
-  } catch (err) {
-    console.error('Capture error:', err);
-    res.status(500).json({ error: 'Failed to capture payment' });
-  }
-});
-
-/**
- * POST /api/bookings/:id/void — Void pre-authorized payment (admin).
- */
-bookingsRouter.post('/:id/void', async (req, res) => {
-  const idParsed = uuidParam.safeParse(req.params.id);
-  if (!idParsed.success) {
-    res.status(400).json({ error: 'Invalid booking ID' });
-    return;
-  }
-
-  try {
-    const reservation = await pool.query(
-      `SELECT id, moneris_txn FROM bookings.reservations WHERE id = $1 AND status = 'paid'`,
-      [idParsed.data],
-    );
-    if (reservation.rowCount === 0) {
-      res.status(404).json({ error: 'Booking not found or not in paid state' });
-      return;
-    }
-
-    const result = await voidTransaction(reservation.rows[0].moneris_txn);
-
-    if (!result.success) {
-      res.status(500).json({ error: result.message || 'Void failed' });
-      return;
-    }
-
-    await pool.query(
-      `UPDATE bookings.reservations SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
-      [idParsed.data],
-    );
-
-    res.json({ status: 'voided' });
-  } catch (err) {
-    console.error('Void error:', err);
-    res.status(500).json({ error: 'Failed to void payment' });
-  }
-});
-
-/**
- * POST /api/bookings/:id/complete — Mark rental as returned (admin).
- */
-bookingsRouter.post('/:id/complete', async (req, res) => {
-  const idParsed = uuidParam.safeParse(req.params.id);
-  if (!idParsed.success) {
-    res.status(400).json({ error: 'Invalid booking ID' });
-    return;
-  }
-
-  try {
-    const result = await pool.query(
-      `UPDATE bookings.reservations SET status = 'completed', updated_at = NOW()
-       WHERE id = $1 AND status IN ('paid', 'active')
-       RETURNING id`,
-      [idParsed.data],
-    );
-
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: 'Booking not found or not in completable state' });
-      return;
-    }
-
-    res.json({ status: 'completed' });
-  } catch (err) {
-    console.error('Complete booking error:', err);
-    res.status(500).json({ error: 'Failed to complete booking' });
-  }
-});
-
-/**
- * GET /api/bookings/:id/waiver — Download signed waiver PDF (admin).
- */
-bookingsRouter.get('/:id/waiver', async (req, res) => {
-  const idParsed = uuidParam.safeParse(req.params.id);
-  if (!idParsed.success) {
-    res.status(400).json({ error: 'Invalid booking ID' });
-    return;
-  }
-
-  try {
-    const result = await pool.query(
-      `SELECT w.pdf_storage_key, c.full_name
-       FROM bookings.waivers w
-       JOIN bookings.reservations r ON r.id = w.reservation_id
-       LEFT JOIN bookings.customers c ON w.customer_id = c.id
-       WHERE r.id = $1`,
-      [idParsed.data],
-    );
-
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: 'Waiver not found for this booking' });
-      return;
-    }
-
-    const { pdf_storage_key, full_name } = result.rows[0];
-    const pdfBuffer = await getWaiverPdf(pdf_storage_key);
-    const safeName = (full_name || 'waiver').replace(/[^a-zA-Z0-9-_ ]/g, '').trim();
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="waiver-${safeName}.pdf"`);
-    res.send(pdfBuffer);
-  } catch (err) {
-    console.error('Waiver download error:', err);
-    res.status(500).json({ error: 'Failed to download waiver' });
-  }
-});

@@ -17,15 +17,16 @@ if (!existsSync(STORAGE_DIR)) {
 
 export async function uploadWaiverPdf(key: string, pdfBuffer: Buffer): Promise<string> {
   if (process.env.S3_ENDPOINT) {
-    // Production: upload to S3-compatible storage
-    // TODO: Implement S3 upload with aws-sdk
-    // const s3 = new S3Client({ endpoint: process.env.S3_ENDPOINT, ... });
-    // await s3.send(new PutObjectCommand({ Bucket: 'waivers', Key: key, Body: pdfBuffer }));
-    throw new Error('S3 storage not yet configured');
+    throw new Error('S3 storage not yet configured — set up aws-sdk when ready for production');
   }
 
   // Local dev: write to disk
   const filePath = path.join(STORAGE_DIR, key);
+  const resolved = path.resolve(filePath);
+  const storageRoot = path.resolve(STORAGE_DIR);
+  if (!resolved.startsWith(storageRoot + path.sep) && resolved !== storageRoot) {
+    throw new Error('Invalid storage key: path traversal detected');
+  }
   const dir = path.dirname(filePath);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
@@ -40,5 +41,10 @@ export async function getWaiverPdf(key: string): Promise<Buffer> {
   }
 
   const filePath = path.join(STORAGE_DIR, key);
+  const resolved = path.resolve(filePath);
+  const storageRoot = path.resolve(STORAGE_DIR);
+  if (!resolved.startsWith(storageRoot + path.sep) && resolved !== storageRoot) {
+    throw new Error('Invalid storage key: path traversal detected');
+  }
   return readFileSync(filePath);
 }

@@ -272,9 +272,6 @@
 }
 
 // ── Booking Table ─────────────────────────────────────────────
-.booking-table-wrapper {
-  // nothing special
-}
 
 .booking-table-scroll {
   overflow-x: auto;
@@ -962,11 +959,6 @@
     margin-bottom: 16px;
   }
 
-  // Step content
-  &__step-content {
-    // nothing
-  }
-
   &__label {
     display: block;
     font-size: 13px;
@@ -1390,4 +1382,77 @@
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+// ── Walk-In Modal: Waiver Linking ────────────────────────────
+.walk-in-modal__link-waivers {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.walk-in-modal__waiver-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.walk-in-modal__waiver-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  input[type="checkbox"] {
+    accent-color: #10B981;
+  }
+}
+
+.walk-in-modal__waiver-name {
+  font-weight: 500;
+  flex: 1;
+}
+
+.walk-in-modal__waiver-time {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.walk-in-modal__waiver-minor {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(251, 191, 36, 0.15);
+  color: #FCD34D;
+}
+
+.walk-in-modal__link-success {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #10B981;
+}
+
+// ── Waivers Ready Badge ─────────────────────────────────────
+.waivers-ready-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  white-space: nowrap;
 }

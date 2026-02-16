@@ -1,25 +1,14 @@
 import { type Router as IRouter, Router } from 'express';
 import { z } from 'zod';
 import pool from '../db/pool.js';
+import { TIMEZONE, DURATION_HOURS, PRICE_COLUMN } from '../constants.js';
 
 export const availabilityRouter: IRouter = Router();
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const timeRegex = /^\d{2}:\d{2}$/;
 
-const TIMEZONE = 'America/Edmonton';
-const DURATION_HOURS: Record<string, number> = { '2h': 2, '4h': 4, '8h': 8 };
 const CMS_URL = process.env.CMS_URL || 'http://localhost:3003';
-
-/**
- * Map duration type → price column in the bikes table.
- */
-const PRICE_COLUMN: Record<string, string> = {
-  '2h': 'price2h',
-  '4h': 'price4h',
-  '8h': 'price8h',
-  'multi-day': 'price_per_day',
-};
 
 const querySchema = z
   .object({

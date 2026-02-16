@@ -2,13 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import type { Booking, StatusFilter, DateFilter } from './useBookings'
 import { StatusBadge } from './StatusBadge'
-
-const DURATION_LABELS: Record<string, string> = {
-  '2h': '2 Hours',
-  '4h': '4 Hours',
-  '8h': 'Full Day',
-  'multi-day': 'Multi-Day',
-}
+import { parseTstzrange, formatDateTime } from './utils'
+import { DURATION_LABELS } from './constants'
 
 interface FilterConfig {
   label: string
@@ -24,38 +19,6 @@ const FILTERS: FilterConfig[] = [
   { label: 'Overdue', status: 'overdue', date: 'all' },
   { label: 'Completed', status: 'completed', date: 'all' },
 ]
-
-/**
- * Parse PostgreSQL tstzrange format: ["2026-02-27 16:00:00+00","2026-02-27 20:00:00+00")
- * Returns [startDate, endDate] or [null, null] on failure.
- */
-function parseTstzrange(range: string): [Date | null, Date | null] {
-  if (!range) return [null, null]
-  // Remove brackets: [ or ( at start, ) or ] at end
-  const inner = range.replace(/^[\[\(]/, '').replace(/[\]\)]$/, '')
-  const parts = inner.split(',').map((s) => s.trim().replace(/^"|"$/g, ''))
-  if (parts.length !== 2) return [null, null]
-
-  const start = new Date(parts[0])
-  const end = new Date(parts[1])
-
-  return [
-    isNaN(start.getTime()) ? null : start,
-    isNaN(end.getTime()) ? null : end,
-  ]
-}
-
-function formatDateTime(date: Date | null): string {
-  if (!date) return '-'
-  return date.toLocaleString('en-CA', {
-    timeZone: 'America/Edmonton',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
-}
 
 function formatDateOnly(date: Date | null): string {
   if (!date) return '-'

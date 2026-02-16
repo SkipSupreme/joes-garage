@@ -3,14 +3,15 @@ import { z } from 'zod';
 import pool from '../db/pool.js';
 import { generateWaiverPdf } from '../services/waiver-pdf.js';
 import { uploadWaiverPdf } from '../services/storage.js';
+import { getWaiverTextFromCMS } from '../services/cms.js';
 
 export const waiversRouter: IRouter = Router();
 
 // Signature data URL: must be a PNG, max ~1MB base64 (reasonable for a drawn signature)
 const MAX_SIGNATURE_LENGTH = 1_500_000;
 
-const waiverSchema = z.object({
-  reservationId: z.string().uuid(),
+// Base waiver fields shared by both booking-linked and standalone waivers
+const baseWaiverFields = {
   signatureDataUrl: z
     .string()
     .startsWith('data:image/png;base64,')
@@ -34,6 +35,11 @@ const waiverSchema = z.object({
   consentTerms: z.literal(true),
   isMinor: z.boolean().default(false),
   guardianName: z.string().min(2).max(200).trim().optional(),
+};
+
+const waiverSchema = z.object({
+  reservationId: z.string().uuid(),
+  ...baseWaiverFields,
 });
 
 /**
@@ -94,6 +100,9 @@ waiversRouter.post('/', async (req, res) => {
       [data.reservationId, customerId],
     );
 
+    // Fetch waiver text from CMS (falls back to hardcoded default if empty)
+    const waiverText = await getWaiverTextFromCMS();
+
     // Generate waiver PDF
     const { pdfBuffer, sha256 } = await generateWaiverPdf({
       fullName: data.fullName,
@@ -104,6 +113,7 @@ waiversRouter.post('/', async (req, res) => {
       signatureDataUrl: data.signatureDataUrl,
       signerIp,
       signerUa,
+      waiverText: waiverText || undefined,
     });
 
     // Store PDF — unique per rider (customerId) to support multiple waivers per reservation
@@ -157,6 +167,101 @@ waiversRouter.post('/', async (req, res) => {
     await client.query('ROLLBACK');
     console.error('Waiver submission error:', err);
     res.status(500).json({ error: 'Failed to submit waiver' });
+  } finally {
+    client.release();
+  }
+});
+
+// ---------- Standalone waiver (no booking required) ----------
+
+const standaloneWaiverSchema = z.object(baseWaiverFields);
+
+/**
+ * POST /api/waivers/standalone
+ * Submits a signed waiver without requiring a booking/reservation.
+ * Used for walk-in customers or pre-signing before a booking exists.
+ */
+waiversRouter.post('/standalone', async (req, res) => {
+  const parsed = standaloneWaiverSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    return;
+  }
+
+  const data = parsed.data;
+  const signerIp = req.ip || req.socket.remoteAddress || 'unknown';
+  const signerUa = (req.headers['user-agent'] || 'unknown').slice(0, 500);
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // Create or update customer
+    const customerResult = await client.query(
+      `
+      INSERT INTO bookings.customers (full_name, email, phone, date_of_birth)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (email) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        phone = EXCLUDED.phone,
+        date_of_birth = EXCLUDED.date_of_birth
+      RETURNING id
+      `,
+      [data.fullName, data.email, data.phone, data.dateOfBirth],
+    );
+    const customerId = customerResult.rows[0].id;
+
+    // Fetch waiver text from CMS (falls back to hardcoded default if empty)
+    const waiverText = await getWaiverTextFromCMS();
+
+    // Generate waiver PDF — pass 'standalone' as reservationId since the template expects this field
+    const { pdfBuffer, sha256 } = await generateWaiverPdf({
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      dateOfBirth: data.dateOfBirth,
+      reservationId: 'standalone',
+      signatureDataUrl: data.signatureDataUrl,
+      signerIp,
+      signerUa,
+      waiverText: waiverText || undefined,
+    });
+
+    // Store PDF with unique key per customer + timestamp
+    const storageKey = `waivers/standalone-${customerId}-${Date.now()}.pdf`;
+    await uploadWaiverPdf(storageKey, pdfBuffer);
+
+    // Insert waiver with reservation_id = NULL (column is nullable)
+    const waiverResult = await client.query(
+      `
+      INSERT INTO bookings.waivers
+        (reservation_id, customer_id, pdf_storage_key, pdf_sha256, signed_at, signer_ip, signer_ua, consent_electronic, consent_terms, is_minor, guardian_customer_id)
+      VALUES (NULL, $1, $2, $3, NOW(), $4::inet, $5, $6, $7, $8, NULL)
+      RETURNING id
+      `,
+      [
+        customerId,
+        storageKey,
+        sha256,
+        signerIp,
+        signerUa,
+        data.consentElectronic,
+        data.consentTerms,
+        data.isMinor,
+      ],
+    );
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      waiverId: waiverResult.rows[0].id,
+      success: true,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Standalone waiver submission error:', err);
+    res.status(500).json({ error: 'Failed to submit standalone waiver' });
   } finally {
     client.release();
   }

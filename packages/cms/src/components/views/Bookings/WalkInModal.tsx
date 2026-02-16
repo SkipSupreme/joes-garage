@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
+import { adminFetch } from './adminFetch'
 
 interface FleetBike {
   type: string
@@ -24,11 +25,7 @@ interface AvailableBike {
 type Duration = '2h' | '4h' | '8h'
 type Step = 1 | 2 | 3
 
-const DURATION_LABELS: Record<Duration, string> = {
-  '2h': '2 Hours',
-  '4h': '4 Hours',
-  '8h': 'Full Day',
-}
+import { DURATION_LABELS } from './constants'
 
 interface WalkInModalProps {
   apiUrl: string
@@ -47,6 +44,19 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ reservationId: string; bookingRef: string; waiverUrl: string } | null>(null)
 
+  // Waiver linking state (Step 3)
+  const [unlinkedWaivers, setUnlinkedWaivers] = useState<Array<{
+    waiver_id: string
+    full_name: string
+    email: string
+    phone: string
+    signed_at: string
+    is_minor: boolean
+  }>>([])
+  const [selectedWaivers, setSelectedWaivers] = useState<Set<string>>(new Set())
+  const [linking, setLinking] = useState(false)
+  const [linkMessage, setLinkMessage] = useState<string | null>(null)
+
   // Fetch available bikes when duration changes
   useEffect(() => {
     const fetchBikes = async () => {
@@ -55,10 +65,6 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
         // Use availability endpoint with today's date and the selected duration
         const now = new Date()
         const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Edmonton' })
-          .split('/')
-          .reverse()
-          .join('-')
-        // Actually, en-CA with toLocaleDateString returns YYYY-MM-DD format already
         const hhStr = now.toLocaleTimeString('en-CA', {
           timeZone: 'America/Edmonton',
           hour: '2-digit',
@@ -142,9 +148,8 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
         }
       }
 
-      const res = await fetch(`${apiUrl}/api/admin/walk-in`, {
+      const res = await adminFetch(`${apiUrl}/api/admin/walk-in`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bikes: bikePayload,
           duration,
@@ -173,6 +178,43 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Fetch today's unlinked waivers when walk-in is created
+  useEffect(() => {
+    if (!result) return
+    const fetchUnlinked = async () => {
+      try {
+        const res = await adminFetch(`${apiUrl}/api/admin/waivers/unlinked`)
+        if (res.ok) {
+          const data = await res.json()
+          setUnlinkedWaivers(data.waivers || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch unlinked waivers:', err)
+      }
+    }
+    fetchUnlinked()
+  }, [result, apiUrl])
+
+  const handleLinkWaivers = async () => {
+    if (selectedWaivers.size === 0 || !result) return
+    setLinking(true)
+    try {
+      const res = await adminFetch(`${apiUrl}/api/admin/bookings/${result.reservationId}/link-waivers`, {
+        method: 'PATCH',
+        body: JSON.stringify({ waiverIds: Array.from(selectedWaivers) }),
+      })
+      if (!res.ok) throw new Error('Failed to link waivers')
+      const data = await res.json()
+      setLinkMessage(data.message)
+      setUnlinkedWaivers((prev) => prev.filter((w) => !selectedWaivers.has(w.waiver_id)))
+      setSelectedWaivers(new Set())
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLinking(false)
     }
   }
 
@@ -382,6 +424,53 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
                   Tell the customer to visit the link above, or scan the QR code at the counter.
                 </p>
               </div>
+
+              {/* Link pre-signed waivers */}
+              {unlinkedWaivers.length > 0 && (
+                <div className="walk-in-modal__link-waivers">
+                  <p className="walk-in-modal__label">Pre-Signed Waivers Available</p>
+                  <p className="walk-in-modal__waiver-hint">
+                    Select waivers signed today to link to this booking:
+                  </p>
+                  <div className="walk-in-modal__waiver-list">
+                    {unlinkedWaivers.map((w) => (
+                      <label key={w.waiver_id} className="walk-in-modal__waiver-item">
+                        <input
+                          type="checkbox"
+                          checked={selectedWaivers.has(w.waiver_id)}
+                          onChange={(e) => {
+                            setSelectedWaivers((prev) => {
+                              const next = new Set(prev)
+                              if (e.target.checked) next.add(w.waiver_id)
+                              else next.delete(w.waiver_id)
+                              return next
+                            })
+                          }}
+                        />
+                        <span className="walk-in-modal__waiver-name">{w.full_name}</span>
+                        <span className="walk-in-modal__waiver-time">
+                          {new Date(w.signed_at).toLocaleTimeString('en-CA', {
+                            timeZone: 'America/Edmonton',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        {w.is_minor && <span className="walk-in-modal__waiver-minor">Minor</span>}
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    className="walk-in-modal__nav-btn walk-in-modal__nav-btn--primary"
+                    onClick={handleLinkWaivers}
+                    disabled={selectedWaivers.size === 0 || linking}
+                    type="button"
+                    style={{ marginTop: '8px' }}
+                  >
+                    {linking ? 'Linking...' : `Link ${selectedWaivers.size} Waiver${selectedWaivers.size !== 1 ? 's' : ''}`}
+                  </button>
+                  {linkMessage && <p className="walk-in-modal__link-success">{linkMessage}</p>}
+                </div>
+              )}
             </div>
 
             <div className="walk-in-modal__nav">

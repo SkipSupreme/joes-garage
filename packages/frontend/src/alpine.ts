@@ -1,12 +1,48 @@
 import type { Alpine } from 'alpinejs';
 import SignaturePad from 'signature_pad';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
 
 const SHOP_OPEN_HOUR = 9;
 const SHOP_OPEN_MIN = 30; // 9:30 AM
 const SHOP_CLOSE = 18; // 6 PM
 const DURATION_HOURS: Record<string, number> = { '2h': 2, '4h': 4 };
+
+// ── Shared waiver helpers (used by bookingFlow, waiverPage, standaloneWaiver) ──
+
+const DOB_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function getDobDays(dobMonth: string, dobYear: string): number[] {
+  const m = parseInt(dobMonth);
+  const y = parseInt(dobYear) || 2000;
+  if (!m) return Array.from({ length: 31 }, (_, i) => i + 1);
+  return Array.from({ length: new Date(y, m, 0).getDate() }, (_, i) => i + 1);
+}
+
+function getDobYears(): number[] {
+  const now = new Date().getFullYear();
+  const years: number[] = [];
+  for (let y = now - 16; y >= now - 100; y--) years.push(y);
+  return years;
+}
+
+function formatDateOfBirth(dobYear: string, dobMonth: string, dobDay: string): string {
+  if (!dobYear || !dobMonth || !dobDay) return '';
+  return `${dobYear}-${String(dobMonth).padStart(2, '0')}-${String(dobDay).padStart(2, '0')}`;
+}
+
+function createSignaturePad(canvasId: string): SignaturePad | null {
+  const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+  if (!canvas) return null;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * ratio;
+  canvas.height = canvas.offsetHeight * ratio;
+  canvas.getContext('2d')!.scale(ratio, ratio);
+  return new SignaturePad(canvas, {
+    backgroundColor: 'rgb(255, 255, 255)',
+    penColor: 'rgb(30, 30, 30)',
+  });
+}
 
 export default (Alpine: Alpine) => {
   // Booking flow — multi-step rental booking
@@ -29,6 +65,8 @@ export default (Alpine: Alpine) => {
     bikes: [] as any[],
     cart: [] as Array<{ bike: any; quantity: number }>,
     reservationId: null as string | null,
+    bookingRef: null as string | null,
+    bookingToken: null as string | null,
     holdExpires: null as Date | null,
     holdCountdown: '',
     holdTimer: null as ReturnType<typeof setInterval> | null,
@@ -141,27 +179,10 @@ export default (Alpine: Alpine) => {
     get cartTotal() {
       return this.cartTotalRental + this.cartTotalDeposit;
     },
-    get dobMonths() {
-      return ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    },
-    get dobDays() {
-      const m = parseInt(this.waiver.dobMonth);
-      const y = parseInt(this.waiver.dobYear) || 2000;
-      if (!m) return Array.from({ length: 31 }, (_, i) => i + 1);
-      return Array.from({ length: new Date(y, m, 0).getDate() }, (_, i) => i + 1);
-    },
-    get dobYears() {
-      const now = new Date().getFullYear();
-      // 16 to 100 years ago (must be 18+ but allow 16 for guardian consent per waiver clause 7)
-      const years: number[] = [];
-      for (let y = now - 16; y >= now - 100; y--) years.push(y);
-      return years;
-    },
-    get dateOfBirth() {
-      const { dobYear, dobMonth, dobDay } = this.waiver;
-      if (!dobYear || !dobMonth || !dobDay) return '';
-      return `${dobYear}-${String(dobMonth).padStart(2, '0')}-${String(dobDay).padStart(2, '0')}`;
-    },
+    get dobMonths() { return DOB_MONTHS; },
+    get dobDays() { return getDobDays(this.waiver.dobMonth, this.waiver.dobYear); },
+    get dobYears() { return getDobYears(); },
+    get dateOfBirth() { return formatDateOfBirth(this.waiver.dobYear, this.waiver.dobMonth, this.waiver.dobDay); },
 
     formatTime(slot: string) {
       const [h] = slot.split(':').map(Number);
@@ -185,20 +206,8 @@ export default (Alpine: Alpine) => {
       // Initialize signature pad when waiver step becomes visible
       this.$watch('step', (val: number) => {
         if (val === 3 && !this.signaturePad) {
-          // Wait one tick for x-show to make the canvas visible
           this.$nextTick(() => {
-            const canvas = document.getElementById('signature-pad') as HTMLCanvasElement | null;
-            if (canvas) {
-              const ratio = window.devicePixelRatio || 1;
-              canvas.width = canvas.offsetWidth * ratio;
-              canvas.height = canvas.offsetHeight * ratio;
-              canvas.getContext('2d')!.scale(ratio, ratio);
-
-              this.signaturePad = new SignaturePad(canvas, {
-                backgroundColor: 'rgb(255, 255, 255)',
-                penColor: 'rgb(30, 30, 30)',
-              });
-            }
+            this.signaturePad = createSignaturePad('signature-pad');
           });
         }
       });
@@ -287,6 +296,8 @@ export default (Alpine: Alpine) => {
         if (!res.ok) throw new Error(data.error || 'Failed to reserve bikes');
 
         this.reservationId = data.reservationId;
+        this.bookingRef = data.bookingRef || null;
+        this.bookingToken = data.bookingToken || null;
         this.holdExpires = new Date(data.holdExpiresAt);
         this.startHoldTimer();
         this.step = 3;
@@ -494,26 +505,10 @@ export default (Alpine: Alpine) => {
       const labels: Record<string, string> = { '2h': '2 Hours', '4h': '4 Hours', '8h': 'Full Day', 'multi-day': 'Multi-Day' };
       return labels[this.booking.duration_type] || this.booking.duration_type;
     },
-    get dobMonths() {
-      return ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    },
-    get dobDays() {
-      const m = parseInt(this.waiver.dobMonth);
-      const y = parseInt(this.waiver.dobYear) || 2000;
-      if (!m) return Array.from({ length: 31 }, (_, i) => i + 1);
-      return Array.from({ length: new Date(y, m, 0).getDate() }, (_, i) => i + 1);
-    },
-    get dobYears() {
-      const now = new Date().getFullYear();
-      const years: number[] = [];
-      for (let y = now - 16; y >= now - 100; y--) years.push(y);
-      return years;
-    },
-    get dateOfBirth() {
-      const { dobYear, dobMonth, dobDay } = this.waiver;
-      if (!dobYear || !dobMonth || !dobDay) return '';
-      return `${dobYear}-${String(dobMonth).padStart(2, '0')}-${String(dobDay).padStart(2, '0')}`;
-    },
+    get dobMonths() { return DOB_MONTHS; },
+    get dobDays() { return getDobDays(this.waiver.dobMonth, this.waiver.dobYear); },
+    get dobYears() { return getDobYears(); },
+    get dateOfBirth() { return formatDateOfBirth(this.waiver.dobYear, this.waiver.dobMonth, this.waiver.dobDay); },
 
     init() {
       // Read the reservation ref from the data attribute set in the Astro template
@@ -531,7 +526,11 @@ export default (Alpine: Alpine) => {
       this.loading = true;
       this.error = null;
       try {
-        const res = await fetch(`${API_URL}/api/bookings/${this.ref}`);
+        // Include HMAC token from URL if present (required for short booking refs)
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : '';
+        const res = await fetch(`${API_URL}/api/bookings/${this.ref}${tokenQuery}`);
         if (!res.ok) throw new Error('Booking not found.');
         const data = await res.json();
         this.booking = data;
@@ -546,17 +545,7 @@ export default (Alpine: Alpine) => {
       // Initialize signature pad after booking loads
       if (!this.error && !this.allSigned) {
         this.$nextTick(() => {
-          const canvas = document.getElementById('waiver-signature-pad') as HTMLCanvasElement | null;
-          if (canvas) {
-            const ratio = window.devicePixelRatio || 1;
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext('2d')!.scale(ratio, ratio);
-            this.signaturePad = new SignaturePad(canvas, {
-              backgroundColor: 'rgb(255, 255, 255)',
-              penColor: 'rgb(30, 30, 30)',
-            });
-          }
+          this.signaturePad = createSignaturePad('waiver-signature-pad');
         });
       }
     },
@@ -584,7 +573,7 @@ export default (Alpine: Alpine) => {
 
       try {
         const body: any = {
-          reservationId: this.ref,
+          reservationId: this.booking?.id || this.ref,
           signatureDataUrl,
           fullName: this.waiver.fullName.trim(),
           email: this.waiver.email.trim(),
@@ -624,6 +613,100 @@ export default (Alpine: Alpine) => {
 
         // Refresh booking to update waiver list
         await this.fetchBooking();
+      } catch (err: any) {
+        this.error = err.message;
+      } finally {
+        this.submitting = false;
+      }
+    },
+  }));
+
+  // ── Standalone Waiver (QR walk-up flow — no booking required) ─────────────
+
+  Alpine.data('standaloneWaiver', () => ({
+    loading: false,
+    submitting: false,
+    error: null as string | null,
+    successName: null as string | null,
+    signaturePad: null as any,
+
+    waiver: {
+      fullName: '',
+      email: '',
+      phone: '',
+      dobMonth: '',
+      dobDay: '',
+      dobYear: '',
+      isMinor: false,
+      guardianName: '',
+      consentElectronic: false,
+      consentTerms: false,
+    },
+
+    get dobMonths() { return DOB_MONTHS; },
+    get dobDays() { return getDobDays(this.waiver.dobMonth, this.waiver.dobYear); },
+    get dobYears() { return getDobYears(); },
+    get dateOfBirth() { return formatDateOfBirth(this.waiver.dobYear, this.waiver.dobMonth, this.waiver.dobDay); },
+
+    init() {
+      this.$nextTick(() => {
+        this.signaturePad = createSignaturePad('waiver-signature-pad');
+      });
+    },
+
+    clearSignature() {
+      if (this.signaturePad) this.signaturePad.clear();
+    },
+
+    resetForm() {
+      this.waiver = {
+        fullName: '', email: '', phone: '',
+        dobMonth: '', dobDay: '', dobYear: '',
+        isMinor: false, guardianName: '',
+        consentElectronic: false, consentTerms: false,
+      };
+      this.successName = null;
+      this.error = null;
+      if (this.signaturePad) this.signaturePad.clear();
+      this.$nextTick(() => {
+        this.signaturePad = createSignaturePad('waiver-signature-pad');
+      });
+    },
+
+    async submitWaiver() {
+      this.error = null;
+      this.submitting = true;
+
+      if (!this.signaturePad || this.signaturePad.isEmpty()) {
+        this.error = 'Please draw your signature.';
+        this.submitting = false;
+        return;
+      }
+
+      try {
+        const body: any = {
+          signatureDataUrl: this.signaturePad.toDataURL('image/png'),
+          fullName: this.waiver.fullName.trim(),
+          email: this.waiver.email.trim(),
+          phone: this.waiver.phone.trim(),
+          dateOfBirth: this.dateOfBirth,
+          consentElectronic: this.waiver.consentElectronic,
+          consentTerms: this.waiver.consentTerms,
+          isMinor: this.waiver.isMinor,
+        };
+        if (this.waiver.isMinor && this.waiver.guardianName.trim()) {
+          body.guardianName = this.waiver.guardianName.trim();
+        }
+
+        const res = await fetch(`${API_URL}/api/waivers/standalone`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to submit waiver.');
+
+        this.successName = this.waiver.fullName.trim();
       } catch (err: any) {
         this.error = err.message;
       } finally {

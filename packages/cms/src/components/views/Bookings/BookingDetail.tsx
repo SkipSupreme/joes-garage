@@ -1,6 +1,8 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { StatusBadge } from './StatusBadge'
+import { adminFetch } from './adminFetch'
+import { parseTstzrange, formatDateTime } from './utils'
 
 interface DetailItem {
   id: string
@@ -60,37 +62,7 @@ interface BookingDetailProps {
   onAction: () => void
 }
 
-const DURATION_LABELS: Record<string, string> = {
-  '2h': '2 Hours',
-  '4h': '4 Hours',
-  '8h': 'Full Day',
-  'multi-day': 'Multi-Day',
-}
-
-function parseTstzrange(range: string): [Date | null, Date | null] {
-  if (!range) return [null, null]
-  const inner = range.replace(/^[\[\(]/, '').replace(/[\]\)]$/, '')
-  const parts = inner.split(',').map((s) => s.trim().replace(/^"|"$/g, ''))
-  if (parts.length !== 2) return [null, null]
-  const start = new Date(parts[0])
-  const end = new Date(parts[1])
-  return [
-    isNaN(start.getTime()) ? null : start,
-    isNaN(end.getTime()) ? null : end,
-  ]
-}
-
-function formatDateTime(date: Date | null): string {
-  if (!date) return '-'
-  return date.toLocaleString('en-CA', {
-    timeZone: 'America/Edmonton',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
-}
+import { DURATION_LABELS } from './constants'
 
 function formatNoteDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -122,7 +94,7 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${apiUrl}/api/admin/bookings/${bookingId}`)
+      const res = await adminFetch(`${apiUrl}/api/admin/bookings/${bookingId}`)
       if (!res.ok) throw new Error('Failed to fetch booking details')
       const data = await res.json()
       setDetail(data)
@@ -144,9 +116,8 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
   ) => {
     setActionLoading(true)
     try {
-      const res = await fetch(`${apiUrl}${path}`, {
+      const res = await adminFetch(`${apiUrl}${path}`, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
       })
       if (!res.ok) {

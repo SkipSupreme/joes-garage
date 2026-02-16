@@ -45,6 +45,12 @@ export async function generateWaiverPdf(data: WaiverData): Promise<{ pdfBuffer: 
     second: '2-digit',
   });
 
+  // Validate that the signature data URL contains only valid base64 characters
+  const VALID_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
+  if (!VALID_DATA_URL.test(data.signatureDataUrl)) {
+    throw new Error('Invalid signature data URL format');
+  }
+
   // First pass: render without hash (hash placeholder)
   let html = templateHtml
     .replace(/\{\{fullName\}\}/g, escapeHtml(data.fullName))

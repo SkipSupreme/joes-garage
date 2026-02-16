@@ -44,25 +44,15 @@
   --color-warning: #F59E0B;
 
   /* Typography
-   * Display: Franchise (self-hosted) → Oswald (Google Fonts fallback) → Impact
+   * Display: Oswald (Google Fonts) → Impact (system fallback)
    * Body: Jost (Google Fonts, closest free Futura match)
-   * If you have Franchise-Bold.woff2, drop it in /public/fonts/ and it'll be used automatically
    */
-  --font-display: "Franchise", "Oswald", "Impact", system-ui, sans-serif;
+  --font-display: "Oswald", "Impact", system-ui, sans-serif;
   --font-body: "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* Custom breakpoint for ultrawide monitors */
   --breakpoint-3xl: 1920px;
-}
-
-/* Self-hosted Franchise Bold — drop the file in /public/fonts/ to activate */
-@font-face {
-  font-family: "Franchise";
-  src: url("/fonts/Franchise-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
 }
 
 @layer base {
