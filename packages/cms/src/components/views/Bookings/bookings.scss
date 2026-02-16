@@ -673,6 +673,70 @@
     font-style: italic;
   }
 
+  // Link pre-signed waivers
+  &__link-waivers {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  &__link-waivers-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #F59E0B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+  }
+
+  &__waiver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__unlinked-waiver {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.15s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    input[type="checkbox"] {
+      accent-color: #10B981;
+    }
+  }
+
+  &__unlinked-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--theme-text);
+  }
+
+  &__unlinked-time {
+    font-size: 11px;
+    color: var(--theme-elevation-500);
+  }
+
+  &__unlinked-minor {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #FCD34D;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
   // Notes
   &__notes {
     display: flex;
@@ -1294,7 +1358,7 @@
 
     &--available { background: #10B981; }
     &--reserved { background: #3B82F6; }
-    &--rented { background: #14B8A6; }
+    &--rented { background: #F59E0B; }
     &--maintenance { background: #6B7280; }
   }
 }
@@ -1323,7 +1387,7 @@
 
     &--available { background: #10B981; }
     &--reserved { background: #3B82F6; }
-    &--rented { background: #14B8A6; }
+    &--rented { background: #F59E0B; }
     &--maintenance { background: #6B7280; }
   }
 }

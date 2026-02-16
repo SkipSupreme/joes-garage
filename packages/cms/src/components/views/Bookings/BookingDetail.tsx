@@ -89,6 +89,16 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
   const [actionLoading, setActionLoading] = useState(false)
   const [showExtend, setShowExtend] = useState(false)
   const [extendDateTime, setExtendDateTime] = useState('')
+  const [unlinkedWaivers, setUnlinkedWaivers] = useState<Array<{
+    waiver_id: string
+    full_name: string
+    email: string
+    phone: string
+    signed_at: string
+    is_minor: boolean
+  }>>([])
+  const [selectedWaivers, setSelectedWaivers] = useState<Set<string>>(new Set())
+  const [linking, setLinking] = useState(false)
 
   const fetchDetail = useCallback(async () => {
     setLoading(true)
@@ -108,6 +118,49 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
   useEffect(() => {
     fetchDetail()
   }, [fetchDetail])
+
+  // Fetch unlinked waivers when detail loads and booking needs waivers
+  useEffect(() => {
+    if (!detail) return
+    const signedCount = detail.waivers.filter((w) => w.signed_at).length
+    if (signedCount >= detail.items.length) {
+      setUnlinkedWaivers([])
+      return
+    }
+    if (detail.status === 'cancelled') return
+    const fetchUnlinked = async () => {
+      try {
+        const res = await adminFetch(`${apiUrl}/api/admin/waivers/unlinked`)
+        if (res.ok) {
+          const data = await res.json()
+          setUnlinkedWaivers(data.waivers || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch unlinked waivers:', err)
+      }
+    }
+    fetchUnlinked()
+  }, [detail, apiUrl])
+
+  const handleLinkWaivers = async () => {
+    if (selectedWaivers.size === 0) return
+    setLinking(true)
+    try {
+      const res = await adminFetch(`${apiUrl}/api/admin/bookings/${bookingId}/link-waivers`, {
+        method: 'PATCH',
+        body: JSON.stringify({ waiverIds: Array.from(selectedWaivers) }),
+      })
+      if (!res.ok) throw new Error('Failed to link waivers')
+      setUnlinkedWaivers((prev) => prev.filter((w) => !selectedWaivers.has(w.waiver_id)))
+      setSelectedWaivers(new Set())
+      await fetchDetail()
+      onAction()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setLinking(false)
+    }
+  }
 
   const doAction = async (
     method: string,
@@ -312,6 +365,53 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
               </div>
             ) : (
               <p className="booking-detail__muted">No waivers yet</p>
+            )}
+
+            {/* Link pre-signed waivers */}
+            {unlinkedWaivers.length > 0 && (
+              <div className="booking-detail__link-waivers">
+                <p className="booking-detail__link-waivers-label">
+                  Pre-Signed Waivers Available
+                </p>
+                <div className="booking-detail__waiver-list">
+                  {unlinkedWaivers.map((w) => (
+                    <label key={w.waiver_id} className="booking-detail__unlinked-waiver">
+                      <input
+                        type="checkbox"
+                        checked={selectedWaivers.has(w.waiver_id)}
+                        onChange={(e) => {
+                          setSelectedWaivers((prev) => {
+                            const next = new Set(prev)
+                            if (e.target.checked) next.add(w.waiver_id)
+                            else next.delete(w.waiver_id)
+                            return next
+                          })
+                        }}
+                      />
+                      <span className="booking-detail__unlinked-name">{w.full_name}</span>
+                      <span className="booking-detail__unlinked-time">
+                        {new Date(w.signed_at).toLocaleTimeString('en-CA', {
+                          timeZone: 'America/Edmonton',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      {w.is_minor && <span className="booking-detail__unlinked-minor">Minor</span>}
+                    </label>
+                  ))}
+                </div>
+                <button
+                  className="booking-detail__action-btn booking-detail__action-btn--primary"
+                  onClick={handleLinkWaivers}
+                  disabled={selectedWaivers.size === 0 || linking}
+                  type="button"
+                  style={{ marginTop: '8px', width: '100%' }}
+                >
+                  {linking
+                    ? 'Linking...'
+                    : `Link ${selectedWaivers.size} Waiver${selectedWaivers.size !== 1 ? 's' : ''}`}
+                </button>
+              </div>
             )}
           </div>
 

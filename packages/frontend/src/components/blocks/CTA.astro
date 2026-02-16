@@ -7,6 +7,7 @@ interface Props {
 }
 
 const { heading, content, buttonText, buttonLink } = Astro.props;
+const isExternal = buttonLink.startsWith('http');
 ---
 
 <section class="relative py-20 lg:py-28 bg-coal overflow-hidden">
@@ -27,6 +28,7 @@ const { heading, content, buttonText, buttonLink } = Astro.props;
     <div class="mt-10">
       <a
         href={buttonLink}
+        {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         class="inline-flex items-center gap-2 px-10 py-4 bg-amber text-coal font-bold text-lg rounded-xl hover:bg-amber-light hover:shadow-xl hover:shadow-amber/20 hover:-translate-y-0.5 transition-all duration-200"
       >
         {buttonText}

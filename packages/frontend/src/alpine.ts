@@ -1,5 +1,7 @@
 import type { Alpine } from 'alpinejs';
 import SignaturePad from 'signature_pad';
+import flatpickr from 'flatpickr';
+import QRCode from 'qrcode';
 
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -192,6 +194,9 @@ export default (Alpine: Alpine) => {
       return mins === '00' ? `${display} ${suffix}` : `${display}:${mins} ${suffix}`;
     },
 
+    startDatePicker: null as any,
+    endDatePicker: null as any,
+
     init() {
       this.$watch('selectedDate', () => this.validateDates());
       this.$watch('endDate', () => this.validateDates());
@@ -201,6 +206,11 @@ export default (Alpine: Alpine) => {
         // Full Day auto-sets to shop hours (9:30 AM – 6 PM)
         this.startTime = val === '8h' ? '09:30' : '';
         this.dateError = null;
+
+        // Initialize end-date Flatpickr when multi-day is selected
+        if (val === 'multi-day') {
+          this.$nextTick(() => this.initEndDatePicker());
+        }
       });
 
       // Initialize signature pad when waiver step becomes visible
@@ -210,6 +220,43 @@ export default (Alpine: Alpine) => {
             this.signaturePad = createSignaturePad('signature-pad');
           });
         }
+      });
+
+      // Initialize start-date Flatpickr
+      this.$nextTick(() => this.initStartDatePicker());
+    },
+
+    initStartDatePicker() {
+      const el = document.getElementById('ride-date');
+      if (!el || this.startDatePicker) return;
+      this.startDatePicker = flatpickr(el, {
+        dateFormat: 'Y-m-d',
+        minDate: 'today',
+        disableMobile: true,
+        onChange: (selectedDates: Date[]) => {
+          if (selectedDates.length) {
+            this.selectedDate = selectedDates[0].toISOString().split('T')[0];
+            // Update end-date min if it exists
+            if (this.endDatePicker) {
+              this.endDatePicker.set('minDate', this.selectedDate);
+            }
+          }
+        },
+      });
+    },
+
+    initEndDatePicker() {
+      const el = document.getElementById('end-date');
+      if (!el || this.endDatePicker) return;
+      this.endDatePicker = flatpickr(el, {
+        dateFormat: 'Y-m-d',
+        minDate: this.selectedDate || 'today',
+        disableMobile: true,
+        onChange: (selectedDates: Date[]) => {
+          if (selectedDates.length) {
+            this.endDate = selectedDates[0].toISOString().split('T')[0];
+          }
+        },
       });
     },
 
@@ -391,7 +438,8 @@ export default (Alpine: Alpine) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Payment failed');
 
-        window.location.href = `/book/confirmation?id=${data.bookingId}`;
+        const tokenParam = data.bookingToken ? `&token=${data.bookingToken}` : '';
+        window.location.href = `/book/confirmation?id=${data.bookingId}${tokenParam}`;
       } catch (err: any) {
         this.paymentError = err.message;
       } finally {
@@ -405,6 +453,21 @@ export default (Alpine: Alpine) => {
     booking: null as any,
     loading: true,
     error: null as string | null,
+    waiverUrl: '',
+    qrDataUrl: '',
+
+    get itemCount() {
+      return (this.booking as any)?.item_count || 1;
+    },
+    get signedWaiverCount() {
+      return ((this.booking as any)?.waivers || []).length;
+    },
+    get remainingWaivers() {
+      return Math.max(0, this.itemCount - this.signedWaiverCount);
+    },
+    get needsMoreWaivers() {
+      return this.itemCount > 1 && this.remainingWaivers > 0;
+    },
 
     init() {
       const params = new URLSearchParams(window.location.search);
@@ -422,10 +485,31 @@ export default (Alpine: Alpine) => {
         const res = await fetch(`${API_URL}/api/bookings/${id}`);
         if (!res.ok) throw new Error('Booking not found');
         this.booking = await res.json();
+        await this.generateWaiverQR();
       } catch (err: any) {
         this.error = err.message;
       } finally {
         this.loading = false;
+      }
+    },
+
+    async generateWaiverQR() {
+      const b = this.booking as any;
+      if (!b?.booking_ref) return;
+      // Build the waiver URL using the pay response's bookingToken if available,
+      // or fall back to generating from the ref on the page
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token') || b.booking_token || '';
+      const baseUrl = window.location.origin;
+      this.waiverUrl = `${baseUrl}/waiver/${b.booking_ref}?token=${token}`;
+      try {
+        this.qrDataUrl = await QRCode.toDataURL(this.waiverUrl, {
+          width: 200,
+          margin: 2,
+          color: { dark: '#111111', light: '#FFFFFF' },
+        });
+      } catch (err) {
+        console.error('QR generation failed:', err);
       }
     },
 

@@ -29,15 +29,15 @@ function formatDateOnly(date: Date | null): string {
   })
 }
 
-/** Group items by bike_type and count them, e.g. "Mountain x2, Road x1" */
+/** Group items by bike_name and count them, e.g. "Reid Express x2, Reid Ranger" */
 function summarizeBikes(items: Booking['items']): string {
   const groups: Record<string, number> = {}
   for (const item of items) {
-    const key = item.bike_type || 'Bike'
+    const key = item.bike_name || item.bike_type || 'Bike'
     groups[key] = (groups[key] || 0) + 1
   }
   return Object.entries(groups)
-    .map(([type, count]) => (count > 1 ? `${type} x${count}` : type))
+    .map(([name, count]) => (count > 1 ? `${name} x${count}` : name))
     .join(', ')
 }
 

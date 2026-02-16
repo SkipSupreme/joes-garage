@@ -34,7 +34,7 @@ const phoneTel = 'tel:+1' + phone.replace(/[^\d]/g, '');
         You're all set!
       </h1>
       <p class="mt-3 text-lg text-ink-muted animate-fade-up delay-100">
-        Your bike rental has been confirmed. Check your email for the signed waiver PDF.
+        Your bike rental has been confirmed. Check your email for details.
       </p>
 
       <!-- Booking details card -->
@@ -75,10 +75,25 @@ const phoneTel = 'tel:+1' + phone.replace(/[^\d]/g, '');
                   <span class="font-medium text-coal" x-text="durationLabel"></span>
                 </div>
               </template>
-              <div class="flex justify-between">
-                <span class="text-ink-muted">Bike</span>
-                <span class="font-medium text-coal" x-text="booking.bike_name"></span>
-              </div>
+              <template x-if="booking.items && booking.items.length > 1">
+                <div>
+                  <span class="text-ink-muted">Bikes</span>
+                  <div class="mt-1 space-y-1">
+                    <template x-for="item in booking.items" :key="item.bike_id">
+                      <div class="flex justify-between text-sm">
+                        <span class="font-medium text-coal" x-text="item.bike_name"></span>
+                        <span class="text-ink-muted" x-text="item.bike_type"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <template x-if="!booking.items || booking.items.length <= 1">
+                <div class="flex justify-between">
+                  <span class="text-ink-muted">Bike</span>
+                  <span class="font-medium text-coal" x-text="booking.bike_name"></span>
+                </div>
+              </template>
               <div class="flex justify-between">
                 <span class="text-ink-muted">When</span>
                 <span class="font-medium text-coal text-right" x-text="formatPeriod(booking.rental_period)"></span>
@@ -110,6 +125,53 @@ const phoneTel = 'tel:+1' + phone.replace(/[^\d]/g, '');
           </div>
         </template>
       </div>
+
+      <!-- Group waiver QR section — shown when booking has multiple bikes and waivers still needed -->
+      <template x-if="!loading && booking && itemCount > 1">
+        <div class="mt-8 p-6 sm:p-8 rounded-2xl bg-amber/5 border border-amber/20 text-center animate-fade-up delay-250">
+          <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber/10 mb-3">
+            <svg class="w-5 h-5 text-amber" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+
+          <h3 class="text-lg font-display font-bold text-coal">
+            <span x-text="remainingWaivers"></span> more waiver<span x-show="remainingWaivers !== 1">s</span> needed
+          </h3>
+          <p class="mt-1 text-sm text-ink-muted max-w-sm mx-auto">
+            Each rider needs to sign their own waiver. Share the QR code or link below with your group.
+          </p>
+
+          <!-- QR code -->
+          <template x-if="qrDataUrl">
+            <div class="mt-5">
+              <img :src="qrDataUrl" alt="Waiver QR code" class="w-48 h-48 mx-auto rounded-xl border border-parchment bg-white p-2" />
+            </div>
+          </template>
+
+          <!-- Waiver link with copy button -->
+          <div class="mt-4 flex items-center gap-2 max-w-sm mx-auto">
+            <input
+              type="text"
+              :value="waiverUrl"
+              readonly
+              class="flex-1 px-3 py-2 text-xs bg-white border border-parchment rounded-lg text-ink-muted truncate cursor-text"
+            />
+            <button
+              type="button"
+              @click="navigator.clipboard.writeText(waiverUrl); $el.textContent = 'Copied!'; setTimeout(() => $el.textContent = 'Copy', 1500)"
+              class="shrink-0 px-4 py-2 text-xs font-bold bg-coal text-cream rounded-lg hover:bg-coal-light transition-colors"
+            >
+              Copy
+            </button>
+          </div>
+
+          <!-- Waiver progress -->
+          <div class="mt-4 text-xs text-ink-muted">
+            <span x-text="signedWaiverCount"></span> of <span x-text="itemCount"></span> waivers signed
+          </div>
+        </div>
+      </template>
 
       <!-- Actions -->
       <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center animate-fade-up delay-300">

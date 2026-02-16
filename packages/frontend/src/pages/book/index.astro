@@ -30,7 +30,7 @@ import Base from '../../layouts/Base.astro';
       <div class="flex items-center justify-between mb-12 3xl:mb-16">
         <template x-for="(label, i) in ['When', 'Bike', 'Waiver', 'Payment']" :key="i">
           <div class="flex items-center flex-1 last:flex-none">
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-1 sm:gap-2 shrink-0">
               <div
                 :class="{
                   'bg-amber text-coal': step > i + 1,
@@ -48,12 +48,12 @@ import Base from '../../layouts/Base.astro';
               </div>
               <span
                 :class="step >= i + 1 ? 'text-coal' : 'text-ink-light'"
-                class="text-xs 3xl:text-sm font-medium hidden sm:block transition-colors"
+                class="text-[10px] sm:text-xs 3xl:text-sm font-medium transition-colors"
                 x-text="label"
               ></span>
             </div>
             <template x-if="i < 3">
-              <div :class="step > i + 1 ? 'bg-amber' : 'bg-parchment'" class="flex-1 h-0.5 rounded-full mx-3 3xl:mx-6 hidden sm:block transition-colors"></div>
+              <div :class="step > i + 1 ? 'bg-amber' : 'bg-parchment'" class="flex-1 h-0.5 rounded-full mx-1.5 sm:mx-3 3xl:mx-6 transition-colors"></div>
             </template>
           </div>
         </template>
@@ -72,12 +72,12 @@ import Base from '../../layouts/Base.astro';
               <div>
                 <label for="ride-date" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Date</label>
                 <input
-                  type="date"
+                  type="text"
                   id="ride-date"
-                  x-model="selectedDate"
-                  :min="today"
+                  placeholder="Select a date"
+                  readonly
                   required
-                  class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
+                  class="w-full px-4 py-3 text-base 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors cursor-pointer"
                 />
               </div>
 
@@ -133,12 +133,12 @@ import Base from '../../layouts/Base.astro';
                 <div>
                   <label for="end-date" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">End Date</label>
                   <input
-                    type="date"
+                    type="text"
                     id="end-date"
-                    x-model="endDate"
-                    :min="selectedDate || today"
+                    placeholder="Select end date"
+                    readonly
                     required
-                    class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors"
+                    class="w-full px-4 py-3 text-base 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-white border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors cursor-pointer"
                   />
                 </div>
               </template>

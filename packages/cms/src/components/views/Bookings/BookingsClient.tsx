@@ -1,5 +1,6 @@
 'use client'
 import React, { useState } from 'react'
+import { SetStepNav } from '@payloadcms/ui'
 import './bookings.scss'
 import { useBookings } from './useBookings'
 import type { Booking } from './useBookings'
@@ -59,6 +60,7 @@ export const BookingsClient: React.FC<BookingsClientProps> = ({ apiUrl }) => {
 
   return (
     <div className="bookings-dashboard">
+      <SetStepNav nav={[{ label: 'Bookings' }]} />
       {/* Header */}
       <div className="bookings-dashboard__header">
         <h1 className="bookings-dashboard__title">Bookings</h1>
