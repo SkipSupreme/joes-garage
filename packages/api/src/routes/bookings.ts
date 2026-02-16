@@ -1,5 +1,5 @@
 import { type Router as IRouter, Router } from 'express';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { z } from 'zod';
 import pool from '../db/pool.js';
 import { preAuthorize } from '../services/moneris.js';
@@ -11,6 +11,10 @@ export const bookingsRouter: IRouter = Router();
 const MAX_RENTAL_DAYS = 30;
 
 const BOOKING_HMAC_SECRET = process.env.BOOKING_HMAC_SECRET || 'dev-booking-hmac-secret';
+
+if (!process.env.BOOKING_HMAC_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('BOOKING_HMAC_SECRET environment variable is required in production');
+}
 
 /** Generate a short HMAC token for a booking ref (used in confirmation URLs) */
 export function generateBookingToken(bookingRef: string): string {
@@ -431,7 +435,10 @@ bookingsRouter.get('/:id', async (req, res) => {
   // HMAC token validation for booking ref lookups (prevents enumeration)
   if (isRef) {
     const token = req.query.token as string | undefined;
-    if (!token || token !== generateBookingToken(param.toUpperCase())) {
+    const expected = generateBookingToken(param.toUpperCase());
+    const valid = token && token.length === expected.length &&
+      timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+    if (!valid) {
       res.status(403).json({ error: 'Invalid or missing booking token' });
       return;
     }

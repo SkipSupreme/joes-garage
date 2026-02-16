@@ -81,6 +81,13 @@ export const BookingTable: React.FC<BookingTableProps> = ({
     setSearchInput(search)
   }, [search])
 
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
+
   const handleSearch = (value: string) => {
     setSearchInput(value)
     if (debounceRef.current) clearTimeout(debounceRef.current)

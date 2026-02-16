@@ -423,6 +423,8 @@ export default (Alpine: Alpine) => {
     async processPayment() {
       this.paymentError = null;
       this.loading = true;
+      // Stop the hold timer so it can't reset the flow during payment
+      if (this.holdTimer) clearInterval(this.holdTimer);
       try {
         // In production, this token comes from Moneris Hosted Tokenization iframe
         const monerisToken = 'sandbox-token-placeholder';

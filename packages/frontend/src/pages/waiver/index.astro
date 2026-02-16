@@ -1,9 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getSiteSettings } from '../../lib/payload';
+import { sanitizeHtml } from '../../lib/sanitize-html';
 
 const settings = await getSiteSettings();
-const waiverHtml = settings.waiverText || '';
+const waiverHtml = sanitizeHtml(settings.waiverText || '');
 ---
 
 <Base title="Sign Waiver" description="Sign the rental waiver before your Joe's Garage bike rental. Walk-ups welcome.">

@@ -59,6 +59,8 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
 
   // Fetch available bikes when duration changes
   useEffect(() => {
+    const controller = new AbortController()
+
     const fetchBikes = async () => {
       setFetchingBikes(true)
       try {
@@ -79,20 +81,23 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
           url = `${apiUrl}/api/availability?date=${dateStr}&duration=${duration}&startTime=${hhStr}`
         }
 
-        const res = await fetch(url)
+        const res = await fetch(url, { signal: controller.signal })
         if (!res.ok) throw new Error('Failed to fetch available bikes')
         const data = await res.json()
-        setBikes(data.bikes || [])
+        if (!controller.signal.aborted) setBikes(data.bikes || [])
       } catch (err: any) {
+        if (err.name === 'AbortError') return
         console.error('Failed to fetch bikes:', err)
-        setBikes([])
+        if (!controller.signal.aborted) setBikes([])
       } finally {
-        setFetchingBikes(false)
+        if (!controller.signal.aborted) setFetchingBikes(false)
       }
     }
 
     fetchBikes()
     setSelected({})
+
+    return () => controller.abort()
   }, [apiUrl, duration])
 
   const getPriceForDuration = (bike: AvailableBike): number => {

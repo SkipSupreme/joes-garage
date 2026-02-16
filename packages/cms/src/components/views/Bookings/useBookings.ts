@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { adminFetch } from './adminFetch'
 
 export type BookingStatus = 'hold' | 'paid' | 'active' | 'overdue' | 'completed' | 'cancelled'
@@ -115,7 +115,7 @@ export function useBookings(apiUrl: string): UseBookingsReturn {
     page: 1,
   })
 
-  const refreshRef = useRef(0)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -166,15 +166,14 @@ export function useBookings(apiUrl: string): UseBookingsReturn {
 
   // Re-fetch on manual refresh
   useEffect(() => {
-    if (refreshRef.current > 0) {
+    if (refreshTrigger > 0) {
       fetchAll()
     }
-  }, [refreshRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [refreshTrigger, fetchAll])
 
   const refresh = useCallback(() => {
-    refreshRef.current += 1
-    fetchAll()
-  }, [fetchAll])
+    setRefreshTrigger((prev) => prev + 1)
+  }, [])
 
   const setStatus = useCallback((s: StatusFilter) => {
     setFilters((prev) => ({ ...prev, status: s, page: 1 }))
