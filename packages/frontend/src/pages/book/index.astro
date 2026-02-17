@@ -301,7 +301,7 @@ import Base from '../../layouts/Base.astro';
               <!-- Bike photo -->
               <div class="aspect-[3/2] rounded-xl bg-white mb-4 flex items-center justify-center overflow-hidden relative">
                 <template x-if="bike.photo_url">
-                  <img :src="bike.photo_url" :alt="bike.photo_alt || bike.name" class="w-full h-full object-contain p-2" loading="lazy" />
+                  <img :src="bike.photo_url" :alt="bike.photo_alt || bike.name" width="600" height="400" decoding="async" loading="lazy" class="w-full h-full object-contain p-2" />
                 </template>
                 <template x-if="!bike.photo_url">
                   <svg class="w-10 h-10 text-ink-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>
