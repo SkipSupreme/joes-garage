@@ -83,7 +83,7 @@ import Base from '../../layouts/Base.astro';
 
               <!-- Duration chips (2x2 grid) -->
               <div>
-                <label class="block text-sm 3xl:text-base font-medium text-coal mb-2">How long?</label>
+                <span class="block text-sm 3xl:text-base font-medium text-coal mb-2">How long?</span>
                 <div class="grid grid-cols-2 gap-3">
                   <template x-for="d in [{val: '2h', label: '2 Hours'}, {val: '4h', label: '4 Hours'}, {val: '8h', label: 'Full Day'}, {val: 'multi-day', label: 'Multi-Day'}]" :key="d.val">
                     <button
@@ -110,7 +110,7 @@ import Base from '../../layouts/Base.astro';
               <!-- Time slot grid (2h / 4h only) -->
               <template x-if="isHourly && duration">
                 <div>
-                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-2">Pick a start time</label>
+                  <span class="block text-sm 3xl:text-base font-medium text-coal mb-2">Pick a start time</span>
                   <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     <template x-for="slot in availableTimeSlots" :key="slot">
                       <button
@@ -408,22 +408,22 @@ import Base from '../../layouts/Base.astro';
             <form @submit.prevent="submitWaiver()" class="space-y-5 3xl:space-y-6">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 3xl:gap-6">
                 <div>
-                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Full Name</label>
-                  <input type="text" x-model="waiver.fullName" required minlength="2" maxlength="200" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Your full name" />
+                  <label for="waiver-name" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Full Name</label>
+                  <input type="text" id="waiver-name" x-model="waiver.fullName" required minlength="2" maxlength="200" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Your full name" />
                 </div>
                 <div>
-                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Email</label>
-                  <input type="email" x-model="waiver.email" required maxlength="254" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="you@email.com" />
+                  <label for="waiver-email" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Email</label>
+                  <input type="email" id="waiver-email" x-model="waiver.email" required maxlength="254" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="you@email.com" />
                 </div>
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 3xl:gap-6">
                 <div>
-                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Phone</label>
-                  <input type="tel" x-model="waiver.phone" required minlength="7" maxlength="20" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="(403) 555-1234" />
+                  <label for="waiver-phone" class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Phone</label>
+                  <input type="tel" id="waiver-phone" x-model="waiver.phone" required minlength="7" maxlength="20" class="w-full px-4 py-3 3xl:px-5 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="(403) 555-1234" />
                 </div>
                 <div>
-                  <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Date of Birth</label>
+                  <span class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Date of Birth</span>
                   <div class="grid grid-cols-3 gap-2">
                     <select x-model="waiver.dobMonth" required class="w-full px-3 py-3 3xl:px-4 3xl:py-4 3xl:text-lg rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
                       <option value="" disabled selected>Month</option>
@@ -449,7 +449,7 @@ import Base from '../../layouts/Base.astro';
 
               <!-- Signature pad -->
               <div>
-                <label class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Your Signature</label>
+                <span class="block text-sm 3xl:text-base font-medium text-coal mb-1.5">Your Signature</span>
                 <div class="relative rounded-xl border-2 border-dashed border-parchment bg-white overflow-hidden">
                   <canvas
                     id="signature-pad"

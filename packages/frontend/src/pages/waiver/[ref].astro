@@ -150,22 +150,22 @@ const waiverHtml = sanitizeHtml(settings.waiverText || '');
                 <form @submit.prevent="submitWaiver()" class="space-y-5">
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label class="block text-sm font-medium text-coal mb-1.5">Full Name</label>
-                      <input type="text" x-model="waiver.fullName" required minlength="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Your full name" />
+                      <label for="waiver-name" class="block text-sm font-medium text-coal mb-1.5">Full Name</label>
+                      <input type="text" id="waiver-name" x-model="waiver.fullName" required minlength="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Your full name" />
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-coal mb-1.5">Email</label>
-                      <input type="email" x-model="waiver.email" required maxlength="254" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="you@email.com" />
+                      <label for="waiver-email" class="block text-sm font-medium text-coal mb-1.5">Email</label>
+                      <input type="email" id="waiver-email" x-model="waiver.email" required maxlength="254" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="you@email.com" />
                     </div>
                   </div>
 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label class="block text-sm font-medium text-coal mb-1.5">Phone</label>
-                      <input type="tel" x-model="waiver.phone" required minlength="7" maxlength="20" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="(403) 555-1234" />
+                      <label for="waiver-phone" class="block text-sm font-medium text-coal mb-1.5">Phone</label>
+                      <input type="tel" id="waiver-phone" x-model="waiver.phone" required minlength="7" maxlength="20" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="(403) 555-1234" />
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-coal mb-1.5">Date of Birth</label>
+                      <span class="block text-sm font-medium text-coal mb-1.5">Date of Birth</span>
                       <div class="grid grid-cols-3 gap-2">
                         <select x-model="waiver.dobMonth" required class="w-full px-3 py-3 rounded-xl bg-cream-dark border border-parchment text-coal focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors appearance-none">
                           <option value="" disabled selected>Month</option>
@@ -198,14 +198,14 @@ const waiverHtml = sanitizeHtml(settings.waiverText || '');
                   <!-- Guardian name (shown for minors) -->
                   <template x-if="waiver.isMinor">
                     <div>
-                      <label class="block text-sm font-medium text-coal mb-1.5">Parent / Guardian Name</label>
-                      <input type="text" x-model="waiver.guardianName" required minlength="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Guardian's full name" />
+                      <label for="waiver-guardian" class="block text-sm font-medium text-coal mb-1.5">Parent / Guardian Name</label>
+                      <input type="text" id="waiver-guardian" x-model="waiver.guardianName" required minlength="2" maxlength="200" class="w-full px-4 py-3 rounded-xl bg-cream-dark border border-parchment text-coal placeholder:text-ink-light focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30 transition-colors" placeholder="Guardian's full name" />
                     </div>
                   </template>
 
                   <!-- Signature pad -->
                   <div>
-                    <label class="block text-sm font-medium text-coal mb-1.5">Your Signature</label>
+                    <span class="block text-sm font-medium text-coal mb-1.5">Your Signature</span>
                     <div class="relative rounded-xl border-2 border-dashed border-parchment bg-white overflow-hidden">
                       <canvas
                         id="waiver-signature-pad"
