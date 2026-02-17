@@ -23,6 +23,7 @@ export const Bikes: CollectionConfig = {
       name: 'type',
       type: 'select',
       required: true,
+      index: true,
       options: [
         { label: 'City', value: 'city' },
         { label: 'Cruiser', value: 'cruiser' },
@@ -104,6 +105,7 @@ export const Bikes: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'available',
+      index: true,
       options: [
         { label: 'Available', value: 'available' },
         { label: 'In Repair', value: 'in-repair' },

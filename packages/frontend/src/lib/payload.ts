@@ -1,8 +1,9 @@
 /**
  * Build-time helpers for fetching content from Payload CMS REST API.
- * Used in Astro page frontmatter during static site generation.
+ * Used in Astro page frontmatter during SSR.
  *
- * depth=2 ensures media inside blocks are fully populated with URLs.
+ * depth=2 on pages ensures media inside blocks are fully populated with URLs.
+ * pagination=false skips the COUNT query on all collection fetches.
  * Rich text (Lexical JSON) is converted to HTML before returning.
  */
 
@@ -89,7 +90,7 @@ function normalizeMediaUrl(doc: any): any {
 // --- Pages ---
 
 export async function getPages() {
-  const data = await payloadFetch<{ docs: any[] }>('/pages?limit=100&depth=2');
+  const data = await payloadFetch<{ docs: any[] }>('/pages?limit=100&depth=2&pagination=false');
   return data.docs.map((page) => ({
     ...page,
     layout: processBlocks(page.layout),
@@ -106,7 +107,7 @@ export async function getPages() {
 
 export async function getPage(slug: string) {
   const data = await payloadFetch<{ docs: any[] }>(
-    `/pages?where[slug][equals]=${encodeURIComponent(slug)}&limit=1&depth=2`,
+    `/pages?where[slug][equals]=${encodeURIComponent(slug)}&limit=1&depth=2&pagination=false`,
   );
   const page = data.docs[0];
   if (!page) return null;
@@ -128,7 +129,7 @@ export async function getPage(slug: string) {
 
 export async function getBikes() {
   const data = await payloadFetch<{ docs: any[] }>(
-    '/bikes?where[status][equals]=available&limit=100&depth=1',
+    '/bikes?where[status][equals]=available&limit=100&depth=1&pagination=false',
   );
   return data.docs.map((bike) => {
     const b = normalizeMediaUrl(bike);
@@ -141,7 +142,7 @@ export async function getBikes() {
 }
 
 export async function getServices() {
-  const data = await payloadFetch<{ docs: any[] }>('/services?limit=100&depth=1');
+  const data = await payloadFetch<{ docs: any[] }>('/services?limit=100&depth=1&pagination=false');
   return data.docs.map((service) => {
     const s = normalizeMediaUrl(service);
     if (s.description && typeof s.description === 'object' && s.description.root) {
@@ -152,7 +153,7 @@ export async function getServices() {
 }
 
 export async function getTestimonials() {
-  const data = await payloadFetch<{ docs: any[] }>('/testimonials?limit=100&depth=1');
+  const data = await payloadFetch<{ docs: any[] }>('/testimonials?limit=100&depth=1&pagination=false');
   return data.docs.map(normalizeMediaUrl);
 }
 

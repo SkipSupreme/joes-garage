@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -37,7 +38,10 @@ app.use(
   }),
 );
 
-// 2. CORS - only allow our frontend origins
+// 2. Compress responses (gzip/deflate) — ~60-80% size reduction for JSON
+app.use(compression({ threshold: 1024 }));
+
+// 3. CORS - only allow our frontend origins
 app.use(
   cors({
     origin: allowedOrigins,
@@ -47,7 +51,7 @@ app.use(
   }),
 );
 
-// 3. Structured request logging
+// 4. Structured request logging
 app.use(
   pinoHttp({
     logger,
@@ -57,13 +61,13 @@ app.use(
   }),
 );
 
-// 4. Body parsing with strict limits
+// 5. Body parsing with strict limits
 app.use(express.json({ limit: '2mb' }));
 
-// 5. Disable X-Powered-By to reduce fingerprinting
+// 6. Disable X-Powered-By to reduce fingerprinting
 app.disable('x-powered-by');
 
-// 6. Global rate limiter: 100 requests per minute per IP
+// 7. Global rate limiter: 100 requests per minute per IP
 const globalLimiter = rateLimit({
   windowMs: 60_000,
   max: 100,

@@ -69,6 +69,7 @@ export const Messages: CollectionConfig = {
       name: 'read',
       type: 'checkbox',
       defaultValue: false,
+      index: true,
       admin: {
         description: 'Check this when you\'ve read the message',
       },

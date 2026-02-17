@@ -28,6 +28,7 @@ export const Services: CollectionConfig = {
       name: 'price',
       type: 'number',
       min: 0,
+      index: true,
       admin: {
         description: 'Price in CAD',
       },
