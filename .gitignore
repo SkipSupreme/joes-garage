@@ -43,6 +43,7 @@ screenshots/*
 !packages/cms/media/*.png
 !public/**/*.png
 !packages/frontend/public/**/*.png
+!packages/frontend/src/assets/**/*.png
 !logo.png
 
 # Playwright MCP artifacts

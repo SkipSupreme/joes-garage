@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+
 interface Testimonial {
   quote: string;
   name: string;
@@ -35,7 +37,7 @@ const { testimonials } = Astro.props;
 
           <div class="flex items-center gap-3">
             {t.photo?.url ? (
-              <img src={t.photo.url} alt={t.name} class="w-10 h-10 rounded-full object-cover" loading="lazy" />
+              <Image src={t.photo.url} alt={t.name} width={80} height={80} class="w-10 h-10 rounded-full object-cover" />
             ) : (
               <div class="w-10 h-10 rounded-full bg-coal flex items-center justify-center">
                 <span class="text-sm font-bold text-cream">{t.name.charAt(0)}</span>

@@ -7,8 +7,14 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://joes-garage.ca',
   output: 'server',
-  adapter: cloudflare(),
+  adapter: cloudflare({ imageService: 'compile' }),
   integrations: [alpinejs({ entrypoint: '/src/alpine.ts' }), sitemap()],
+  image: {
+    remotePatterns: [
+      { protocol: 'https' },
+      { protocol: 'http', hostname: 'localhost' },
+    ],
+  },
   vite: {
     plugins: [tailwindcss()],
   },

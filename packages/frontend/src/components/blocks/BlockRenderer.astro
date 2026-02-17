@@ -42,10 +42,10 @@ const blockComponents: Record<string, any> = {
 };
 ---
 
-{blocks.map((block) => {
+{blocks.map((block, i) => {
   const Component = blockComponents[block.blockType];
   if (!Component) return null;
 
   const { blockType, id, ...props } = block;
-  return <Component {...props} />;
+  return <Component {...props} aboveFold={i < 2} />;
 })}

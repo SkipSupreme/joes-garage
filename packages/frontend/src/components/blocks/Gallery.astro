@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+
 interface GalleryImage {
   image: { url: string; alt?: string };
   caption?: string;
@@ -6,9 +8,10 @@ interface GalleryImage {
 
 interface Props {
   images: GalleryImage[];
+  aboveFold?: boolean;
 }
 
-const { images } = Astro.props;
+const { images, aboveFold = false } = Astro.props;
 ---
 
 <section class="py-16 lg:py-20">
@@ -19,11 +22,12 @@ const { images } = Astro.props;
           'group relative overflow-hidden rounded-2xl bg-cream-dark border border-parchment',
           i === 0 ? 'sm:col-span-2 sm:row-span-2' : '',
         ]}>
-          <img
+          <Image
             src={item.image.url}
             alt={item.image.alt || item.caption || ''}
+            width={i === 0 ? 800 : 400}
+            height={i === 0 ? 600 : 300}
             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
           />
           {item.caption && (
             <div class="absolute inset-0 bg-gradient-to-t from-coal/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">

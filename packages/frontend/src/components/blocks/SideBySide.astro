@@ -1,13 +1,15 @@
 ---
+import { Image } from 'astro:assets';
 import { sanitizeHtml } from '../../lib/sanitize-html';
 
 interface Props {
   image: { url: string; alt?: string };
   content: string; // Rich text HTML
   imagePosition: 'left' | 'right';
+  aboveFold?: boolean;
 }
 
-const { image, content, imagePosition = 'left' } = Astro.props;
+const { image, content, imagePosition = 'left', aboveFold = false } = Astro.props;
 ---
 
 <section class="py-16 lg:py-20">
@@ -19,11 +21,13 @@ const { image, content, imagePosition = 'left' } = Astro.props;
       <!-- Image -->
       <div class="relative">
         <div class="aspect-[3/4] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-cream-dark border border-parchment">
-          <img
+          <Image
             src={image.url}
             alt={image.alt || ''}
+            width={800}
+            height={600}
+            loading={aboveFold ? 'eager' : 'lazy'}
             class="w-full h-full object-cover object-top"
-            loading="lazy"
           />
         </div>
         <div class:list={[

@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+
 interface Props {
   heading: string;
   subheading?: string;
@@ -13,7 +15,7 @@ const { heading, subheading, backgroundImage, ctaText, ctaLink } = Astro.props;
 <section class="relative min-h-[60vh] flex items-center overflow-hidden bg-coal">
   {backgroundImage?.url ? (
     <div class="absolute inset-0">
-      <img src={backgroundImage.url} alt={backgroundImage.alt || ''} class="w-full h-full object-cover" loading="eager" />
+      <Image src={backgroundImage.url} alt={backgroundImage.alt || ''} width={1920} height={1080} loading="eager" class="w-full h-full object-cover" />
       <div class="absolute inset-0 bg-coal/70"></div>
     </div>
   ) : (
