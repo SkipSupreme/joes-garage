@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
+import { logger } from '../lib/logger.js';
 
 const ADMIN_SECRET = process.env.ADMIN_API_SECRET || 'dev-admin-secret-change-in-production';
 
@@ -11,6 +12,7 @@ export function adminAuth(req: Request, res: Response, next: NextFunction): void
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    logger.warn({ ip: req.ip, path: req.path, reason: 'missing_token' }, 'Admin auth failed');
     res.status(401).json({ error: 'Missing or invalid Authorization header' });
     return;
   }
@@ -21,6 +23,7 @@ export function adminAuth(req: Request, res: Response, next: NextFunction): void
     timingSafeEqual(Buffer.from(token), Buffer.from(ADMIN_SECRET));
 
   if (!valid) {
+    logger.warn({ ip: req.ip, path: req.path, reason: 'invalid_token' }, 'Admin auth failed');
     res.status(403).json({ error: 'Invalid admin credentials' });
     return;
   }
