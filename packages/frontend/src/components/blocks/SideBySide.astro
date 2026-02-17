@@ -27,6 +27,7 @@ const { image, content, imagePosition = 'left', aboveFold = false } = Astro.prop
             width={800}
             height={600}
             loading={aboveFold ? 'eager' : 'lazy'}
+            fetchpriority={aboveFold ? 'high' : 'auto'}
             class="w-full h-full object-cover object-top"
           />
         </div>

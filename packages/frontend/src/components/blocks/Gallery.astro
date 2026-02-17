@@ -28,6 +28,7 @@ const { images, aboveFold = false } = Astro.props;
             width={i === 0 ? 800 : 400}
             height={i === 0 ? 600 : 300}
             loading={aboveFold && i < 3 ? 'eager' : 'lazy'}
+            fetchpriority={aboveFold && i === 0 ? 'high' : 'auto'}
             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {item.caption && (

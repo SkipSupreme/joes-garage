@@ -65,6 +65,7 @@ try {
         ))}
         <a
           href="/book"
+          data-astro-prefetch
           class:list={[
             'ml-4 px-6 py-2.5 text-sm 3xl:text-base font-bold rounded-lg transition-all duration-200',
             currentPath.startsWith('/book')
@@ -122,6 +123,7 @@ try {
       ))}
       <a
         href="/book"
+        data-astro-prefetch
         class="block mt-2 px-4 py-3 text-sm font-bold text-center rounded-lg bg-red text-cream hover:bg-red-light transition-colors"
       >
         Book a Bike

@@ -8,6 +8,10 @@ export default defineConfig({
   site: 'https://joes-garage.ca',
   output: 'server',
   adapter: cloudflare({ imageService: 'compile' }),
+  prefetch: {
+    prefetchAll: false, // only prefetch links with data-astro-prefetch
+    defaultStrategy: 'viewport', // prefetch when link enters viewport
+  },
   integrations: [alpinejs({ entrypoint: '/src/alpine.ts' }), sitemap()],
   image: {
     remotePatterns: [

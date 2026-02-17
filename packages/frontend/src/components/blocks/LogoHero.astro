@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import logoHero from '../../assets/logo-hero.png';
+import logoHero from '../../assets/logo-hero.webp';
 
 interface Props {
   eyebrow?: string;
@@ -90,7 +90,7 @@ const { eyebrow, heading, headingAccent, subtitle, ctaButtons, trustIndicators }
         <div class="relative w-full max-w-2xl 3xl:max-w-3xl flex items-center justify-center">
           <div class="absolute w-[520px] h-[520px] 3xl:w-[640px] 3xl:h-[640px] rounded-full border border-cream/5"></div>
           <div class="absolute w-[600px] h-[600px] 3xl:w-[720px] 3xl:h-[720px] rounded-full border border-dashed border-cream/3 animate-[spin_120s_linear_infinite]"></div>
-          <Image src={logoHero} alt="Joe's Garage — Rentals & Repairs" width={1200} height={857} loading="eager" class="relative w-[520px] 3xl:w-[640px] drop-shadow-2xl" />
+          <Image src={logoHero} alt="Joe's Garage — Rentals & Repairs" width={1200} height={857} loading="eager" fetchpriority="high" class="relative w-[520px] 3xl:w-[640px] drop-shadow-2xl" />
         </div>
       </div>
     </div>

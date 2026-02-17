@@ -1,0 +1,91 @@
+@import "flatpickr/dist/flatpickr.min.css";
+
+/* ── Flatpickr calendar overrides — larger, more readable ── */
+.flatpickr-calendar {
+  font-size: 16px !important;
+  width: 340px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid var(--color-parchment) !important;
+}
+.flatpickr-months {
+  padding: 8px 4px !important;
+}
+.flatpickr-months .flatpickr-month {
+  height: 40px !important;
+}
+.flatpickr-current-month {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+.flatpickr-weekdays {
+  padding: 4px 0 !important;
+}
+span.flatpickr-weekday {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--color-ink-muted) !important;
+}
+.flatpickr-day {
+  width: 44px !important;
+  max-width: 44px !important;
+  flex-basis: 14.2857% !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  font-size: 16px !important;
+  border-radius: 10px !important;
+  margin: 1px !important;
+}
+.dayContainer {
+  width: 340px !important;
+  min-width: 340px !important;
+  max-width: 340px !important;
+}
+.flatpickr-days {
+  width: 340px !important;
+}
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+  background: var(--color-amber) !important;
+  border-color: var(--color-amber) !important;
+  color: #fff !important;
+}
+.flatpickr-day:hover {
+  background: var(--color-cream-dark) !important;
+  border-color: var(--color-cream-dark) !important;
+}
+.flatpickr-day.today {
+  border-color: var(--color-red) !important;
+}
+.flatpickr-day.today:hover {
+  background: var(--color-red) !important;
+  color: #fff !important;
+}
+.flatpickr-prev-month,
+.flatpickr-next-month {
+  padding: 8px !important;
+}
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+@media (max-width: 400px) {
+  .flatpickr-calendar {
+    width: 300px !important;
+  }
+  .dayContainer,
+  .flatpickr-days {
+    width: 300px !important;
+    min-width: 300px !important;
+    max-width: 300px !important;
+  }
+  .flatpickr-day {
+    width: 38px !important;
+    max-width: 38px !important;
+    flex-basis: 14.2857% !important;
+    height: 38px !important;
+    line-height: 38px !important;
+  }
+}

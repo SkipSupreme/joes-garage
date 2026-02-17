@@ -1,9 +1,11 @@
 ---
+export const prerender = true;
+
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import BlockRenderer from '../components/blocks/BlockRenderer.astro';
 import { getPage } from '../lib/payload';
-import logoHero from '../assets/logo-hero.png';
+import logoHero from '../assets/logo-hero.webp';
 
 // Try to fetch homepage from CMS — fall back to hardcoded content if unavailable
 let page: any = null;
@@ -58,6 +60,7 @@ const pageDescription = hasCmsContent
             <div class="animate-fade-up delay-300 mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4">
               <a
                 href="/book"
+                data-astro-prefetch
                 class="group inline-flex items-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-red text-cream font-bold rounded-xl hover:bg-red-light hover:shadow-xl hover:shadow-red/20 hover:-translate-y-0.5 transition-all duration-200"
               >
                 Book a Rental
@@ -93,7 +96,7 @@ const pageDescription = hasCmsContent
             <div class="relative w-full max-w-2xl 3xl:max-w-3xl flex items-center justify-center">
               <div class="absolute w-[520px] h-[520px] 3xl:w-[640px] 3xl:h-[640px] rounded-full border border-cream/5"></div>
               <div class="absolute w-[600px] h-[600px] 3xl:w-[720px] 3xl:h-[720px] rounded-full border border-dashed border-cream/3 animate-[spin_120s_linear_infinite]"></div>
-              <Image src={logoHero} alt="Joe's Garage — Rentals & Repairs" width={1200} height={857} loading="eager" class="relative w-[520px] 3xl:w-[640px] drop-shadow-2xl" />
+              <Image src={logoHero} alt="Joe's Garage — Rentals & Repairs" width={1200} height={857} loading="eager" fetchpriority="high" class="relative w-[520px] 3xl:w-[640px] drop-shadow-2xl" />
             </div>
           </div>
         </div>
@@ -275,7 +278,7 @@ const pageDescription = hasCmsContent
         </div>
 
         <div class="text-center mt-10">
-          <a href="/book" class="inline-flex items-center gap-2 px-8 py-4 bg-red text-cream font-bold rounded-xl hover:bg-red-light hover:shadow-xl hover:shadow-red/20 hover:-translate-y-0.5 transition-all duration-200">
+          <a href="/book" data-astro-prefetch class="inline-flex items-center gap-2 px-8 py-4 bg-red text-cream font-bold rounded-xl hover:bg-red-light hover:shadow-xl hover:shadow-red/20 hover:-translate-y-0.5 transition-all duration-200">
             Start Booking
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
           </a>
@@ -350,6 +353,7 @@ const pageDescription = hasCmsContent
         <div class="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <a
             href="/book"
+            data-astro-prefetch
             class="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 bg-red text-cream font-bold text-lg rounded-xl hover:bg-red-light hover:shadow-xl hover:shadow-red/20 hover:-translate-y-0.5 transition-all duration-200"
           >
             Book a Rental

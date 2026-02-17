@@ -4,6 +4,10 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { getSiteSettings } from '../lib/payload';
 
+// Font file URLs — resolved by Vite with content hashes for preload hints
+import oswaldLatinUrl from '@fontsource-variable/oswald/files/oswald-latin-wght-normal.woff2?url';
+import jostLatinUrl from '@fontsource-variable/jost/files/jost-latin-wght-normal.woff2?url';
+
 interface Props {
   title: string;
   description?: string;
@@ -80,20 +84,31 @@ const schemaHours = cmsHours
     <meta name="theme-color" content="#111111" />
     <link rel="canonical" href={canonicalUrl} />
 
+    <!-- Preload critical fonts (eliminates font-loading waterfall) -->
+    <link rel="preload" href={oswaldLatinUrl} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={jostLatinUrl} as="font" type="font/woff2" crossorigin />
+
     <!-- Open Graph -->
     <meta property="og:title" content={`${title} | Joe's Garage`} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImage && (
+      <>
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </>
+    )}
 
-    <!-- Fonts: Oswald (Franchise fallback for display) + Jost (Futura replacement for body) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Oswald:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`${title} | Joe's Garage`} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+    <!-- DNS prefetch for API -->
+    <link rel="dns-prefetch" href={import.meta.env.PUBLIC_API_URL || 'http://localhost:3001'} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} | Joe's Garage</title>
@@ -131,12 +146,15 @@ const schemaHours = cmsHours
     })} />
   </head>
   <body class="min-h-screen flex flex-col bg-cream text-ink font-body">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-coal focus:text-cream focus:rounded-lg focus:text-sm focus:font-medium">
+      Skip to main content
+    </a>
     <Nav />
 
     <!-- Spacer for fixed nav -->
     <div class="h-14 sm:h-16 lg:h-20 3xl:h-24"></div>
 
-    <main class="flex-1">
+    <main id="main-content" class="flex-1">
       <slot />
     </main>
 
