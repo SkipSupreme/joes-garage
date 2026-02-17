@@ -19,13 +19,15 @@ interface AvailableBike {
   price2h: string
   price4h: string
   price8h: string
+  price_per_day: string
   deposit_amount: string
 }
 
-type Duration = '2h' | '4h' | '8h'
+type Duration = '2h' | '4h' | '8h' | 'multi-day'
 type Step = 1 | 2 | 3
 
 import { DURATION_LABELS } from './constants'
+import { CalendarPicker } from './CalendarPicker'
 
 interface WalkInModalProps {
   apiUrl: string
@@ -36,6 +38,7 @@ interface WalkInModalProps {
 export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuccess }) => {
   const [step, setStep] = useState<Step>(1)
   const [duration, setDuration] = useState<Duration>('2h')
+  const [endDate, setEndDate] = useState('')
   const [bikes, setBikes] = useState<AvailableBike[]>([])
   const [selected, setSelected] = useState<Record<string, { count: number; bikeIds: number[] }>>({})
   const [customer, setCustomer] = useState({ fullName: '', phone: '', email: '' })
@@ -57,14 +60,40 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
   const [linking, setLinking] = useState(false)
   const [linkMessage, setLinkMessage] = useState<string | null>(null)
 
-  // Fetch available bikes when duration changes
+  // Today's date in Calgary timezone (YYYY-MM-DD)
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Edmonton' })
+
+  // Minimum end date for multi-day: tomorrow
+  const tomorrowStr = (() => {
+    const d = new Date(todayStr)
+    d.setDate(d.getDate() + 1)
+    return d.toISOString().split('T')[0]
+  })()
+
+  // Calculate rental days for multi-day
+  const rentalDays = duration === 'multi-day' && endDate
+    ? Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24)) + 1)
+    : 1
+
+  // Reset selections when duration changes
   useEffect(() => {
+    setSelected({})
+    setEndDate('')
+  }, [duration])
+
+  // Fetch available bikes when duration changes (or endDate for multi-day)
+  useEffect(() => {
+    // Don't fetch for multi-day until an end date is selected
+    if (duration === 'multi-day' && !endDate) {
+      setBikes([])
+      return
+    }
+
     const controller = new AbortController()
 
     const fetchBikes = async () => {
       setFetchingBikes(true)
       try {
-        // Use availability endpoint with today's date and the selected duration
         const now = new Date()
         const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Edmonton' })
         const hhStr = now.toLocaleTimeString('en-CA', {
@@ -75,7 +104,9 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
         })
 
         let url: string
-        if (duration === '8h') {
+        if (duration === 'multi-day') {
+          url = `${apiUrl}/api/availability?date=${dateStr}&duration=multi-day&endDate=${endDate}`
+        } else if (duration === '8h') {
           url = `${apiUrl}/api/availability?date=${dateStr}&duration=8h`
         } else {
           url = `${apiUrl}/api/availability?date=${dateStr}&duration=${duration}&startTime=${hhStr}`
@@ -98,13 +129,14 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
     setSelected({})
 
     return () => controller.abort()
-  }, [apiUrl, duration])
+  }, [apiUrl, duration, endDate])
 
   const getPriceForDuration = (bike: AvailableBike): number => {
     switch (duration) {
       case '2h': return parseFloat(bike.price2h || '0')
       case '4h': return parseFloat(bike.price4h || '0')
       case '8h': return parseFloat(bike.price8h || '0')
+      case 'multi-day': return parseFloat(bike.price_per_day || '0') * rentalDays
       default: return parseFloat(bike.rental_price || '0')
     }
   }
@@ -158,6 +190,7 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
         body: JSON.stringify({
           bikes: bikePayload,
           duration,
+          endDate: duration === 'multi-day' ? endDate : undefined,
           customer: {
             fullName: customer.fullName.trim(),
             phone: customer.phone.trim(),
@@ -276,10 +309,33 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
               </div>
             </div>
 
+            {/* End date picker for multi-day */}
+            {duration === 'multi-day' && (
+              <div style={{ marginBottom: '12px' }}>
+                <CalendarPicker
+                  label="Return Date"
+                  value={endDate}
+                  onChange={setEndDate}
+                  minDate={tomorrowStr}
+                />
+                {endDate && (
+                  <p className="walk-in-modal__date-info">
+                    {rentalDays} day{rentalDays !== 1 ? 's' : ''} (today through {new Date(endDate).toLocaleDateString('en-CA', {
+                      timeZone: 'America/Edmonton',
+                      month: 'short',
+                      day: 'numeric',
+                    })})
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Bike grid */}
             <div className="walk-in-modal__bikes">
               <label className="walk-in-modal__label">Available Bikes</label>
-              {fetchingBikes ? (
+              {duration === 'multi-day' && !endDate ? (
+                <div className="walk-in-modal__bikes-empty">Select a return date to see available bikes</div>
+              ) : fetchingBikes ? (
                 <div className="walk-in-modal__bikes-loading">Loading available bikes...</div>
               ) : bikes.length === 0 ? (
                 <div className="walk-in-modal__bikes-empty">No bikes available for this duration</div>
@@ -295,7 +351,12 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
                         <div className="walk-in-modal__bike-info">
                           <span className="walk-in-modal__bike-name">{bike.name}</span>
                           <span className="walk-in-modal__bike-type">{bike.type} {bike.size && `(${bike.size})`}</span>
-                          <span className="walk-in-modal__bike-price">${price.toFixed(2)}</span>
+                          <span className="walk-in-modal__bike-price">
+                            ${price.toFixed(2)}
+                            {duration === 'multi-day' && (
+                              <span className="walk-in-modal__bike-rate"> (${parseFloat(bike.price_per_day || '0').toFixed(2)}/day)</span>
+                            )}
+                          </span>
                           <span className="walk-in-modal__bike-avail">{bike.available_count} available</span>
                         </div>
                         <div className="walk-in-modal__bike-qty">
@@ -328,6 +389,7 @@ export const WalkInModal: React.FC<WalkInModalProps> = ({ apiUrl, onClose, onSuc
             <div className="walk-in-modal__total-bar">
               <div>
                 <strong>{totalBikes}</strong> bike{totalBikes !== 1 ? 's' : ''} selected
+                {duration === 'multi-day' && endDate && <> for <strong>{rentalDays}</strong> day{rentalDays !== 1 ? 's' : ''}</>}
               </div>
               <div>
                 <strong>${totalPrice.toFixed(2)}</strong> rental

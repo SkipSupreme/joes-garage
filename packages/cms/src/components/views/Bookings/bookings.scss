@@ -1090,6 +1090,18 @@
     color: #10B981;
   }
 
+  &__bike-rate {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--theme-elevation-500);
+  }
+
+  &__date-info {
+    font-size: 13px;
+    color: var(--theme-elevation-500);
+    margin-top: 6px;
+  }
+
   &__bike-avail {
     font-size: 11px;
     color: var(--theme-elevation-400, #6B7280);
@@ -1278,6 +1290,150 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+// ── Calendar Picker (walk-in modal) ──────────────────────────
+// Matches the flatpickr sizing on the public booking page:
+// 340px wide, 44px day cells, large readable text.
+.cal-picker {
+  margin-bottom: 12px;
+
+  &__field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--theme-elevation-50);
+    border: 1px solid var(--theme-elevation-100);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--theme-text);
+    font-family: inherit;
+    text-align: left;
+    transition: border-color 0.15s;
+
+    &:hover {
+      border-color: #D42B2B;
+    }
+  }
+
+  &__field-icon {
+    flex-shrink: 0;
+    color: var(--theme-elevation-500);
+  }
+
+  &__field-text {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  &__field-change {
+    font-size: 12px;
+    font-weight: 500;
+    color: #D42B2B;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__container {
+    width: 340px;
+    background: var(--theme-elevation-50);
+    border: 1px solid var(--theme-elevation-100);
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px 12px;
+  }
+
+  &__month-label {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--theme-text);
+  }
+
+  &__nav-btn {
+    background: none;
+    border: none;
+    color: var(--theme-text);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: var(--theme-elevation-100);
+    }
+  }
+
+  &__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+
+  &__weekday {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--theme-elevation-500);
+    padding: 4px 0;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  &__blank {
+    width: 44px;
+    height: 44px;
+  }
+
+  &__day {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--theme-text);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+
+    &:hover:not(:disabled) {
+      background: var(--theme-elevation-100);
+    }
+
+    &:disabled {
+      color: var(--theme-elevation-300, #4B5563);
+      cursor: not-allowed;
+    }
+
+    &--selected {
+      background: #D42B2B !important;
+      color: white !important;
+      font-weight: 700;
+    }
+
+    &--today:not(&--selected) {
+      border: 2px solid #D42B2B;
+    }
   }
 }
 

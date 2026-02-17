@@ -340,6 +340,8 @@ span.flatpickr-weekday {
 }
 .flatpickr-day {
   width: 44px !important;
+  max-width: 44px !important;
+  flex-basis: 14.2857% !important;
   height: 44px !important;
   line-height: 44px !important;
   font-size: 16px !important;
@@ -393,6 +395,8 @@ span.flatpickr-weekday {
   }
   .flatpickr-day {
     width: 38px !important;
+    max-width: 38px !important;
+    flex-basis: 14.2857% !important;
     height: 38px !important;
     line-height: 38px !important;
   }

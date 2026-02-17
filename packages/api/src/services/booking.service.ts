@@ -997,6 +997,7 @@ export async function completeBooking(
 export interface WalkInInput {
   bikes: Array<{ bikeId: number }>;
   duration: string;
+  endDate?: string;
   customer: {
     fullName: string;
     phone: string;
@@ -1015,7 +1016,7 @@ export interface WalkInResult {
 }
 
 export async function createWalkIn(data: WalkInInput): Promise<ServiceResult<WalkInResult>> {
-  const { bikes, duration, customer } = data;
+  const { bikes, duration, endDate, customer } = data;
   const client = await pool.connect();
 
   try {
@@ -1029,12 +1030,41 @@ export async function createWalkIn(data: WalkInInput): Promise<ServiceResult<Wal
     });
 
     const bikeIds = bikes.map((b) => b.bikeId);
+
+    // Calculate time range (walk-in uses current time, not date strings)
+    const now = new Date();
+    let rentalDays = 1;
+    let endTime: Date;
+
+    if (duration === 'multi-day') {
+      // endDate is the last day of the rental (inclusive), end at midnight after it
+      const end = new Date(endDate!);
+      end.setDate(end.getDate() + 1);
+      endTime = end;
+      // Count days from today to endDate (inclusive)
+      const today = new Date(now.toLocaleDateString('en-CA', { timeZone: TIMEZONE }));
+      rentalDays = Math.max(1, Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+    } else if (duration === '8h') {
+      // Full Day: ends at 6 PM Calgary time
+      endTime = new Date(
+        now.toLocaleString('en-US', { timeZone: TIMEZONE }).replace(/,/, ''),
+      );
+      endTime.setHours(18, 0, 0, 0);
+      if (endTime <= now) {
+        endTime.setDate(endTime.getDate() + 1);
+      }
+    } else {
+      const hours = DURATION_HOURS[duration];
+      endTime = new Date(now.getTime() + hours * 60 * 60 * 1000);
+    }
+
     const bikesResult = await client.query(
       `SELECT id, name,
         CASE $2
           WHEN '2h' THEN price2h
           WHEN '4h' THEN price4h
           WHEN '8h' THEN price8h
+          WHEN 'multi-day' THEN price_per_day
         END AS rental_price,
         deposit_amount, status
        FROM bikes WHERE id = ANY($1)`,
@@ -1054,27 +1084,10 @@ export async function createWalkIn(data: WalkInInput): Promise<ServiceResult<Wal
       return fail(400, `Bike(s) not available: ${unavailable.map((b: any) => b.name).join(', ')}`);
     }
 
-    // Calculate time range (walk-in uses current time, not date strings)
-    const now = new Date();
-    let endTime: Date;
-
-    if (duration === '8h') {
-      endTime = new Date(
-        now.toLocaleString('en-US', { timeZone: TIMEZONE }).replace(/,/, ''),
-      );
-      endTime.setHours(18, 0, 0, 0);
-      if (endTime <= now) {
-        endTime.setDate(endTime.getDate() + 1);
-      }
-    } else {
-      const hours = DURATION_HOURS[duration];
-      endTime = new Date(now.getTime() + hours * 60 * 60 * 1000);
-    }
-
     let totalRental = 0;
     let totalDeposit = 0;
     for (const bike of bikesResult.rows) {
-      totalRental += parseFloat(bike.rental_price);
+      totalRental += parseFloat(bike.rental_price) * rentalDays;
       totalDeposit += parseFloat(bike.deposit_amount);
     }
     const totalAmount = totalRental + totalDeposit;
