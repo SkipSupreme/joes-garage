@@ -13,6 +13,7 @@
     "@astrojs/check": "^0.9.6",
     "@astrojs/cloudflare": "^12.0.0",
     "@astrojs/sitemap": "^3.3.0",
+    "@joes-garage/shared": "workspace:*",
     "@types/alpinejs": "^3.13.0",
     "alpinejs": "^3.14.0",
     "astro": "^5.2.0",

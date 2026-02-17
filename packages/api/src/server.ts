@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import app from './app.js';
 import pool from './db/pool.js';
+import { logger } from './lib/logger.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
@@ -14,21 +15,21 @@ cron.schedule('* * * * *', async () => {
         AND hold_expires < NOW()
     `);
     if (result.rowCount && result.rowCount > 0) {
-      console.log(`Cleaned up ${result.rowCount} expired hold(s)`);
+      logger.info({ count: result.rowCount }, 'Cleaned up expired holds');
     }
   } catch (err) {
-    console.error('Hold cleanup error:', err);
+    logger.error(err, 'Hold cleanup error');
   }
 });
 
 // Graceful shutdown
 function shutdown() {
-  console.log('Shutting down...');
+  logger.info('Shutting down...');
   pool.end().then(() => process.exit(0));
 }
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 app.listen(PORT, () => {
-  console.log(`Booking API running on port ${PORT}`);
+  logger.info({ port: PORT }, 'Booking API started');
 });

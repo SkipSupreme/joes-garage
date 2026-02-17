@@ -2,13 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import pinoHttp from 'pino-http';
 import { availabilityRouter } from './routes/availability.js';
 import { bookingsRouter } from './routes/bookings.js';
 import { waiversRouter } from './routes/waivers.js';
 import { contactRouter } from './routes/contact.js';
 import { adminRouter } from './routes/admin/index.js';
 import { adminAuth } from './middleware/adminAuth.js';
+import { AppError, ValidationError } from './lib/errors.js';
+import { logger } from './lib/logger.js';
 import pool from './db/pool.js';
+import { ZodError } from 'zod';
 
 const app: ReturnType<typeof express> = express();
 
@@ -16,7 +20,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4321,http:
   .split(',')
   .map((o) => o.trim());
 
-// Security headers (CSP allows Moneris iframe for payment tokenization)
+// 1. Security headers (CSP allows Moneris iframe for payment tokenization)
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -33,7 +37,7 @@ app.use(
   }),
 );
 
-// CORS - only allow our frontend origins
+// 2. CORS - only allow our frontend origins
 app.use(
   cors({
     origin: allowedOrigins,
@@ -43,13 +47,23 @@ app.use(
   }),
 );
 
-// Body parsing with strict limits
+// 3. Structured request logging
+app.use(
+  pinoHttp({
+    logger,
+    autoLogging: {
+      ignore: (req) => req.url === '/api/health' || req.url === '/api/v1/health',
+    },
+  }),
+);
+
+// 4. Body parsing with strict limits
 app.use(express.json({ limit: '2mb' }));
 
-// Disable X-Powered-By to reduce fingerprinting
+// 5. Disable X-Powered-By to reduce fingerprinting
 app.disable('x-powered-by');
 
-// Global rate limiter: 100 requests per minute per IP
+// 6. Global rate limiter: 100 requests per minute per IP
 const globalLimiter = rateLimit({
   windowMs: 60_000,
   max: 100,
@@ -77,7 +91,7 @@ const adminLimiter = rateLimit({
   message: { error: 'Too many admin requests, please try again later' },
 });
 
-// Health check (no rate limit)
+// Health check (no rate limit, outside versioned routes)
 app.get('/api/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
@@ -87,20 +101,46 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
-app.use('/api/availability', availabilityRouter);
-app.use('/api/bookings', bookingLimiter, bookingsRouter);
-app.use('/api/waivers', bookingLimiter, waiversRouter);
-app.use('/api/contact', bookingLimiter, contactRouter);
-app.use('/api/admin', adminLimiter, adminAuth, adminRouter);
+// --- Versioned API routes (v1) ---
+const v1 = express.Router();
+v1.use('/availability', availabilityRouter);
+v1.use('/bookings', bookingLimiter, bookingsRouter);
+v1.use('/waivers', bookingLimiter, waiversRouter);
+v1.use('/contact', bookingLimiter, contactRouter);
+v1.use('/admin', adminLimiter, adminAuth, adminRouter);
+
+app.use('/api/v1', v1);
+app.use('/api', v1); // backwards-compatible alias
 
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-// Global error handler — never leak stack traces to client
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+// Global error handler — distinguishes operational vs unexpected errors
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // Zod validation errors
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      error: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      details: err.errors,
+    });
+    return;
+  }
+
+  // Known operational errors (AppError, NotFoundError, ConflictError, etc.)
+  if (err instanceof AppError) {
+    const body: Record<string, unknown> = { error: err.message, code: err.code };
+    if (err instanceof ValidationError && err.details) {
+      body.details = err.details;
+    }
+    res.status(err.statusCode).json(body);
+    return;
+  }
+
+  // Unexpected errors — log full details, return generic message
+  req.log.error(err, 'Unhandled error');
   res.status(500).json({ error: 'Internal server error' });
 });
 

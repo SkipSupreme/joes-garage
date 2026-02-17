@@ -2,13 +2,13 @@ import type { Alpine } from 'alpinejs';
 import SignaturePad from 'signature_pad';
 import flatpickr from 'flatpickr';
 import QRCode from 'qrcode';
+import { DURATION_HOURS, DURATION_LABELS } from '@joes-garage/shared/constants';
 
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3001';
 
 const SHOP_OPEN_HOUR = 9;
 const SHOP_OPEN_MIN = 30; // 9:30 AM
 const SHOP_CLOSE = 18; // 6 PM
-const DURATION_HOURS: Record<string, number> = { '2h': 2, '4h': 4 };
 
 // ── Shared waiver helpers (used by bookingFlow, waiverPage, standaloneWaiver) ──
 
@@ -94,13 +94,7 @@ export default (Alpine: Alpine) => {
       return this.duration === '8h';
     },
     get durationLabel() {
-      const labels: Record<string, string> = {
-        '2h': '2 Hours',
-        '4h': '4 Hours',
-        '8h': 'Full Day',
-        'multi-day': 'Multi-Day',
-      };
-      return labels[this.duration] || '';
+      return DURATION_LABELS[this.duration] || '';
     },
     get availableTimeSlots() {
       if (!this.isHourly || !this.duration) return [];
@@ -518,13 +512,7 @@ export default (Alpine: Alpine) => {
     get durationLabel() {
       const b = this.booking as any;
       if (!b?.duration_type) return '';
-      const labels: Record<string, string> = {
-        '2h': '2 Hours',
-        '4h': '4 Hours',
-        '8h': 'Full Day',
-        'multi-day': 'Multi-Day',
-      };
-      return labels[b.duration_type] || b.duration_type;
+      return DURATION_LABELS[b.duration_type] || b.duration_type;
     },
 
     formatPeriod(periodStr: string) {
@@ -588,8 +576,7 @@ export default (Alpine: Alpine) => {
     },
     get durationLabel() {
       if (!this.booking?.duration_type) return '';
-      const labels: Record<string, string> = { '2h': '2 Hours', '4h': '4 Hours', '8h': 'Full Day', 'multi-day': 'Multi-Day' };
-      return labels[this.booking.duration_type] || this.booking.duration_type;
+      return DURATION_LABELS[this.booking.duration_type] || this.booking.duration_type;
     },
     get dobMonths() { return DOB_MONTHS; },
     get dobDays() { return getDobDays(this.waiver.dobMonth, this.waiver.dobYear); },

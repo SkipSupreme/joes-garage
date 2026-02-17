@@ -70,4 +70,13 @@ export default buildConfig({
     process.env.FRONTEND_URL || 'http://localhost:4321',
     process.env.API_URL || 'http://localhost:3001',
   ],
+
+  // Limit relationship population depth to prevent recursive query abuse
+  defaultDepth: 1,
+  maxDepth: 5,
+
+  // Disable GraphQL — only REST API is used
+  graphQL: {
+    disable: true,
+  },
 });
