@@ -55,12 +55,30 @@ const holdSchema = z
     { message: `Invalid dates. Start must be today or later. Max rental: ${MAX_RENTAL_DAYS} days.` },
   );
 
+const preloadSchema = z.object({
+  reservationId: z.string().uuid(),
+});
+
 const paySchema = z.object({
   reservationId: z.string().uuid(),
   monerisToken: z.string().min(1).max(500),
 });
 
 const uuidParam = z.string().uuid();
+
+// ── POST /preload ─────────────────────────────────────────────────────────
+
+bookingsRouter.post('/preload', async (req, res) => {
+  const parsed = preloadSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid request' });
+    return;
+  }
+
+  const result = await bookingService.preloadPayment(parsed.data.reservationId);
+  if (!result.ok) { res.status(result.status).json({ error: result.error }); return; }
+  res.json(result.data);
+});
 
 // ── POST /hold ─────────────────────────────────────────────────────────────
 

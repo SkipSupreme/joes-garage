@@ -2,7 +2,7 @@ import pool from '../db/pool.js';
 import { TIMEZONE, DURATION_HOURS } from '../constants.js';
 import { buildRangeBounds } from './time-range.js';
 import { upsertCustomer } from './customer.service.js';
-import { preAuthorize, capture, voidTransaction } from './moneris.js';
+import { preloadCheckout, getReceipt, capture, voidTransaction } from './moneris.js';
 import { sendBookingConfirmation, sendAdminNotification } from './email.js';
 import { generateBookingToken } from '../routes/bookings.js';
 import type { ServiceResult, ReservationWithCustomer, ReservationItemWithBike, NoteRow } from '../types/db.js';
@@ -512,6 +512,37 @@ export async function createHold(data: HoldInput): Promise<ServiceResult<HoldRes
   }
 }
 
+// ── Preload Moneris Checkout ───────────────────────────────────────────────
+
+export async function preloadPayment(
+  reservationId: string,
+): Promise<ServiceResult<{ ticket: string; isSandbox: boolean }>> {
+  const res = await pool.query(
+    `SELECT r.id, r.status, r.total_amount, r.deposit_amount, r.booking_ref,
+            c.email AS customer_email
+     FROM bookings.reservations r
+     LEFT JOIN bookings.customers c ON c.id = r.customer_id
+     WHERE r.id = $1 AND r.status IN ('hold', 'paid')`,
+    [reservationId],
+  );
+
+  if (res.rowCount === 0) {
+    return fail(404, 'Reservation not found or expired');
+  }
+
+  const reservation = res.rows[0];
+  const amount = parseFloat(reservation.deposit_amount || reservation.total_amount);
+  const orderId = reservation.booking_ref || reservationId.slice(0, 8);
+
+  const result = await preloadCheckout(amount, orderId, reservation.customer_email);
+
+  if (!result.success) {
+    return fail(502, result.error || 'Payment gateway error');
+  }
+
+  return ok({ ticket: result.ticket!, isSandbox: result.isSandbox });
+}
+
 // ── Process payment ────────────────────────────────────────────────────────
 
 export interface PaymentResult {
@@ -557,8 +588,7 @@ export async function processPayment(
     }
     const firstWaiver = waiverCheck.rows[0];
 
-    const amount = parseFloat(reservation.deposit_amount || reservation.total_amount);
-    const monerisResult = await preAuthorize(monerisToken, amount, reservationId);
+    const monerisResult = await getReceipt(monerisToken);
 
     if (!monerisResult.success) {
       await client.query('ROLLBACK');

@@ -613,14 +613,45 @@ import '../../styles/flatpickr.css';
               </div>
             </template>
 
-            <!-- Moneris iframe placeholder -->
-            <div class="rounded-xl border border-parchment bg-white p-6 mb-6">
-              <div class="text-center py-8">
-                <svg class="w-10 h-10 text-ink-light mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>
-                <p class="text-sm text-ink-muted">Moneris Hosted Tokenization</p>
-                <p class="text-xs text-ink-light mt-1">Card entry iframe loads here in production</p>
+            <!-- Loading state while preload runs -->
+            <template x-if="mcoLoading">
+              <div class="rounded-xl border border-parchment bg-white p-6 mb-6">
+                <div class="text-center py-8">
+                  <svg class="w-8 h-8 animate-spin text-ink-light mx-auto mb-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  <p class="text-sm text-ink-muted">Connecting to payment gateway&hellip;</p>
+                </div>
               </div>
-            </div>
+            </template>
+
+            <!-- Sandbox mode: test card form -->
+            <template x-if="mcoSandbox && mcoReady">
+              <div class="rounded-xl border-2 border-dashed border-amber/40 bg-amber/5 p-6 mb-6">
+                <div class="flex items-center gap-2 mb-4">
+                  <span class="px-2 py-0.5 text-xs font-bold rounded bg-amber text-coal uppercase">Sandbox</span>
+                  <span class="text-sm text-ink-muted">Test mode — no real charges</span>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-medium text-ink-muted mb-1">Card Number</label>
+                    <div class="px-3 py-2.5 rounded-lg bg-white border border-parchment text-sm text-coal font-mono">4242 4242 4242 4242</div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-medium text-ink-muted mb-1">Expiry</label>
+                      <div class="px-3 py-2.5 rounded-lg bg-white border border-parchment text-sm text-coal font-mono">12/29</div>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-ink-muted mb-1">CVV</label>
+                      <div class="px-3 py-2.5 rounded-lg bg-white border border-parchment text-sm text-coal font-mono">123</div>
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-3 text-xs text-ink-light">These are pre-filled test credentials. Click pay to complete the sandbox transaction.</p>
+              </div>
+            </template>
+
+            <!-- Production mode: Moneris Checkout iframe -->
+            <div x-show="!mcoSandbox && mcoReady" id="moneris-checkout" class="rounded-xl border border-parchment bg-white mb-6 min-h-[400px]"></div>
 
             <template x-if="paymentError">
               <div class="p-4 rounded-xl bg-error/5 border border-error/15 mb-6">
@@ -628,17 +659,20 @@ import '../../styles/flatpickr.css';
               </div>
             </template>
 
-            <button
-              @click="processPayment()"
-              :disabled="loading"
-              class="w-full px-6 py-4 3xl:py-5 3xl:text-xl bg-amber text-coal font-bold text-lg rounded-xl hover:bg-amber-light hover:shadow-xl hover:shadow-amber/20 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
-            >
-              <span x-show="!loading">Pay $<span x-text="cartTotal.toFixed(2)"></span></span>
-              <span x-show="loading" x-cloak class="flex items-center gap-2">
-                <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                Processing...
-              </span>
-            </button>
+            <!-- Pay button (sandbox only — production MCO handles its own submit) -->
+            <template x-if="mcoSandbox && mcoReady">
+              <button
+                @click="processPayment()"
+                :disabled="loading"
+                class="w-full px-6 py-4 3xl:py-5 3xl:text-xl bg-amber text-coal font-bold text-lg rounded-xl hover:bg-amber-light hover:shadow-xl hover:shadow-amber/20 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+              >
+                <span x-show="!loading">Pay $<span x-text="cartTotal.toFixed(2)"></span></span>
+                <span x-show="loading" x-cloak class="flex items-center gap-2">
+                  <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  Processing...
+                </span>
+              </button>
+            </template>
 
             <p class="mt-4 text-center text-xs text-ink-light flex items-center justify-center gap-1.5">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>

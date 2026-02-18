@@ -167,6 +167,9 @@ export function registerBookingFlow(Alpine: Alpine) {
             this.signaturePad = createSignaturePad('signature-pad');
           });
         }
+        if (val === 4) {
+          this.$nextTick(() => this.initMonerisCheckout());
+        }
       });
 
       this.$nextTick(() => this.initStartDatePicker());
@@ -365,19 +368,94 @@ export function registerBookingFlow(Alpine: Alpine) {
       }
     },
 
+    // MCO state
+    mcoTicket: null as string | null,
+    mcoSandbox: false,
+    mcoReady: false,
+    mcoLoading: false,
+
+    async initMonerisCheckout() {
+      this.paymentError = null;
+      this.mcoLoading = true;
+
+      try {
+        // 1. Get preload ticket from our API
+        const res = await fetch(`${API_URL}/api/bookings/preload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reservationId: this.reservationId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to initialize payment');
+
+        this.mcoTicket = data.ticket;
+        this.mcoSandbox = data.isSandbox;
+
+        if (data.isSandbox) {
+          // Sandbox: show test card form
+          this.mcoReady = true;
+        } else {
+          // Production: load Moneris Checkout JS and open iframe
+          await this.loadMcoScript();
+          this.openMcoCheckout(data.ticket);
+        }
+      } catch (err: any) {
+        this.paymentError = err.message;
+      } finally {
+        this.mcoLoading = false;
+      }
+    },
+
+    loadMcoScript(): Promise<void> {
+      return new Promise((resolve, reject) => {
+        if ((window as any).monerisCheckout) { resolve(); return; }
+        const script = document.createElement('script');
+        script.src = 'https://gateway.moneris.com/chktv2/js/chkt_v2.00.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Moneris payment script'));
+        document.head.appendChild(script);
+      });
+    },
+
+    openMcoCheckout(ticket: string) {
+      const mco = new (window as any).monerisCheckout();
+      mco.setMode('prod');
+      mco.setCheckoutDiv('moneris-checkout');
+      mco.setCallback('page_loaded', () => { this.mcoReady = true; });
+      mco.setCallback('cancel_transaction', () => {
+        this.paymentError = 'Payment cancelled.';
+        this.mcoReady = false;
+      });
+      mco.setCallback('error_event', () => {
+        this.paymentError = 'A payment error occurred. Please try again.';
+        this.mcoReady = false;
+      });
+      mco.setCallback('payment_receipt', () => {
+        // MCO finished processing — confirm with our server
+        this.completePayment(ticket);
+      });
+      mco.startCheckout(ticket);
+    },
+
     async processPayment() {
+      // Sandbox shortcut: skip MCO iframe
+      if (this.mcoSandbox && this.mcoTicket) {
+        await this.completePayment(this.mcoTicket);
+        return;
+      }
+    },
+
+    async completePayment(ticket: string) {
       this.paymentError = null;
       this.loading = true;
       if (this.holdTimer) clearInterval(this.holdTimer);
       try {
-        const monerisToken = 'sandbox-token-placeholder';
-
         const res = await fetch(`${API_URL}/api/bookings/pay`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             reservationId: this.reservationId,
-            monerisToken,
+            monerisToken: ticket,
           }),
         });
         const data = await res.json();

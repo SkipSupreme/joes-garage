@@ -1,0 +1,193 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Page Not Found" description="The page you're looking for doesn't exist.">
+  <section class="relative min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)] overflow-hidden bg-coal flex items-center">
+
+    <!-- Layered textures -->
+    <div class="absolute inset-0 grain"></div>
+    <div class="absolute inset-0 pattern-corrugated"></div>
+
+    <!-- Atmospheric red glow — top left -->
+    <div class="absolute -top-32 -left-32 w-[500px] h-[500px] bg-red/8 rounded-full blur-[150px] err-glow"></div>
+
+    <!-- Diagonal caution stripe -->
+    <div class="absolute inset-0 pointer-events-none err-stripe" aria-hidden="true">
+      <div class="absolute w-[200%] h-[3px] bg-red/25 top-[30%] -left-[20%] -rotate-[18deg] origin-center"></div>
+      <div class="absolute w-[200%] h-[1px] bg-red/15 top-[32%] -left-[20%] -rotate-[18deg] origin-center"></div>
+      <div class="absolute w-[200%] h-[3px] bg-red/25 bottom-[25%] -left-[20%] -rotate-[18deg] origin-center"></div>
+      <div class="absolute w-[200%] h-[1px] bg-red/15 bottom-[23%] -left-[20%] -rotate-[18deg] origin-center"></div>
+    </div>
+
+    <!-- Giant "404" painted on the container wall -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none err-bg-num" aria-hidden="true">
+      <span class="font-display font-extrabold text-[16rem] sm:text-[24rem] lg:text-[36rem] 3xl:text-[48rem] leading-none text-cream/[0.04] tracking-tighter translate-x-[5%]">
+        404
+      </span>
+    </div>
+
+    <!-- Spinning bike wheel — right side on desktop, behind text on mobile -->
+    <div class="absolute right-[-8%] sm:right-[2%] lg:right-[8%] top-1/2 -translate-y-1/2 pointer-events-none err-wheel" aria-hidden="true">
+      <svg class="w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] lg:w-[480px] lg:h-[480px] 3xl:w-[580px] 3xl:h-[580px] err-spin" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer rim -->
+        <circle cx="100" cy="100" r="95" stroke="currentColor" stroke-width="2.5" class="text-cream/[0.06]" />
+        <circle cx="100" cy="100" r="90" stroke="currentColor" stroke-width="1" class="text-cream/[0.03]" />
+        <!-- Tire -->
+        <circle cx="100" cy="100" r="97" stroke="currentColor" stroke-width="5" class="text-cream/[0.04]" />
+        <!-- Hub -->
+        <circle cx="100" cy="100" r="12" stroke="currentColor" stroke-width="2" class="text-cream/[0.08]" />
+        <circle cx="100" cy="100" r="5" fill="currentColor" class="text-red/20" />
+        <!-- Spokes — 12 evenly distributed -->
+        <line x1="100" y1="18" x2="100" y2="88" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="141" y1="23.4" x2="112" y2="89" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="176.6" y1="59" x2="111" y2="94" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="182" y1="100" x2="112" y2="100" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="176.6" y1="141" x2="111" y2="106" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="141" y1="176.6" x2="112" y2="111" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="100" y1="182" x2="100" y2="112" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="59" y1="176.6" x2="88" y2="111" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="23.4" y1="141" x2="89" y2="106" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="18" y1="100" x2="88" y2="100" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="23.4" y1="59" x2="89" y2="94" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <line x1="59" y1="23.4" x2="88" y2="89" stroke="currentColor" stroke-width="0.8" class="text-cream/[0.05]" />
+        <!-- Broken spoke — snapped, dangling -->
+        <line x1="155" y1="42" x2="120" y2="82" stroke="currentColor" stroke-width="0.8" class="text-red/30" stroke-dasharray="4 3" />
+      </svg>
+    </div>
+
+    <!-- Content — left-aligned, asymmetric -->
+    <div class="relative z-10 mx-auto max-w-7xl w-full px-6 sm:px-8 lg:px-12 py-16 sm:py-20">
+      <div class="max-w-xl lg:max-w-2xl">
+
+        <!-- Error label -->
+        <div class="err-label flex items-center gap-3 mb-6 sm:mb-8">
+          <div class="w-8 h-[2px] bg-red"></div>
+          <span class="text-red text-xs sm:text-sm font-bold font-body uppercase tracking-[0.25em]">Error 404</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="err-headline font-display font-extrabold text-cream leading-[0.9] tracking-tight">
+          <span class="block text-5xl sm:text-7xl lg:text-8xl 3xl:text-9xl">Wrong</span>
+          <span class="block text-6xl sm:text-8xl lg:text-9xl 3xl:text-[10rem] text-red mt-1 sm:mt-2">Bay.</span>
+        </h1>
+
+        <!-- Description -->
+        <p class="err-desc mt-6 sm:mt-8 text-base sm:text-lg 3xl:text-xl text-cream/40 max-w-md leading-relaxed font-body">
+          This page doesn't exist&hairsp;&mdash;&hairsp;looks like the chain came off.
+          Let's get you back on the road.
+        </p>
+
+        <!-- CTAs -->
+        <div class="err-ctas mt-10 sm:mt-12 flex flex-col sm:flex-row items-start gap-4">
+          <a
+            href="/"
+            class="group relative px-8 py-3.5 text-sm font-bold font-body uppercase tracking-wider bg-red text-cream rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-red/25 hover:-translate-y-0.5"
+          >
+            <span class="relative z-10">Back to Home</span>
+            <div class="absolute inset-0 bg-red-light translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+          </a>
+          <a
+            href="/book"
+            data-astro-prefetch
+            class="px-8 py-3.5 text-sm font-bold font-body uppercase tracking-wider text-cream/60 rounded-lg border border-cream/10 hover:border-cream/25 hover:text-cream hover:bg-cream/5 transition-all duration-300"
+          >
+            Book a Bike
+          </a>
+        </div>
+
+        <!-- Decorative bottom detail -->
+        <div class="err-footer mt-16 sm:mt-20 flex items-center gap-3 text-cream/15">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+          </svg>
+          <span class="text-xs font-body uppercase tracking-[0.2em]">Joe's Garage &mdash; Calgary, AB</span>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+</Base>
+
+<style>
+  /* ═══ Entrance animations ═══ */
+  .err-label {
+    animation: errFadeRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  }
+  .err-headline span:first-child {
+    animation: errFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  }
+  .err-headline span:last-child {
+    animation: errFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+  }
+  .err-desc {
+    animation: errFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  }
+  .err-ctas {
+    animation: errFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+  }
+  .err-footer {
+    animation: errFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.8s both;
+  }
+
+  /* Wheel fades in and starts spinning */
+  .err-wheel {
+    animation: errFadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+  }
+  .err-spin {
+    animation: errSpin 45s linear infinite;
+  }
+
+  /* Background 404 scales in */
+  .err-bg-num {
+    animation: errScaleIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0s both;
+  }
+
+  /* Diagonal stripes slide in */
+  .err-stripe {
+    animation: errFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  }
+
+  /* Red glow pulses slowly */
+  .err-glow {
+    animation: errGlowPulse 6s ease-in-out infinite, errFadeIn 2s ease-out both;
+  }
+
+  @keyframes errFadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes errFadeRight {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes errFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes errScaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes errSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes errGlowPulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .err-label, .err-headline span, .err-desc, .err-ctas, .err-footer,
+    .err-wheel, .err-bg-num, .err-stripe, .err-glow {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .err-spin {
+      animation: none !important;
+    }
+  }
+</style>
