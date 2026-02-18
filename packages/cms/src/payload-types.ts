@@ -616,6 +616,10 @@ export interface Service {
    * e.g., "30 min", "2-3 days"
    */
   estimatedTime?: string | null;
+  /**
+   * Highlight this service as "Most Popular" on the website
+   */
+  featured?: boolean | null;
   photo?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
@@ -1085,6 +1089,7 @@ export interface ServicesSelect<T extends boolean = true> {
   description?: T;
   price?: T;
   estimatedTime?: T;
+  featured?: T;
   photo?: T;
   updatedAt?: T;
   createdAt?: T;

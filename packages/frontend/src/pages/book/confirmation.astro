@@ -2,8 +2,8 @@
 import Base from '../../layouts/Base.astro';
 import { getSiteSettings } from '../../lib/payload';
 
-// This page will be SSR (server-rendered) to fetch booking data securely
-// export const prerender = false;
+// SSR — must render per-request so URL query params (booking ID, token) are fresh
+export const prerender = false;
 
 // Fetch contact info from CMS so it stays in sync
 let settings: any = null;

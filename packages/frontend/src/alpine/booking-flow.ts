@@ -7,6 +7,12 @@ import {
 } from './shared';
 
 export function registerBookingFlow(Alpine: Alpine) {
+  type SignaturePadLike = {
+    clear: () => void;
+    isEmpty: () => boolean;
+    toDataURL: (type?: string) => string;
+  };
+
   Alpine.data('bookingFlow', () => ({
     step: 1,
     loading: false,
@@ -43,7 +49,7 @@ export function registerBookingFlow(Alpine: Alpine) {
       consentElectronic: false,
       consentTerms: false,
     },
-    signaturePad: null as any,
+    signaturePad: null as SignaturePadLike | null,
 
     // Computed
     get isHourly() {
@@ -163,8 +169,12 @@ export function registerBookingFlow(Alpine: Alpine) {
 
       this.$watch('step', (val: number) => {
         if (val === 3 && !this.signaturePad) {
-          this.$nextTick(() => {
-            this.signaturePad = createSignaturePad('signature-pad');
+          this.$nextTick(async () => {
+            // Wait two paint frames so x-show/x-transition has applied layout.
+            await new Promise<void>((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+            );
+            this.signaturePad = await createSignaturePad('signature-pad');
           });
         }
         if (val === 4) {
@@ -187,7 +197,7 @@ export function registerBookingFlow(Alpine: Alpine) {
           if (selectedDates.length) {
             this.selectedDate = selectedDates[0].toISOString().split('T')[0];
             if (this.endDatePicker) {
-              this.endDatePicker.set('minDate', this.selectedDate);
+              (this.endDatePicker as { set: (key: string, value: string) => void }).set('minDate', this.selectedDate);
             }
           }
         },
@@ -324,24 +334,30 @@ export function registerBookingFlow(Alpine: Alpine) {
     },
 
     clearSignature() {
-      if (this.signaturePad) this.signaturePad.clear();
+      const signaturePad = this.signaturePad as SignaturePadLike | null;
+      if (signaturePad) signaturePad.clear();
     },
 
     async submitWaiver() {
       this.waiverError = null;
       this.loading = true;
 
-      if (!this.signaturePad) {
+      let signaturePad = this.signaturePad as SignaturePadLike | null;
+      if (!signaturePad) {
+        signaturePad = await createSignaturePad('signature-pad');
+        this.signaturePad = signaturePad;
+      }
+      if (!signaturePad) {
         this.waiverError = 'Signature pad failed to load. Please refresh the page.';
         this.loading = false;
         return;
       }
-      if (this.signaturePad.isEmpty()) {
+      if (signaturePad.isEmpty()) {
         this.waiverError = 'Please draw your signature.';
         this.loading = false;
         return;
       }
-      const signatureDataUrl = this.signaturePad.toDataURL('image/png');
+      const signatureDataUrl = signaturePad.toDataURL('image/png');
 
       try {
         const res = await fetch(`${API_URL}/api/waivers`, {

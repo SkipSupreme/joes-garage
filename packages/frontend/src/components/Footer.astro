@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import { getSiteSettings } from '../lib/payload';
-import logoFallback from '../assets/logo.webp';
 
 const year = new Date().getFullYear();
 
@@ -18,8 +17,8 @@ const phone = settings?.phone || '(403) 874-5637';
 const email = settings?.email || 'joe@joesgarage.mobi';
 const address = settings?.address || '355 8 St SW, Calgary, AB';
 
-// Logo from CMS with fallback to static file
-const logoSrc: ImageMetadata | string = settings?.logo?.sizes?.thumbnail?.url || settings?.logo?.url || logoFallback;
+// Logo from CMS with fallback to public static file
+const logoSrc = settings?.logo?.sizes?.thumbnail?.url || settings?.logo?.url || '/logo.webp';
 const logoAlt = settings?.logo?.alt || shopName;
 
 // Parse hours from CMS or use defaults
@@ -111,7 +110,7 @@ const socialIcons: Record<string, string> = {
       <!-- Brand column -->
       <div class="lg:col-span-1">
         <div class="mb-4">
-          <Image src={logoSrc} alt={logoAlt} width={168} height={120} class="h-12 w-auto" />
+          <Image src={logoSrc} alt={logoAlt} width={168} height={120} loading="lazy" class="h-12 w-auto" />
         </div>
         <p class="text-sm text-cream/60 leading-relaxed mb-6">
           Calgary's neighbourhood bike shop. Expert repairs, quality rentals, and honest advice since day one.

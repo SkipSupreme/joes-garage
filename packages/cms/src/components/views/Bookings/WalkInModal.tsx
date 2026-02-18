@@ -2,12 +2,6 @@
 import React, { useState, useEffect } from 'react'
 import { adminFetch } from './adminFetch'
 
-interface FleetBike {
-  type: string
-  total: number
-  available: number
-}
-
 interface AvailableBike {
   id: number
   name: string

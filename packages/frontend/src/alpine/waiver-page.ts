@@ -7,6 +7,12 @@ import {
 } from './shared';
 
 export function registerWaiverPage(Alpine: Alpine) {
+  type SignaturePadLike = {
+    clear: () => void;
+    isEmpty: () => boolean;
+    toDataURL: (type?: string) => string;
+  };
+
   Alpine.data('waiverPage', () => ({
     ref: '' as string,
     loading: true,
@@ -29,7 +35,7 @@ export function registerWaiverPage(Alpine: Alpine) {
       consentElectronic: false,
       consentTerms: false,
     },
-    signaturePad: null as any,
+    signaturePad: null as SignaturePadLike | null,
 
     get allSigned() {
       return this.waivers.length >= this.itemCount && this.itemCount > 0;
@@ -38,8 +44,9 @@ export function registerWaiverPage(Alpine: Alpine) {
       return Math.max(0, this.itemCount - this.waivers.length);
     },
     get durationLabel() {
-      if (!this.booking?.duration_type) return '';
-      return DURATION_LABELS[this.booking.duration_type] || this.booking.duration_type;
+      const booking = this.booking as { duration_type?: string } | null;
+      if (!booking?.duration_type) return '';
+      return DURATION_LABELS[booking.duration_type] || booking.duration_type;
     },
     get dobMonths() { return DOB_MONTHS; },
     get dobDays() { return getDobDays(this.waiver.dobMonth, this.waiver.dobYear); },
@@ -77,14 +84,15 @@ export function registerWaiverPage(Alpine: Alpine) {
       }
 
       if (!this.error && !this.allSigned) {
-        this.$nextTick(() => {
-          this.signaturePad = createSignaturePad('waiver-signature-pad');
+        this.$nextTick(async () => {
+          this.signaturePad = await createSignaturePad('waiver-signature-pad');
         });
       }
     },
 
     clearSignature() {
-      if (this.signaturePad) this.signaturePad.clear();
+      const signaturePad = this.signaturePad as SignaturePadLike | null;
+      if (signaturePad) signaturePad.clear();
     },
 
     async submitWaiver() {
@@ -92,21 +100,22 @@ export function registerWaiverPage(Alpine: Alpine) {
       this.successMessage = null;
       this.submitting = true;
 
-      if (!this.signaturePad) {
+      const signaturePad = this.signaturePad as SignaturePadLike | null;
+      if (!signaturePad) {
         this.error = 'Signature pad failed to load. Please refresh the page.';
         this.submitting = false;
         return;
       }
-      if (this.signaturePad.isEmpty()) {
+      if (signaturePad.isEmpty()) {
         this.error = 'Please draw your signature.';
         this.submitting = false;
         return;
       }
-      const signatureDataUrl = this.signaturePad.toDataURL('image/png');
+      const signatureDataUrl = signaturePad.toDataURL('image/png');
 
       try {
         const body: any = {
-          reservationId: this.booking?.id || this.ref,
+          reservationId: (this.booking as { id?: string } | null)?.id || this.ref,
           signatureDataUrl,
           fullName: this.waiver.fullName.trim(),
           email: this.waiver.email.trim(),
@@ -141,7 +150,8 @@ export function registerWaiverPage(Alpine: Alpine) {
           consentElectronic: false,
           consentTerms: false,
         };
-        if (this.signaturePad) this.signaturePad.clear();
+        const nextSignaturePad = this.signaturePad as SignaturePadLike | null;
+        if (nextSignaturePad) nextSignaturePad.clear();
 
         await this.fetchBooking();
       } catch (err: any) {

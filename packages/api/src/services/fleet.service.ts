@@ -1,6 +1,7 @@
 import pool from '../db/pool.js';
-import { TIMEZONE, DURATION_HOURS, PRICE_COLUMN } from '../constants.js';
+import { TIMEZONE } from '../constants.js';
 import { buildRangeBounds } from './time-range.js';
+import { logger } from '../lib/logger.js';
 import type { ServiceResult } from '../types/db.js';
 import { ok, fail } from '../types/db.js';
 
@@ -60,7 +61,7 @@ export async function getFleetStatus(): Promise<ServiceResult<{ fleet: FleetGrou
 
     return ok({ fleet: result.rows });
   } catch (err) {
-    console.error('Fleet status error:', err);
+    logger.error({ err }, 'Fleet status error');
     return fail(500, 'Failed to load fleet status');
   }
 }
@@ -93,7 +94,6 @@ export async function checkAvailability(
   endDate?: string,
 ): Promise<ServiceResult<{ bikes: AvailableBikeGroup[] }>> {
   const { rangeStart, rangeEnd } = buildRangeBounds(date, duration, startTime, endDate);
-  const priceCol = PRICE_COLUMN[duration];
 
   try {
     const result = await pool.query(
@@ -151,7 +151,7 @@ export async function checkAvailability(
 
     return ok({ bikes });
   } catch (err) {
-    console.error('Availability query error:', err);
+    logger.error({ err }, 'Availability query error');
     return fail(500, 'Failed to check availability');
   }
 }

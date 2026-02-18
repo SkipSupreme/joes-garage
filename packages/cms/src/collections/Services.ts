@@ -41,6 +41,15 @@ export const Services: CollectionConfig = {
       },
     },
     {
+      name: 'featured',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Highlight this service as "Most Popular" on the website',
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'photo',
       type: 'upload',
       relationTo: 'media',

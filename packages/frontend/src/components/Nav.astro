@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import { getSiteSettings } from '../lib/payload';
-import logoFallback from '../assets/logo.webp';
 
 const currentPath = Astro.url.pathname;
 
@@ -13,8 +12,8 @@ const links = [
   { href: '/contact', label: 'Contact' },
 ];
 
-// Fetch logo from CMS with fallback to static file
-let logoSrc: ImageMetadata | string = logoFallback;
+// Fetch logo from CMS with fallback to public static file
+let logoSrc = '/logo.webp';
 let logoAlt = "Joe's Garage";
 try {
   const settings = await getSiteSettings();

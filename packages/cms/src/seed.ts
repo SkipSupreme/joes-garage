@@ -224,7 +224,7 @@ async function seedServices() {
   ];
 
   for (const svc of services) {
-    const doc = await apiPost('/services', svc);
+    await apiPost('/services', svc);
     console.log(`  ✓ ${svc.name} ($${svc.price})`);
   }
 }

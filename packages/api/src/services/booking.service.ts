@@ -5,9 +5,15 @@ import { upsertCustomer } from './customer.service.js';
 import { preloadCheckout, getReceipt, capture, voidTransaction } from './moneris.js';
 import { sendBookingConfirmation, sendAdminNotification } from './email.js';
 import { generateBookingToken } from '../routes/bookings.js';
+import { logger } from '../lib/logger.js';
 import type { ServiceResult, ReservationWithCustomer, ReservationItemWithBike, NoteRow } from '../types/db.js';
 import { ok, fail } from '../types/db.js';
 import crypto from 'crypto';
+
+/** Round to 2 decimal places to prevent floating-point accumulation errors in pricing. */
+function roundCents(n: number): number {
+  return Math.round(n * 100) / 100;
+}
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
 
@@ -114,7 +120,7 @@ export async function getDashboard(): Promise<ServiceResult<DashboardData>> {
       },
     });
   } catch (err) {
-    console.error('Dashboard error:', err);
+    logger.error({ err }, 'Dashboard error');
     return fail(500, 'Failed to load dashboard');
   }
 }
@@ -228,7 +234,7 @@ export async function listBookings(filters: BookingsListFilters): Promise<Servic
 
     return ok({ bookings: bookingsResult.rows, total, page, pages });
   } catch (err) {
-    console.error('Bookings list error:', err);
+    logger.error({ err }, 'Bookings list error');
     return fail(500, 'Failed to list bookings');
   }
 }
@@ -313,7 +319,7 @@ export async function getBookingDetail(id: string): Promise<ServiceResult<Bookin
       is_overdue,
     });
   } catch (err) {
-    console.error('Booking detail error:', err);
+    logger.error({ err }, 'Booking detail error');
     return fail(500, 'Failed to fetch booking');
   }
 }
@@ -371,7 +377,7 @@ export async function getPublicBooking(param: string, isUuid: boolean): Promise<
 
     return ok(booking);
   } catch (err) {
-    console.error('Booking fetch error:', err);
+    logger.error({ err }, 'Booking fetch error');
     return fail(500, 'Failed to fetch booking');
   }
 }
@@ -396,6 +402,7 @@ export interface HoldResult {
 export async function createHold(data: HoldInput): Promise<ServiceResult<HoldResult>> {
   const { bikes, date, duration, startTime, endDate } = data;
   const bikeIds = bikes.map((b) => b.bikeId);
+  const { rangeStart, rangeEnd } = buildRangeBounds(date, duration, startTime, endDate);
 
   if (new Set(bikeIds).size !== bikeIds.length) {
     return fail(400, 'Duplicate bike IDs in request');
@@ -405,6 +412,24 @@ export async function createHold(data: HoldInput): Promise<ServiceResult<HoldRes
 
   try {
     await client.query('BEGIN');
+
+    // Self-heal: cancelled bookings should not keep blocking the same time slot.
+    // Release overlapping cancelled item ranges before availability enforcement.
+    await client.query(
+      `UPDATE bookings.reservation_items ri
+       SET rental_period = 'empty'::tstzrange
+       FROM bookings.reservations r
+       WHERE r.id = ri.reservation_id
+         AND r.status = 'cancelled'
+         AND ri.bike_id = ANY($1)
+         AND NOT isempty(ri.rental_period)
+         AND ri.rental_period && tstzrange(
+           ($2::timestamp AT TIME ZONE $4),
+           ($3::timestamp AT TIME ZONE $4),
+           '[)'
+         )`,
+      [bikeIds, rangeStart, rangeEnd, TIMEZONE],
+    );
 
     const bikeCheck = await client.query(
       `SELECT id,
@@ -426,8 +451,6 @@ export async function createHold(data: HoldInput): Promise<ServiceResult<HoldRes
       return fail(404, `Bike(s) not found or not available: ${missing.join(', ')}`);
     }
 
-    const { rangeStart, rangeEnd } = buildRangeBounds(date, duration, startTime, endDate);
-
     const bikeMap = new Map(bikeCheck.rows.map((b: any) => [b.id, b]));
     let totalRentalCost = 0;
     let totalDeposit = 0;
@@ -448,13 +471,13 @@ export async function createHold(data: HoldInput): Promise<ServiceResult<HoldRes
         const rentalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
         const firstDay = parseFloat(bike.price8h);
         const additionalRate = parseFloat(bike.price_per_day);
-        rentalCost = firstDay + additionalRate * Math.max(0, rentalDays - 1);
+        rentalCost = roundCents(firstDay + additionalRate * Math.max(0, rentalDays - 1));
       } else {
         rentalCost = parseFloat(bike.rental_price);
       }
       const deposit = parseFloat(bike.deposit_amount);
-      totalRentalCost += rentalCost;
-      totalDeposit += deposit;
+      totalRentalCost = roundCents(totalRentalCost + rentalCost);
+      totalDeposit = roundCents(totalDeposit + deposit);
       itemDetails.push({ bikeId, rentalPrice: rentalCost, depositAmount: deposit });
     }
 
@@ -505,7 +528,7 @@ export async function createHold(data: HoldInput): Promise<ServiceResult<HoldRes
     if (err.code === '23P01') {
       return fail(409, 'One or more bikes are no longer available for the selected time');
     }
-    console.error('Hold creation error:', err);
+    logger.error({ err }, 'Hold creation error');
     return fail(500, 'Failed to create hold');
   } finally {
     client.release();
@@ -665,11 +688,11 @@ export async function processPayment(
 
     if (emailDetails.customerEmail) {
       sendBookingConfirmation(emailDetails).catch((err) =>
-        console.error('Failed to send confirmation email:', err),
+        logger.error({ err }, 'Failed to send confirmation email'),
       );
     }
     sendAdminNotification(emailDetails).catch((err) =>
-      console.error('Failed to send admin notification:', err),
+      logger.error({ err }, 'Failed to send admin notification'),
     );
 
     return ok({
@@ -681,7 +704,7 @@ export async function processPayment(
     });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Payment processing error:', err);
+    logger.error({ err }, 'Payment processing error');
     return fail(500, 'Failed to process payment');
   } finally {
     client.release();
@@ -768,7 +791,7 @@ export async function checkOut(
     return ok({ status: 'active', checked_out: updateResult.rowCount! });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Check-out error:', err);
+    logger.error({ err }, 'Check-out error');
     return fail(500, 'Failed to check out');
   } finally {
     client.release();
@@ -880,7 +903,7 @@ export async function checkIn(
     return ok({ status: newStatus, checked_in: updateResult.rowCount!, all_returned: allReturned });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Check-in error:', err);
+    logger.error({ err }, 'Check-in error');
     return fail(500, 'Failed to check in');
   } finally {
     client.release();
@@ -915,6 +938,13 @@ export async function cancelBooking(
       `UPDATE bookings.reservations SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
       [reservationId],
     );
+    await client.query(
+      `UPDATE bookings.reservation_items
+       SET rental_period = 'empty'::tstzrange
+       WHERE reservation_id = $1
+         AND NOT isempty(rental_period)`,
+      [reservationId],
+    );
 
     if (reason) {
       await client.query(
@@ -927,7 +957,7 @@ export async function cancelBooking(
     return ok({ status: 'cancelled' });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Cancel error:', err);
+    logger.error({ err }, 'Cancel error');
     return fail(500, 'Failed to cancel booking');
   } finally {
     client.release();
@@ -991,7 +1021,7 @@ export async function extendBooking(
       return fail(409, 'Cannot extend: a bike in this booking conflicts with another reservation in the requested time range');
     }
 
-    console.error('Extend error:', err);
+    logger.error({ err }, 'Extend error');
     return fail(500, 'Failed to extend booking');
   } finally {
     client.release();
@@ -1017,7 +1047,7 @@ export async function completeBooking(
 
     return ok({ status: 'completed' });
   } catch (err) {
-    console.error('Complete booking error:', err);
+    logger.error({ err }, 'Complete booking error');
     return fail(500, 'Failed to complete booking');
   }
 }
@@ -1117,10 +1147,10 @@ export async function createWalkIn(data: WalkInInput): Promise<ServiceResult<Wal
     let totalRental = 0;
     let totalDeposit = 0;
     for (const bike of bikesResult.rows) {
-      totalRental += parseFloat(bike.rental_price) * rentalDays;
-      totalDeposit += parseFloat(bike.deposit_amount);
+      totalRental = roundCents(totalRental + parseFloat(bike.rental_price) * rentalDays);
+      totalDeposit = roundCents(totalDeposit + parseFloat(bike.deposit_amount));
     }
-    const totalAmount = totalRental + totalDeposit;
+    const totalAmount = roundCents(totalRental + totalDeposit);
 
     const resResult = await client.query(
       `INSERT INTO bookings.reservations
@@ -1163,7 +1193,7 @@ export async function createWalkIn(data: WalkInInput): Promise<ServiceResult<Wal
       return fail(409, 'One or more bikes are already booked for the requested time period');
     }
 
-    console.error('Walk-in error:', err);
+    logger.error({ err }, 'Walk-in error');
     return fail(500, 'Failed to create walk-in booking');
   } finally {
     client.release();
@@ -1194,7 +1224,7 @@ export async function addNote(
 
     return ok({ id: result.rows[0].id, created_at: result.rows[0].created_at });
   } catch (err) {
-    console.error('Note creation error:', err);
+    logger.error({ err }, 'Note creation error');
     return fail(500, 'Failed to add note');
   }
 }
@@ -1227,7 +1257,7 @@ export async function capturePayment(
 
     return ok({ status: 'captured' });
   } catch (err) {
-    console.error('Capture error:', err);
+    logger.error({ err }, 'Capture error');
     return fail(500, 'Failed to capture payment');
   }
 }
@@ -1256,10 +1286,17 @@ export async function voidPayment(
       `UPDATE bookings.reservations SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
       [reservationId],
     );
+    await pool.query(
+      `UPDATE bookings.reservation_items
+       SET rental_period = 'empty'::tstzrange
+       WHERE reservation_id = $1
+         AND NOT isempty(rental_period)`,
+      [reservationId],
+    );
 
     return ok({ status: 'voided' });
   } catch (err) {
-    console.error('Void error:', err);
+    logger.error({ err }, 'Void error');
     return fail(500, 'Failed to void payment');
   }
 }

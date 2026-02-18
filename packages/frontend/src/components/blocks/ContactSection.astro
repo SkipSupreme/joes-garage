@@ -169,14 +169,16 @@ const socialSvgs: Record<string, string> = {
 
 <script>
   document.addEventListener('alpine:init', () => {
-    window.Alpine.data('contactForm', () => ({
+    const alpine = window.Alpine;
+    if (!alpine) return;
+    alpine.data('contactForm', () => ({
       sending: false,
       sent: false,
       error: '',
       async submit() {
         this.sending = true;
         this.error = '';
-        const form = this.$el;
+        const form = this.$el as HTMLFormElement;
         const apiUrl = form.dataset.apiUrl || 'http://localhost:3001';
         const data = Object.fromEntries(new FormData(form));
         try {

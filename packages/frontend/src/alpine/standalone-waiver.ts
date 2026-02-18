@@ -6,12 +6,18 @@ import {
 } from './shared';
 
 export function registerStandaloneWaiver(Alpine: Alpine) {
+  type SignaturePadLike = {
+    clear: () => void;
+    isEmpty: () => boolean;
+    toDataURL: (type?: string) => string;
+  };
+
   Alpine.data('standaloneWaiver', () => ({
     loading: false,
     submitting: false,
     error: null as string | null,
     successName: null as string | null,
-    signaturePad: null as any,
+    signaturePad: null as SignaturePadLike | null,
 
     waiver: {
       fullName: '',
@@ -32,13 +38,14 @@ export function registerStandaloneWaiver(Alpine: Alpine) {
     get dateOfBirth() { return formatDateOfBirth(this.waiver.dobYear, this.waiver.dobMonth, this.waiver.dobDay); },
 
     init() {
-      this.$nextTick(() => {
-        this.signaturePad = createSignaturePad('waiver-signature-pad');
+      this.$nextTick(async () => {
+        this.signaturePad = await createSignaturePad('waiver-signature-pad');
       });
     },
 
     clearSignature() {
-      if (this.signaturePad) this.signaturePad.clear();
+      const signaturePad = this.signaturePad as SignaturePadLike | null;
+      if (signaturePad) signaturePad.clear();
     },
 
     resetForm() {
@@ -50,9 +57,10 @@ export function registerStandaloneWaiver(Alpine: Alpine) {
       };
       this.successName = null;
       this.error = null;
-      if (this.signaturePad) this.signaturePad.clear();
-      this.$nextTick(() => {
-        this.signaturePad = createSignaturePad('waiver-signature-pad');
+      const signaturePad = this.signaturePad as SignaturePadLike | null;
+      if (signaturePad) signaturePad.clear();
+      this.$nextTick(async () => {
+        this.signaturePad = await createSignaturePad('waiver-signature-pad');
       });
     },
 
@@ -60,7 +68,8 @@ export function registerStandaloneWaiver(Alpine: Alpine) {
       this.error = null;
       this.submitting = true;
 
-      if (!this.signaturePad || this.signaturePad.isEmpty()) {
+      const signaturePad = this.signaturePad as SignaturePadLike | null;
+      if (!signaturePad || signaturePad.isEmpty()) {
         this.error = 'Please draw your signature.';
         this.submitting = false;
         return;
@@ -68,7 +77,7 @@ export function registerStandaloneWaiver(Alpine: Alpine) {
 
       try {
         const body: any = {
-          signatureDataUrl: this.signaturePad.toDataURL('image/png'),
+          signatureDataUrl: signaturePad.toDataURL('image/png'),
           fullName: this.waiver.fullName.trim(),
           email: this.waiver.email.trim(),
           phone: this.waiver.phone.trim(),

@@ -20,15 +20,6 @@ const FILTERS: FilterConfig[] = [
   { label: 'Completed', status: 'completed', date: 'all' },
 ]
 
-function formatDateOnly(date: Date | null): string {
-  if (!date) return '-'
-  return date.toLocaleDateString('en-CA', {
-    timeZone: 'America/Edmonton',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
 /** Group items by bike_name and count them, e.g. "Reid Express x2, Reid Ranger" */
 function summarizeBikes(items: Booking['items']): string {
   const groups: Record<string, number> = {}

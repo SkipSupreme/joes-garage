@@ -35,11 +35,7 @@ import '../../styles/flatpickr.css';
           <div class="flex items-center flex-1 last:flex-none">
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
               <div
-                :class="{
-                  'bg-amber text-coal': step > i + 1,
-                  'bg-red text-cream': step === i + 1,
-                  'bg-parchment text-ink-light': step < i + 1,
-                }"
+                :class="step > i + 1 ? 'bg-amber text-coal' : (step === i + 1 ? 'bg-red text-cream' : 'bg-parchment text-ink-light')"
                 class="w-8 h-8 3xl:w-10 3xl:h-10 rounded-full flex items-center justify-center text-xs 3xl:text-sm font-bold transition-all duration-300"
               >
                 <template x-if="step > i + 1">
@@ -92,9 +88,7 @@ import '../../styles/flatpickr.css';
                     <button
                       type="button"
                       @click="duration = d.val"
-                      :class="duration === d.val
-                        ? 'border-amber bg-amber/10 text-coal ring-1 ring-amber/30'
-                        : 'border-parchment bg-white text-ink-muted hover:border-amber/30 hover:text-coal'"
+                      :class="duration === d.val ? 'border-amber bg-amber/10 text-coal ring-1 ring-amber/30' : 'border-parchment bg-white text-ink-muted hover:border-amber/30 hover:text-coal'"
                       class="px-4 py-3 3xl:py-4 3xl:text-lg rounded-xl border font-medium text-center transition-all"
                       x-text="d.label"
                     ></button>
@@ -119,9 +113,7 @@ import '../../styles/flatpickr.css';
                       <button
                         type="button"
                         @click="startTime = slot"
-                        :class="startTime === slot
-                          ? 'border-amber bg-amber/10 text-coal ring-1 ring-amber/30 font-bold'
-                          : 'border-parchment bg-white text-ink-muted hover:border-amber/30 hover:text-coal'"
+                        :class="startTime === slot ? 'border-amber bg-amber/10 text-coal ring-1 ring-amber/30 font-bold' : 'border-parchment bg-white text-ink-muted hover:border-amber/30 hover:text-coal'"
                         class="px-2 py-2.5 3xl:py-3 3xl:text-base rounded-lg border text-sm font-medium text-center transition-all"
                         x-text="formatTime(slot)"
                       ></button>

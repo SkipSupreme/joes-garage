@@ -1,6 +1,7 @@
 import { type Router as IRouter, Router } from 'express';
 import { z } from 'zod';
 import { sendContactNotification } from '../services/email.js';
+import { logger } from '../lib/logger.js';
 
 export const contactRouter: IRouter = Router();
 
@@ -17,6 +18,7 @@ const contactSchema = z.object({
 /**
  * POST /api/contact
  * Saves the message to Payload CMS and emails Joe.
+ * At least one delivery channel (CMS or email) must succeed.
  */
 contactRouter.post('/', async (req, res) => {
   const parsed = contactSchema.safeParse(req.body);
@@ -27,6 +29,9 @@ contactRouter.post('/', async (req, res) => {
 
   const { name, email, phone, subject, message } = parsed.data;
 
+  let cmsSaved = false;
+  let emailSent = false;
+
   // Save to Payload CMS Messages collection
   try {
     const cmsResponse = await fetch(`${PAYLOAD_URL}/api/messages`, {
@@ -35,21 +40,26 @@ contactRouter.post('/', async (req, res) => {
       body: JSON.stringify({ name, email, phone, subject, message }),
     });
 
-    if (!cmsResponse.ok) {
-      console.error('CMS save failed:', cmsResponse.status, await cmsResponse.text());
-      // Continue to send email even if CMS save fails
+    if (cmsResponse.ok) {
+      cmsSaved = true;
+    } else {
+      logger.error({ status: cmsResponse.status }, 'CMS save failed');
     }
   } catch (err) {
-    console.error('CMS save error:', err);
-    // Continue — email notification is more important than CMS storage
+    logger.error({ err }, 'CMS save error');
   }
 
   // Send email notification to Joe
   try {
     await sendContactNotification({ name, email, phone, subject, message });
+    emailSent = true;
   } catch (err) {
-    console.error('Contact email error:', err);
-    // Still return success — the message was saved to CMS
+    logger.error({ err }, 'Contact email error');
+  }
+
+  if (!cmsSaved && !emailSent) {
+    res.status(500).json({ error: 'Unable to deliver your message. Please call us instead.' });
+    return;
   }
 
   res.json({ status: 'ok' });

@@ -14,6 +14,8 @@
  * Production (gateway.moneris.com) is used when all env vars are configured.
  */
 
+import { logger } from '../lib/logger.js';
+
 const MONERIS_STORE_ID = process.env.MONERIS_STORE_ID || '';
 const MONERIS_API_TOKEN = process.env.MONERIS_API_TOKEN || '';
 const MONERIS_CHECKOUT_ID = process.env.MONERIS_CHECKOUT_ID || '';
@@ -26,7 +28,12 @@ const MCO_URL = IS_SANDBOX
 
 const MCO_ENV = IS_SANDBOX ? 'qa' : 'prod';
 
-if (IS_SANDBOX) {
+if (IS_SANDBOX && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    '[Moneris] FATAL: Missing MONERIS_STORE_ID, MONERIS_API_TOKEN, or MONERIS_CHECKOUT_ID in production. ' +
+    'Refusing to start with sandbox credentials. Set all three env vars to proceed.'
+  );
+} else if (IS_SANDBOX) {
   console.warn(
     '\x1b[33m[Moneris] Running in SANDBOX mode. Set MONERIS_STORE_ID, MONERIS_API_TOKEN, and MONERIS_CHECKOUT_ID for production.\x1b[0m'
   );
@@ -58,7 +65,7 @@ export async function preloadCheckout(
   customerEmail?: string,
 ): Promise<PreloadResult> {
   if (IS_SANDBOX) {
-    console.log(`[Moneris Sandbox] Preload: $${amount.toFixed(2)} for order ${orderId}`);
+    logger.info({ amount: amount.toFixed(2), orderId }, 'Moneris sandbox preload');
     return {
       success: true,
       ticket: `sandbox-ticket-${Date.now()}`,
@@ -101,10 +108,10 @@ export async function preloadCheckout(
     const errorMsg = data.response?.error
       ? JSON.stringify(data.response.error)
       : 'Preload failed';
-    console.error('Moneris preload error:', errorMsg);
+    logger.error({ error: errorMsg }, 'Moneris preload error');
     return { success: false, error: errorMsg, isSandbox: false };
   } catch (err) {
-    console.error('Moneris preload network error:', err);
+    logger.error({ err }, 'Moneris preload network error');
     return { success: false, error: 'Payment gateway unavailable', isSandbox: false };
   }
 }
@@ -117,7 +124,7 @@ export async function preloadCheckout(
  */
 export async function getReceipt(ticket: string): Promise<MonerisResult> {
   if (IS_SANDBOX) {
-    console.log(`[Moneris Sandbox] Receipt for ticket: ${ticket}`);
+    logger.info({ ticket }, 'Moneris sandbox receipt');
     return {
       success: true,
       transactionId: `sandbox-txn-${Date.now()}`,
@@ -161,7 +168,7 @@ export async function getReceipt(ticket: string): Promise<MonerisResult> {
       message: approved ? 'APPROVED' : (receipt.message || 'DECLINED'),
     };
   } catch (err) {
-    console.error('Moneris receipt error:', err);
+    logger.error({ err }, 'Moneris receipt error');
     return { success: false, message: 'Payment gateway unavailable' };
   }
 }
@@ -173,7 +180,7 @@ export async function getReceipt(ticket: string): Promise<MonerisResult> {
  */
 export async function capture(transactionId: string, amount: number): Promise<MonerisResult> {
   if (IS_SANDBOX) {
-    console.log(`[Moneris Sandbox] Capture: $${amount.toFixed(2)} txn ${transactionId}`);
+    logger.info({ amount: amount.toFixed(2), transactionId }, 'Moneris sandbox capture');
     return { success: true, transactionId, message: 'CAPTURED' };
   }
 
@@ -203,7 +210,7 @@ export async function capture(transactionId: string, amount: number): Promise<Mo
       message: data.response?.receipt?.message || 'CAPTURE FAILED',
     };
   } catch (err) {
-    console.error('Moneris capture error:', err);
+    logger.error({ err }, 'Moneris capture error');
     return { success: false, message: 'Payment gateway unavailable' };
   }
 }
@@ -214,7 +221,7 @@ export async function capture(transactionId: string, amount: number): Promise<Mo
  */
 export async function voidTransaction(transactionId: string): Promise<MonerisResult> {
   if (IS_SANDBOX) {
-    console.log(`[Moneris Sandbox] Void: txn ${transactionId}`);
+    logger.info({ transactionId }, 'Moneris sandbox void');
     return { success: true, transactionId, message: 'VOIDED' };
   }
 
@@ -243,7 +250,7 @@ export async function voidTransaction(transactionId: string): Promise<MonerisRes
       message: data.response?.receipt?.message || 'VOID FAILED',
     };
   } catch (err) {
-    console.error('Moneris void error:', err);
+    logger.error({ err }, 'Moneris void error');
     return { success: false, message: 'Payment gateway unavailable' };
   }
 }

@@ -8,15 +8,6 @@
  * text, but this protects against direct database tampering or future bugs.
  */
 
-const ALLOWED_TAGS = new Set([
-  'p', 'br', 'hr',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'ul', 'ol', 'li',
-  'a', 'strong', 'em', 'u', 's', 'code', 'sub', 'sup',
-  'blockquote', 'img',
-  'div', 'span',
-]);
-
 const DANGEROUS_ATTR_RE = /\s+on\w+\s*=/gi;
 const DANGEROUS_TAGS_RE = /<\/?(?:script|iframe|object|embed|form|input|textarea|button|select|style|link|meta|base|applet|svg|math)\b[^>]*>/gi;
 

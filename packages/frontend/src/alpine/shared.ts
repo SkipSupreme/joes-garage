@@ -35,10 +35,24 @@ export function formatDateOfBirth(dobYear: string, dobMonth: string, dobDay: str
 export async function createSignaturePad(canvasId: string): Promise<any | null> {
   const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
   if (!canvas) return null;
+
+  // Ensure the canvas has usable layout dimensions even if initialized during
+  // a transition frame.
+  const rect = canvas.getBoundingClientRect();
+  const cssWidth = Math.round(rect.width) || canvas.offsetWidth || canvas.clientWidth || 600;
+  const cssHeight = Math.round(rect.height) || canvas.offsetHeight || canvas.clientHeight || 160;
+
+  canvas.style.width = `${cssWidth}px`;
+  canvas.style.height = `${cssHeight}px`;
+
   const ratio = window.devicePixelRatio || 1;
-  canvas.width = canvas.offsetWidth * ratio;
-  canvas.height = canvas.offsetHeight * ratio;
-  canvas.getContext('2d')!.scale(ratio, ratio);
+  canvas.width = Math.max(1, Math.floor(cssWidth * ratio));
+  canvas.height = Math.max(1, Math.floor(cssHeight * ratio));
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  ctx.scale(ratio, ratio);
+
   const SignaturePad = await loadSignaturePad();
   return new SignaturePad(canvas, {
     backgroundColor: 'rgb(255, 255, 255)',

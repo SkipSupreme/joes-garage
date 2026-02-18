@@ -32,7 +32,6 @@ try {
 
 const shopName = settings?.shopName || "Joe's Garage";
 const phone = settings?.phone || '(403) 874-5637';
-const email = settings?.email || 'joe@joesgarage.mobi';
 const address = settings?.address || '355 8 St SW, Calgary, AB';
 
 // Parse address parts for structured data
@@ -114,7 +113,7 @@ const schemaHours = cmsHours
     <title>{title} | Joe's Garage</title>
 
     <!-- Schema.org LocalBusiness structured data -->
-    <script type="application/ld+json" set:html={JSON.stringify({
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
       "name": shopName,

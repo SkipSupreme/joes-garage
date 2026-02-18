@@ -6,6 +6,7 @@
  */
 
 import { lexicalToHtml } from './lexical-html.js';
+import { logger } from '../lib/logger.js';
 
 const CMS_URL = process.env.CMS_URL || 'http://localhost:3003';
 
@@ -28,7 +29,7 @@ export async function getWaiverTextFromCMS(): Promise<string | null> {
   try {
     const res = await fetch(`${CMS_URL}/api/globals/site-settings?depth=0`);
     if (!res.ok) {
-      console.error(`CMS fetch failed: ${res.status} ${res.statusText}`);
+      logger.error({ status: res.status, statusText: res.statusText }, 'CMS fetch failed');
       return cachedWaiverHtml; // return stale cache on error
     }
 
@@ -49,7 +50,7 @@ export async function getWaiverTextFromCMS(): Promise<string | null> {
     cacheExpiry = now + CACHE_TTL_MS;
     return null;
   } catch (err) {
-    console.error('Failed to fetch waiver text from CMS:', err);
+    logger.error({ err }, 'Failed to fetch waiver text from CMS');
     return cachedWaiverHtml; // return stale cache on network error
   }
 }

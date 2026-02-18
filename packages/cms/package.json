@@ -2,11 +2,12 @@
   "name": "cms",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@10.0.0",
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3003",
     "build": "next build",
-    "start": "next start",
+    "start": "next build && next start",
     "generate:types": "payload generate:types",
     "migrate": "payload migrate",
     "migrate:create": "payload migrate:create",

@@ -3,6 +3,7 @@ import { upsertCustomer } from './customer.service.js';
 import { generateWaiverPdf } from './waiver-pdf.js';
 import { uploadWaiverPdf, getWaiverPdf } from './storage.js';
 import { getWaiverTextFromCMS } from './cms.js';
+import { logger } from '../lib/logger.js';
 import type { ServiceResult } from '../types/db.js';
 import { ok, fail } from '../types/db.js';
 
@@ -113,7 +114,7 @@ export async function submitWaiver(
     return ok({ waiverId: waiverResult.rows[0].id, success: true });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Waiver submission error:', err);
+    logger.error({ err }, 'Waiver submission error');
     return fail(500, 'Failed to submit waiver');
   } finally {
     client.release();
@@ -190,7 +191,7 @@ export async function submitStandaloneWaiver(
     return ok({ waiverId: waiverResult.rows[0].id, success: true });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Standalone waiver submission error:', err);
+    logger.error({ err }, 'Standalone waiver submission error');
     return fail(500, 'Failed to submit standalone waiver');
   } finally {
     client.release();
@@ -226,7 +227,7 @@ export async function getUnlinkedWaivers(): Promise<ServiceResult<{ waivers: Unl
     `);
     return ok({ waivers: result.rows });
   } catch (err) {
-    console.error('Unlinked waivers error:', err);
+    logger.error({ err }, 'Unlinked waivers error');
     return fail(500, 'Failed to fetch unlinked waivers');
   }
 }
@@ -273,7 +274,7 @@ export async function linkWaivers(
     const linked = updateResult.rowCount || 0;
     return ok({ linked, message: `${linked} waiver(s) linked to booking` });
   } catch (err) {
-    console.error('Link waivers error:', err);
+    logger.error({ err }, 'Link waivers error');
     return fail(500, 'Failed to link waivers');
   }
 }
@@ -303,7 +304,7 @@ export async function getWaiverForBooking(
 
     return ok({ pdfBuffer, safeName });
   } catch (err) {
-    console.error('Waiver download error:', err);
+    logger.error({ err }, 'Waiver download error');
     return fail(500, 'Failed to download waiver');
   }
 }

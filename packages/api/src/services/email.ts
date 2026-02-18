@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { getWaiverPdf } from './storage.js';
 import { DURATION_LABELS } from '../constants.js';
+import { logger } from '../lib/logger.js';
 
 /**
  * Email service — sends booking confirmations and admin notifications.
@@ -38,7 +39,7 @@ async function getTransporter(): Promise<Transporter> {
         pass: testAccount.pass,
       },
     });
-    console.log(`Ethereal email account: ${testAccount.user}`);
+    logger.info({ user: testAccount.user }, 'Ethereal email account created');
   }
 
   return transporter;
@@ -92,7 +93,7 @@ export async function sendBookingConfirmation(details: BookingDetails): Promise<
         contentType: 'application/pdf',
       });
     } catch (err) {
-      console.error('Failed to attach waiver PDF to confirmation email:', err);
+      logger.error({ err }, 'Failed to attach waiver PDF to confirmation email');
     }
   }
 
@@ -194,7 +195,7 @@ export async function sendBookingConfirmation(details: BookingDetails): Promise<
   // Log Ethereal preview URL in dev
   const previewUrl = nodemailer.getTestMessageUrl(info);
   if (previewUrl) {
-    console.log(`📧 Email preview: ${previewUrl}`);
+    logger.info({ previewUrl }, 'Email preview available');
   }
 }
 
@@ -251,7 +252,7 @@ export async function sendAdminNotification(details: BookingDetails): Promise<vo
 
   const previewUrl = nodemailer.getTestMessageUrl(info);
   if (previewUrl) {
-    console.log(`📧 Admin email preview: ${previewUrl}`);
+    logger.info({ previewUrl }, 'Admin email preview available');
   }
 }
 
@@ -313,7 +314,7 @@ export async function sendContactNotification(details: ContactDetails): Promise<
 
   const previewUrl = nodemailer.getTestMessageUrl(info);
   if (previewUrl) {
-    console.log(`📧 Contact email preview: ${previewUrl}`);
+    logger.info({ previewUrl }, 'Contact email preview available');
   }
 }
 

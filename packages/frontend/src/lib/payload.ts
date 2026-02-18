@@ -11,6 +11,11 @@ import { lexicalToHtml } from './lexical-html';
 
 const PAYLOAD_URL = import.meta.env.PAYLOAD_URL || 'http://localhost:3003';
 
+function warnCmsUnavailable(scope: string, err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  console.warn(`[payload] ${scope} unavailable: ${message}`);
+}
+
 async function payloadFetch<T>(endpoint: string): Promise<T> {
   const url = `${PAYLOAD_URL}/api${endpoint}`;
   const res = await fetch(url);
@@ -90,94 +95,124 @@ function normalizeMediaUrl(doc: any): any {
 // --- Pages ---
 
 export async function getPages() {
-  const data = await payloadFetch<{ docs: any[] }>('/pages?limit=100&depth=2&pagination=false');
-  return data.docs.map((page) => ({
-    ...page,
-    layout: processBlocks(page.layout),
-    meta: page.meta
-      ? {
-          ...page.meta,
-          ogImage: page.meta.ogImage?.url?.startsWith('/')
-            ? { ...page.meta.ogImage, url: `${PAYLOAD_URL}${page.meta.ogImage.url}` }
-            : page.meta.ogImage,
-        }
-      : page.meta,
-  }));
+  try {
+    const data = await payloadFetch<{ docs: any[] }>('/pages?limit=100&depth=2&pagination=false');
+    return data.docs.map((page) => ({
+      ...page,
+      layout: processBlocks(page.layout),
+      meta: page.meta
+        ? {
+            ...page.meta,
+            ogImage: page.meta.ogImage?.url?.startsWith('/')
+              ? { ...page.meta.ogImage, url: `${PAYLOAD_URL}${page.meta.ogImage.url}` }
+              : page.meta.ogImage,
+          }
+        : page.meta,
+    }));
+  } catch (err) {
+    warnCmsUnavailable('getPages', err);
+    return [];
+  }
 }
 
 export async function getPage(slug: string) {
-  const data = await payloadFetch<{ docs: any[] }>(
-    `/pages?where[slug][equals]=${encodeURIComponent(slug)}&limit=1&depth=2&pagination=false`,
-  );
-  const page = data.docs[0];
-  if (!page) return null;
-  return {
-    ...page,
-    layout: processBlocks(page.layout),
-    meta: page.meta
-      ? {
-          ...page.meta,
-          ogImage: page.meta.ogImage?.url?.startsWith('/')
-            ? { ...page.meta.ogImage, url: `${PAYLOAD_URL}${page.meta.ogImage.url}` }
-            : page.meta.ogImage,
-        }
-      : page.meta,
-  };
+  try {
+    const data = await payloadFetch<{ docs: any[] }>(
+      `/pages?where[slug][equals]=${encodeURIComponent(slug)}&limit=1&depth=2&pagination=false`,
+    );
+    const page = data.docs[0];
+    if (!page) return null;
+    return {
+      ...page,
+      layout: processBlocks(page.layout),
+      meta: page.meta
+        ? {
+            ...page.meta,
+            ogImage: page.meta.ogImage?.url?.startsWith('/')
+              ? { ...page.meta.ogImage, url: `${PAYLOAD_URL}${page.meta.ogImage.url}` }
+              : page.meta.ogImage,
+          }
+        : page.meta,
+    };
+  } catch (err) {
+    warnCmsUnavailable(`getPage(${slug})`, err);
+    return null;
+  }
 }
 
 // --- Collections ---
 
 export async function getBikes() {
-  const data = await payloadFetch<{ docs: any[] }>(
-    '/bikes?where[status][equals]=available&limit=100&depth=1&pagination=false',
-  );
-  return data.docs.map((bike) => {
-    const b = normalizeMediaUrl(bike);
-    // Convert richText description
-    if (b.description && typeof b.description === 'object' && b.description.root) {
-      b.description = lexicalToHtml(b.description);
-    }
-    return b;
-  });
+  try {
+    const data = await payloadFetch<{ docs: any[] }>(
+      '/bikes?where[status][equals]=available&limit=100&depth=1&pagination=false',
+    );
+    return data.docs.map((bike) => {
+      const b = normalizeMediaUrl(bike);
+      // Convert richText description
+      if (b.description && typeof b.description === 'object' && b.description.root) {
+        b.description = lexicalToHtml(b.description);
+      }
+      return b;
+    });
+  } catch (err) {
+    warnCmsUnavailable('getBikes', err);
+    return [];
+  }
 }
 
 export async function getServices() {
-  const data = await payloadFetch<{ docs: any[] }>('/services?limit=100&depth=1&pagination=false');
-  return data.docs.map((service) => {
-    const s = normalizeMediaUrl(service);
-    if (s.description && typeof s.description === 'object' && s.description.root) {
-      s.description = lexicalToHtml(s.description);
-    }
-    return s;
-  });
+  try {
+    const data = await payloadFetch<{ docs: any[] }>('/services?limit=100&depth=1&pagination=false');
+    return data.docs.map((service) => {
+      const s = normalizeMediaUrl(service);
+      if (s.description && typeof s.description === 'object' && s.description.root) {
+        s.description = lexicalToHtml(s.description);
+      }
+      return s;
+    });
+  } catch (err) {
+    warnCmsUnavailable('getServices', err);
+    return [];
+  }
 }
 
 export async function getTestimonials() {
-  const data = await payloadFetch<{ docs: any[] }>('/testimonials?limit=100&depth=1&pagination=false');
-  return data.docs.map(normalizeMediaUrl);
+  try {
+    const data = await payloadFetch<{ docs: any[] }>('/testimonials?limit=100&depth=1&pagination=false');
+    return data.docs.map(normalizeMediaUrl);
+  } catch (err) {
+    warnCmsUnavailable('getTestimonials', err);
+    return [];
+  }
 }
 
 // --- Globals ---
 
 export async function getSiteSettings() {
-  const settings = await payloadFetch<any>('/globals/site-settings?depth=1');
-  // Convert waiver rich text
-  if (settings.waiverText && typeof settings.waiverText === 'object' && settings.waiverText.root) {
-    settings.waiverText = lexicalToHtml(settings.waiverText);
-  }
-  // Normalize logo URLs (main + generated sizes)
-  if (settings.logo) {
-    if (settings.logo.url?.startsWith('/')) {
-      settings.logo = { ...settings.logo, url: `${PAYLOAD_URL}${settings.logo.url}` };
+  try {
+    const settings = await payloadFetch<any>('/globals/site-settings?depth=1');
+    // Convert waiver rich text
+    if (settings.waiverText && typeof settings.waiverText === 'object' && settings.waiverText.root) {
+      settings.waiverText = lexicalToHtml(settings.waiverText);
     }
-    if (settings.logo.sizes) {
-      for (const key of Object.keys(settings.logo.sizes)) {
-        const size = settings.logo.sizes[key];
-        if (size?.url?.startsWith('/')) {
-          settings.logo.sizes[key] = { ...size, url: `${PAYLOAD_URL}${size.url}` };
+    // Normalize logo URLs (main + generated sizes)
+    if (settings.logo) {
+      if (settings.logo.url?.startsWith('/')) {
+        settings.logo = { ...settings.logo, url: `${PAYLOAD_URL}${settings.logo.url}` };
+      }
+      if (settings.logo.sizes) {
+        for (const key of Object.keys(settings.logo.sizes)) {
+          const size = settings.logo.sizes[key];
+          if (size?.url?.startsWith('/')) {
+            settings.logo.sizes[key] = { ...size, url: `${PAYLOAD_URL}${size.url}` };
+          }
         }
       }
     }
+    return settings;
+  } catch (err) {
+    warnCmsUnavailable('getSiteSettings', err);
+    return {};
   }
-  return settings;
 }

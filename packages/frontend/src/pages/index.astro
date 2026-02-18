@@ -4,15 +4,21 @@ export const prerender = true;
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import BlockRenderer from '../components/blocks/BlockRenderer.astro';
-import { getPage } from '../lib/payload';
+import { getPage, getTestimonials } from '../lib/payload';
 import logoHero from '../assets/logo-hero.webp';
 
 // Try to fetch homepage from CMS — fall back to hardcoded content if unavailable
 let page: any = null;
+let testimonials: any[] = [];
 try {
   page = await getPage('home');
 } catch {
   // CMS not available — will render hardcoded fallback below
+}
+try {
+  testimonials = await getTestimonials();
+} catch {
+  // CMS not available — will use hardcoded fallback testimonials
 }
 
 const hasCmsContent = page && page.layout && page.layout.length > 0;
@@ -131,16 +137,14 @@ const pageDescription = hasCmsContent
               <div class="absolute inset-0 pattern-corrugated"></div>
               <div class="absolute inset-0 grain"></div>
               <div class="relative text-center p-8">
-                <svg class="w-24 h-24 text-cream/10 mx-auto mb-4 animate-[spin_30s_linear_infinite]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1">
-                  <circle cx="50" cy="50" r="45"/>
-                  <circle cx="50" cy="50" r="8"/>
-                  <line x1="50" y1="5" x2="50" y2="42"/><line x1="50" y1="58" x2="50" y2="95"/>
-                  <line x1="5" y1="50" x2="42" y2="50"/><line x1="58" y1="50" x2="95" y2="50"/>
-                  <line x1="18" y1="18" x2="44" y2="44"/><line x1="56" y1="56" x2="82" y2="82"/>
-                  <line x1="82" y1="18" x2="56" y2="44"/><line x1="44" y1="56" x2="18" y2="82"/>
-                </svg>
-                <p class="text-cream/30 text-sm font-medium">Photo coming soon</p>
-                <p class="text-cream/15 text-xs mt-1">The container on the pathway</p>
+                <div class="w-28 h-28 mx-auto mb-4 rounded-full border-2 border-cream/10 flex items-center justify-center">
+                  <svg class="w-14 h-14 text-red/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+                <p class="text-cream/30 text-sm font-display font-bold tracking-wide uppercase">Bow River Pathway</p>
+                <p class="text-cream/15 text-xs mt-1">SE of Louise Bridge, Calgary</p>
               </div>
               <div class="absolute inset-0 bg-gradient-to-tr from-red/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
@@ -299,41 +303,26 @@ const pageDescription = hasCmsContent
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 3xl:gap-8" data-reveal-stagger>
-          <div class="p-7 rounded-2xl bg-cream/5 border border-cream/10">
-            <div class="flex gap-1 mb-4">
-              {[1,2,3,4,5].map(() => (
-                <svg class="w-4 h-4 text-red" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              ))}
+          {(testimonials.length > 0
+            ? testimonials.slice(0, 3)
+            : [
+                { quote: "Joe tuned up my commuter bike and it rides like new. Fair prices, honest work, and done the same day. Can't ask for more.", name: 'Sarah M., Kensington', rating: 5 },
+                { quote: "Rented a bike right from the container on the pathway. The online booking was seamless, and the bike was in perfect shape. Love this place.", name: 'Mike T., Beltline', rating: 5 },
+                { quote: "Joe's the kind of guy who'll explain what's wrong with your bike in plain English. No upselling, just straight talk. Legend.", name: 'Priya K., Mission', rating: 5 },
+              ]
+          ).map((t: any) => (
+            <div class="p-7 rounded-2xl bg-cream/5 border border-cream/10">
+              <div class="flex gap-1 mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <svg class:list={['w-4 h-4', i < (t.rating || 5) ? 'text-red' : 'text-cream/20']} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                ))}
+              </div>
+              <blockquote class="text-cream/80 leading-relaxed mb-4">
+                "{t.quote}"
+              </blockquote>
+              <cite class="text-sm text-cream/40 font-medium not-italic">— {t.name}</cite>
             </div>
-            <blockquote class="text-cream/80 leading-relaxed mb-4">
-              "Joe tuned up my commuter bike and it rides like new. Fair prices, honest work, and done the same day. Can't ask for more."
-            </blockquote>
-            <cite class="text-sm text-cream/40 font-medium not-italic">— Sarah M., Kensington</cite>
-          </div>
-
-          <div class="p-7 rounded-2xl bg-cream/5 border border-cream/10">
-            <div class="flex gap-1 mb-4">
-              {[1,2,3,4,5].map(() => (
-                <svg class="w-4 h-4 text-red" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              ))}
-            </div>
-            <blockquote class="text-cream/80 leading-relaxed mb-4">
-              "Rented a bike right from the container on the pathway. The online booking was seamless, and the bike was in perfect shape. Love this place."
-            </blockquote>
-            <cite class="text-sm text-cream/40 font-medium not-italic">— Mike T., Beltline</cite>
-          </div>
-
-          <div class="p-7 rounded-2xl bg-cream/5 border border-cream/10">
-            <div class="flex gap-1 mb-4">
-              {[1,2,3,4,5].map(() => (
-                <svg class="w-4 h-4 text-red" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              ))}
-            </div>
-            <blockquote class="text-cream/80 leading-relaxed mb-4">
-              "Joe's the kind of guy who'll explain what's wrong with your bike in plain English. No upselling, just straight talk. Legend."
-            </blockquote>
-            <cite class="text-sm text-cream/40 font-medium not-italic">— Priya K., Mission</cite>
-          </div>
+          ))}
         </div>
       </div>
     </section>
